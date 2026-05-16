@@ -1,8 +1,8 @@
 [org 0x7C00]
 [bits 16]
-KERNEL_OFFSET equ 0x1000
-KERNEL_SECTORS equ 32
-SECTORS_PER_TRACK equ 18
+KERNEL_OFFSET		equ 0x1000
+KERNEL_SECTORS		equ 32
+SECTORS_PER_TRACK	equ 18
 start:
 	cli
 	xor ax, ax
@@ -22,6 +22,9 @@ start:
 	call load_kernel
 	mov si, msg_loaded
 	call print16
+	mov si, msg_prompt
+	call print16
+	call wait_key
 	call switch_pm
 	jmp $
 print16:
@@ -34,6 +37,10 @@ print16:
 	int 0x10
 	jmp print16
 print16_done:
+	ret
+wait_key:
+	xor ax, ax           ;ah=0x00 wait for keypress
+	int 0x16             ;bios keyboard: block until key
 	ret
 load_kernel:
 	xor ax, ax
@@ -121,14 +128,15 @@ gdt_end:
 gdt_descriptor:
 	dw gdt_end - gdt_start - 1
 	dd gdt_start
-CODE_SEG equ gdt_code - gdt_start
-DATA_SEG equ gdt_data - gdt_start
-BOOT_DRIVE db 0
-sector db 0
-head db 0
-track db 0
-msg_boot   db "AneoEngine Boot Loader", 13, 10, 0
-msg_loaded db "Kernel found..", 13, 10, 0
-msg_disk   db "Kernel read error!", 13, 10, 0
-times 510 - ($ - $$) db 0
-dw 0xAA55
+CODE_SEG	equ gdt_code - gdt_start
+DATA_SEG	equ gdt_data - gdt_start
+BOOT_DRIVE	db 0
+sector		db 0
+head		db 0
+track		db 0
+msg_boot	db 13, 10, 13, 10, 13, 10, 13, 10, "AneoEngine Boot Loader", 13, 10, 0
+msg_loaded	db "Kernel found...", 13, 10, 0
+msg_prompt	db 13, 10, "Press any key to continue...", 13, 10, 0
+msg_disk	db "Kernel read error!", 13, 10, 0
+		times 510 - ($ - $$) db 0
+		dw 0xAA55

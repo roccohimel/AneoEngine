@@ -13,7 +13,8 @@ volatile unsigned long ticks = 0;
 #define MAX_NAME 32
 #define MAX_DATA 512
 #define INPUT_MAX 128
-#define BUILD "V0U1-160526B2"
+#define BUILD "V0U1-170526B9"
+#define NOTHING "                                                                                "
 
 static int cx = 0;
 static int cy = 0;
@@ -552,9 +553,7 @@ char *skip(char *s)
 
 void startupBanner(void)
 {
-	print("AneoEngine V0.1 Build ");
-	print(BUILD);
-	print("\n\n");
+	sleep(500);
 	print("Data addresses listed\n");
 	print("\n");
 	print("IVT:0x00000000->0x000003FF\n");
@@ -563,6 +562,8 @@ void startupBanner(void)
 	print("VGA mem:0x000A0000->0x000AFFFF\n");
 	print("Text buf:0x000B0000->0x000BFFFF\n");
 	print("\n");
+	sleep(500);
+	print("Boot sequence:\n");
 	print("BIOS DATA  &OCU ->BOOTLOADER\n");
 	print("        0x00000400->0x000004FF\n");
 	print("BOOTLOADER  &OCU ->KERNEL ENTRY\n");
@@ -574,6 +575,8 @@ void startupBanner(void)
 	print("        0x00001000\n");
 	print("KERNEL DATA  &OCU\n");
 	print("        0x00001000->0x00004000\n");
+	print("\n");
+	print("Loading shell...\n");
 }
 
 void help(void)
@@ -625,7 +628,16 @@ void vmoff(void)
 
 void shell(void)
 {
-	print("\nLoading shell...\n");
+	unsigned int lines = 0;
+	while (lines < 52)
+	{
+		print(NOTHING);
+		lines++;
+		cy++;
+	}
+
+	print("HI");
+
 	char line[INPUT_MAX];
 	char *a;
 	char *b;
@@ -684,8 +696,12 @@ void shell(void)
 void kmain(void)
 {
 	clear();
-	startupBanner();
+	print("AneoEngine V0.1 Build ");
+        print(BUILD);
+        print("\n\n");
 	pit_init_1000hz();
+	startupBanner();
+	sleep(1000);
 	shell();
 }
 
