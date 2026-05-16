@@ -13,11 +13,12 @@ volatile unsigned long ticks = 0;
 #define MAX_NAME 32
 #define MAX_DATA 512
 #define INPUT_MAX 128
-#define BUILD "V0U1-170526B9"
+#define BUILD "V0U1-170526B12"
 #define NOTHING "                                                                                "
+#define BAR "==============================================================================="
 
-static int cx = 0;
-static int cy = 0;
+unsigned int cx = 0;
+unsigned int cy = 0;
 static u8 color = 0x0F;
 
 static inline void outb(u16 port, u8 val)
@@ -579,6 +580,33 @@ void startupBanner(void)
 	print("Loading shell...\n");
 }
 
+void banner(void)
+{
+        print("Data addresses listed\n");
+        print("\n");
+        print("IVT:0x00000000->0x000003FF\n");
+        print("Free low mem:0x00000500->0x00007BFF\n");
+        print("Stack:0x00090000->downward\n");
+        print("VGA mem:0x000A0000->0x000AFFFF\n");
+        print("Text buf:0x000B0000->0x000BFFFF\n");
+        print("\n");
+        print("Boot sequence:\n");
+        print("BIOS DATA  &OCU ->BOOTLOADER\n");
+        print("        0x00000400->0x000004FF\n");
+        print("BOOTLOADER  &OCU ->KERNEL ENTRY\n");
+        print("        0x00007C00->0x00007DFF\n");
+        print("        GTD &OCU:0x00007CDA->0x00007CF2\n");
+        print("        gtd_code:0x00007CE2\n");
+        print("        gtd_data:0x00007CEA\n");
+        print("KERNEL ENTRY  &OCU ->KERNEL DATA\n");
+        print("        0x00001000\n");
+        print("KERNEL DATA  &OCU\n");
+        print("        0x00001000->0x00004000\n");
+        print("\n");
+        print("Loading shell...\n");
+}
+
+
 void help(void)
 {
 	print("help      show commands\n");
@@ -596,11 +624,6 @@ void help(void)
 	print("vmoff     power off vm\n");
 }
 
-void addresses(void)
-{
-
-}
-
 int atoi(const char *s)
 {
 	int n = 0;
@@ -616,6 +639,7 @@ int atoi(const char *s)
 
 void vmoff(void)
 {
+	color = 0x0F;
 	print("Poweroff\n");
 
 	outw(0x604, 0x2000);
@@ -625,6 +649,21 @@ void vmoff(void)
 	for(;;)
 		asm volatile("hlt");
 }
+
+void halt(void)
+{
+	color = 0x0F;
+	cy = 0;
+	print("AneoEngine V0.1 Build ");
+        print(BUILD);
+        print("\n\n");
+	print("PIT:IOP 0x40->0x43\n");
+	banner();
+	sleep(1000);
+	for (;;)
+		asm volatile("hlt");
+}
+
 
 void shell(void)
 {
@@ -636,11 +675,23 @@ void shell(void)
 		cy++;
 	}
 
-	print("HI");
-
 	char line[INPUT_MAX];
 	char *a;
 	char *b;
+
+	color = 0x1F;
+	lines = 0;
+        while (lines < 52)
+        {
+                print(NOTHING);
+                lines++;
+                cy++;
+        }
+
+	cy = 0;
+	print(BAR);
+	cy = 1;
+	cx = 0;
 
 	for(;;)
 	{
@@ -666,28 +717,10 @@ void shell(void)
 			fs_rm(skip(line + 2));
 		else if(starts(line, "color "))
 			color = atoi(skip(line + 5));
-		else if(strcmp(line, "addr") == 0)
-			addresses();
 		else if(strcmp(line, "vmoff") == 0)
 			vmoff();
-		else if(starts(line, "write "))
-		{
-			a = skip(line + 5);
-			b = a;
-
-			while(*b && *b != ' ')
-				b++;
-
-			if(*b)
-			{
-				*b = 0;
-				b++;
-				b = skip(b);
-				fs_write(a, b);
-			}
-			else
-				print("Usage: write file text\n");
-		}
+		else if(strcmp(line, "halt") == 0)
+			halt();
 		else if(line[0])
 			print("Bad command\n");
 	}
