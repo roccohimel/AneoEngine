@@ -2,6 +2,9 @@
 
 extern void pit_init_1000hz(void);
 extern void sleep(unsigned int ms);
+extern char getkey(void);
+extern void vmoff(void);
+extern void halt(void);
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -15,12 +18,12 @@ typedef unsigned int u32;
 #define MAX_NAME 32
 #define MAX_DATA 512
 #define INPUT_MAX 128
-#define BUILD "V0U1-170526B18"
+#define BUILD "V0U1-170526B19"
 #define BAR "==============================================================================="
 
 unsigned int cx = 0;
 unsigned int cy = 0;
-static u8 color = 0x0F;
+u8 color = 0x0F;
 
 void outb(u16 port, u8 val)
 {
@@ -198,65 +201,6 @@ void print_hex(u32 v)
 }
 
 
-static const char keymap[128] =
-{
-	0, 27, '1', '2', '3', '4', '5', '6',
-	'7', '8', '9', '0', '-', '=', '\b', '\t',
-	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',
-	'o', 'p', '[', ']', '\n', 0, 'a', 's',
-	'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',
-	'\'', '`', 0, '\\', 'z', 'x', 'c', 'v',
-	'b', 'n', 'm', ',', '.', '/', 0, '*',
-	0, ' ', 0
-};
-
-static const char shiftmap[128] =
-{
-	0, 27, '!', '@', '#', '$', '%', '^',
-	'&', '*', '(', ')', '_', '+', '\b', '\t',
-	'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
-	'O', 'P', '{', '}', '\n', 0, 'A', 'S',
-	'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',
-	'"', '~', 0, '|', 'Z', 'X', 'C', 'V',
-	'B', 'N', 'M', '<', '>', '?', 0, '*',
-	0, ' ', 0
-};
-
-int shift = 0;
-
-char getkey(void)
-{
-	u8 sc;
-
-	for(;;)
-	{
-		while(!(inb(0x64) & 1))
-			;
-
-		sc = inb(0x60);
-
-		if(sc == 42 || sc == 54)
-		{
-			shift = 1;
-			continue;
-		}
-
-		if(sc == 170 || sc == 182)
-		{
-			shift = 0;
-			continue;
-		}
-
-		if(sc & 0x80)
-			continue;
-
-		if(shift)
-			return shiftmap[sc];
-
-		return keymap[sc];
-	}
-}
-
 void readline(char *buf, int max)
 {
 	int i = 0;
@@ -376,38 +320,6 @@ int atoi(const char *s)
 
 	return n;
 }
-
-void vmoff(void)
-{
-	color = 0x0F;
-	cy = 0;
-	print("VAL:0x00002000->IOP:0x00000604\n");
-	outw(0x604, 0x2000);
-	print("VAL:0x00002000->IOP:0x0000B004\n");
-	outw(0xB004, 0x2000);
-	print("VAL:0x00003400->IOP:0x00004004\n");
-	outw(0x4004, 0x3400);
-	print("Halted: VAL->IOP writing error\n");
-	print("ERR: Failed to write values:\n");
-	print("        VAL:0x00002000->IOP:0x00000604\n");
-	print("        VAL:0x00002000->IOP:0x0000B004\n");
-	print("        VAL:0x00003400->IOP:0x00004004\n");
-
-
-	for(;;)
-		asm volatile("hlt");
-}
-
-void halt(void)
-{
-	color = 0x0F;
-	cy = 0;
-	print("Halted...");
-	sleep(1000);
-	for (;;)
-		asm volatile("hlt");
-}
-
 
 void shell(void)
 {
