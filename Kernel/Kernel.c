@@ -5,6 +5,10 @@ extern void sleep(unsigned int ms);
 extern char getkey(void);
 extern void vmoff(void);
 extern void halt(void);
+extern void startupBanner(void);
+extern void helpMenu(void);
+extern void addr(void);
+extern const char *logo;
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -17,12 +21,12 @@ typedef unsigned int u32;
 #define MAX_FILES 64
 #define MAX_NAME 32
 #define MAX_DATA 512
-#define INPUT_MAX 128
-#define BUILD "V0U1-170526B19"
-#define BAR "==============================================================================="
 
+const char *BAR = "===============================================================================";
+const char *BUILD = "V0U1-180526B4";
 unsigned int cx = 0;
 unsigned int cy = 0;
+unsigned int INPUT_MAX = 128;
 u8 color = 0x0F;
 
 void outb(u16 port, u8 val)
@@ -262,51 +266,6 @@ char *skip(char *s)
 	return s;
 }
 
-void startupBanner(void)
-{
-	sleep(500);
-	print("Data addresses listed\n");
-	print("\n");
-	print("IVT:0x00000000->0x000003FF\n");
-	print("Free low mem:0x00000500->0x00007BFF\n");
-	print("Stack:0x00090000->downward\n");
-	print("VGA mem:0x000A0000->0x000AFFFF\n");
-	print("Text buf:0x000B0000->0x000BFFFF\n");
-	print("\n");
-	sleep(500);
-	print("Boot sequence:\n");
-	print("BIOS DATA  &OCU ->BOOTLOADER\n");
-	print("        0x00000400->0x000004FF\n");
-	print("BOOTLOADER  &OCU ->KERNEL ENTRY\n");
-	print("        0x00007C00->0x00007DFF\n");
-	print("        GTD &OCU:0x00007CDA->0x00007CF2\n");
-	print("        gtd_code:0x00007CE2\n");
-	print("        gtd_data:0x00007CEA\n");
-	print("KERNEL ENTRY  &OCU ->KERNEL DATA\n");
-	print("        0x00001000\n");
-	print("KERNEL DATA  &OCU\n");
-	print("        0x00001000->0x00004000\n");
-	print("\n");
-	print("Loading shell...\n");
-}
-
-
-void help(void)
-{
-	print("help      show commands\n");
-	print("info      system info\n");
-	print("cls       clear screen\n");
-	print("ls        list files\n");
-	print("touch     create file\n");
-	print("mkdir     create dir\n");
-	print("cat       read file\n");
-	print("write     write file\n");
-	print("cd        change dir\n");
-	print("rm        remove file\n");
-	print("addr      address map\n");
-	print("color     set color\n");
-	print("vmoff     power off vm\n");
-}
 
 int atoi(const char *s)
 {
@@ -335,6 +294,7 @@ void shell(void)
 	cy = 1;
 	cx = 0;
 
+	print(logo);
 	for(;;)
 	{
 
@@ -348,28 +308,26 @@ void shell(void)
 
 		readline(line, INPUT_MAX);
 
-		if(strcmp(line, "help") == 0)
-			help();
-		else if(strcmp(line, "cls") == 0)
+		if(strcmp(line, "cls") == 0)
 			clear();
+		else if(strcmp(line, "help") == 0)
+			helpMenu();
 		else if(starts(line, "color "))
 			color = atoi(skip(line + 5));
 		else if(strcmp(line, "vmoff") == 0)
 			vmoff();
 		else if(strcmp(line, "halt") == 0)
 			halt();
+		else if(strcmp(line, "addr") == 0)
+			addr();
 		else if(line[0])
-			print("Bad command\n");
+			perror("ERR: Unknown command\n");
 	}
 }
 
 void kmain(void)
 {
 	clear();
-	print("AneoEngine V0.1 Build ");
-        print(BUILD);
-        print("\n\n");
-	pit_init_1000hz();
 	startupBanner();
 	sleep(1000);
 	shell();

@@ -15,7 +15,7 @@ void pit_init_1000hz(void)
         outb(0x43, 0x36);
         outb(0x40, divisor & 0xFF);
         outb(0x40, (divisor >> 8) & 0xFF);
-        print("PIT:IOP:0x40->0x43\n");
+        print("PIT:IOP:0x40-0x43\n");
 }
 
 unsigned short pit_read_counter(void)
