@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AneoEngine</title>
+<link rel="icon" href="Image.PNG">
+<meta name="description" content="AneoEngine x86 Operating System">
+<meta property="og:title" content="AneoEngine">
+<meta property="og:description" content="AneoEngine x86 Operating System">
+<meta property="og:image" content="Image.PNG">
+</head>
+
+<body bgcolor="#000000">
+
+<div style="margin:auto; background:#0000AA; border:2px solid #FFFFFF; padding:12px; width:850px; font-size:14px; color:#FFFFFF;">
+
+<center><h1>Random Number Generator</h1></center>
+
+<h3 style="font-family:monospace; font-size:14px;">
+Entropy value:
+<p id="result">-----</p>
+<script>
+const randomNumber = Math.floor(Math.random() * 90000) + 10000;
+document.getElementById("result").innerText = randomNumber;
+</script>
+
+</h3>
+</div>
+
+</body>
+</html>
+

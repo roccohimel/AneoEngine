@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AneoEngine</title>
+<link rel="icon" href="Image.PNG">
+<meta name="description" content="AneoEngine x86 Operating System">
+<meta property="og:title" content="AneoEngine">
+<meta property="og:description" content="AneoEngine x86 Operating System">
+<meta property="og:image" content="Image.PNG">
+</head>
+
+<body bgcolor="#000000">
+
+<div style="margin:auto; background:#0000AA; border:2px solid #FFFFFF; padding:12px; width:850px; font-size:14px; color:#FFFFFF;">
+
+<center><h1>The AneoEngine Operating System</h1></center>
+
+<pre style="font-family:monospace; font-size:14px;">
+Latest stable distrobution builds:
+<a href="https://github.com/roccohimel/AneoEngine/releases/download/V0U1-180526B4/AneoEngine.ISO" style="color:#FF7777;">AneoEngine V0.1 - Build 180526B4 Official distro (1.4 MB)</a></h3>
+<a href="https://github.com/roccohimel/AneoEngine/releases/download/V0U1-180526B4/build.sh" style="color:#FF7777;">AneoEngine V0.1 - Build 180526B4 Official build script (1.3 KB)</a></h3>
+
+Latest distrobution builds:              
+<a href="https://github.com/roccohimel/AneoEngine/raw/refs/heads/main/AneoEngine.ISO" style="color:#FF7777;">AneoEngine V0.1 - Unstable distro</a></h3>
+<a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/build.sh" style="color:#FF7777;">AneoEngine V0.1 - Latest build script</a></h3>
+
+</pre>
+
+<center><h1>Running Natively</h1></center>
+<pre style="font-family:monospace; font-size:14px;">
+You can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.
+For Linux you can run the following:
+'lsblk' to see your USB device
+'sudo dd if=AneoEngine.ISO of=/dev/sdX' to flash the ISO, replace 'sdX with your device.
+Or you can use BalenaEtcher
+
+For Windows you can use either Rufus or BalenaEtcher.
+</pre>
+
+<center><h1>Running on QEMU</h1></center>
+<pre style="font-family:monospace; font-size:14px;">
+QEMU works on all modern operating systems. To run on QEMU run the following:
+$ qemu-system-i386 -fda AneoEngine.ISO
+$ qemu-system-x86_64 -fda AneoEngine.ISO
+
+</div>
+
+</body>
+</html>

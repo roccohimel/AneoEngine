@@ -15,4 +15,4 @@ dd if=/dev/zero of=AneoEngine.ISO bs=512 count=2880
 dd if=Boot/AEBOOT.BIN of=AneoEngine.ISO conv=notrunc
 dd if=Boot/KERNEL.BIN of=AneoEngine.ISO bs=512 seek=1 conv=notrunc
 rm *.o
-qemu-system-i386 -fda AneoEngine.ISO
+qemu-system-x86_64 -fda AneoEngine.ISO
