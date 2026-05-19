@@ -1,11 +1,14 @@
 extern void print(const char *s);
 extern void sleep(unsigned int ms);
+extern const char *VERSION;
 extern const char *BUILD;
 extern void pit_init_1000hz(void);
 
 void startupBanner(void)
 {
-        print("AneoEngine V0.1 Build ");
+        print("AneoEngine ");
+	print(VERSION);
+	print(" Build ");
         print(BUILD);
         print("\n\n");
         pit_init_1000hz();

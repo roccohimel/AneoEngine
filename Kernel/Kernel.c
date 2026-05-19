@@ -6,7 +6,8 @@ extern char getkey(void);
 extern void vmoff(void);
 extern void halt(void);
 extern void startupBanner(void);
-extern void helpMenu(void);
+extern int helpMenu(void);
+extern int programsMenu(void);
 extern void addr(void);
 extern const char *logo;
 
@@ -23,6 +24,7 @@ typedef unsigned int u32;
 #define MAX_DATA 512
 
 const char *BAR = "===============================================================================";
+const char *VERSION = "V0.1";
 const char *BUILD = "V0U1-180526B4";
 unsigned int cx = 0;
 unsigned int cy = 0;
@@ -320,6 +322,8 @@ void shell(void)
 			halt();
 		else if(strcmp(line, "addr") == 0)
 			addr();
+		else if(strcmp(line, "programs") == 0)
+                        programsMenu();
 		else if(line[0])
 			perror("ERR: Unknown command\n");
 	}

@@ -12,29 +12,18 @@ extern void perror(const char *s);
 extern void clear(void);
 extern void readline(char *buf, int max);
 extern int strcmp(const char *a, const char *b);
-extern void info(void);
+extern void printer(void);
 
-int helpMenu(void)
+int programsMenu(void)
 {
 
 	char line[INPUT_MAX];
 	char *a;
 	char *b;
 
-	color = 0x1F;
-	clear();
-	cy = 0;
-	print(BAR);
-	cy = 1;
-	cx = 0;
+	print("Programs:\n");
+	print("00001576  /Programs/Printer\n");
 
-	color = 0x12;
-	print("        AneoEngine Help Menu\n");
-	color = 0x1F;
-	print("\n");
-	print("/Cmds/Help/Info\n");
-	print("/Cmds/Help/Commands\n");
-	print("/Cmds/Help/HowItWorks\n");
 	for(;;)
 	{
 
@@ -44,7 +33,7 @@ int helpMenu(void)
 		cy = oldcy;
 		cx = 0;
 
-		print("Help> ");
+		print("Programs> ");
 
 		readline(line, INPUT_MAX);
 
@@ -55,10 +44,9 @@ int helpMenu(void)
 			print("Exiting...\n");
 			return 0;
 		}
-		else if(strcmp(line, "Info") == 0)
-			info();
+		else if(strcmp(line, "Printer") == 0)
+			printer();
 		else if(line[0])
 			perror("ERR: Unknown command\n");
 	}
 }
-
