@@ -4,7 +4,8 @@ typedef unsigned int u32;
 
 extern unsigned int INPUT_MAX;
 extern u8 color;
-extern const char *BAR;
+extern const char *BAR1;
+extern const char *BAR2;
 extern unsigned int cy;
 extern unsigned int cx;
 extern void print(const char *s);
@@ -13,6 +14,7 @@ extern void clear(void);
 extern void readline(char *buf, int max);
 extern int strcmp(const char *a, const char *b);
 extern void printer(void);
+extern void rtc_print_datetime(void);
 
 int programsMenu(void)
 {
@@ -29,7 +31,9 @@ int programsMenu(void)
 
 		const int oldcy = cy;
 		cy = 0;
-		print(BAR);
+		print(BAR1);
+                rtc_print_datetime();
+                print(BAR2);
 		cy = oldcy;
 		cx = 0;
 

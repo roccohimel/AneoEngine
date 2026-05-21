@@ -34,33 +34,30 @@ int shift = 0;
 
 char getkey(void)
 {
-	u8 sc;
+        u8 sc;
 
-	for(;;)
-	{
-		while(!(inb(0x64) & 1))
-			;
+        if(!(inb(0x64) & 1))
+                return 0;
 
-		sc = inb(0x60);
+        sc = inb(0x60);
 
-		if(sc == 42 || sc == 54)
-		{
-			shift = 1;
-			continue;
-		}
+        if(sc == 42 || sc == 54)
+        {
+                shift = 1;
+                return 0;
+        }
 
-		if(sc == 170 || sc == 182)
-		{
-			shift = 0;
-			continue;
-		}
+        if(sc == 170 || sc == 182)
+        {
+                shift = 0;
+                return 0;
+        }
 
-		if(sc & 0x80)
-			continue;
+        if(sc & 0x80)
+                return 0;
 
-		if(shift)
-			return shiftmap[sc];
+        if(shift)
+                return shiftmap[sc];
 
-		return keymap[sc];
-	}
+        return keymap[sc];
 }
