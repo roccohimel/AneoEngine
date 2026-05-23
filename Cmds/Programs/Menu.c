@@ -15,6 +15,7 @@ extern void readline(char *buf, int max);
 extern int strcmp(const char *a, const char *b);
 extern void printer(void);
 extern void rtc_print_datetime(void);
+extern void draw_tb(void);
 
 int programsMenu(void)
 {
@@ -29,14 +30,7 @@ int programsMenu(void)
 	for(;;)
 	{
 
-		const int oldcy = cy;
-		cy = 0;
-		print(BAR1);
-                rtc_print_datetime();
-                print(BAR2);
-		cy = oldcy;
-		cx = 0;
-
+		draw_tb();
 		print("Programs> ");
 
 		readline(line, INPUT_MAX);

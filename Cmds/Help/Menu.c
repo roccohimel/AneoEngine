@@ -15,6 +15,7 @@ extern void readline(char *buf, int max);
 extern int strcmp(const char *a, const char *b);
 extern void info(void);
 extern void rtc_print_datetime(void);
+extern void draw_tb(void);
 
 int helpMenu(void)
 {
@@ -26,9 +27,6 @@ int helpMenu(void)
 	color = 0x1F;
 	clear();
 	cy = 0;
-	print(BAR1);
-        rtc_print_datetime();
-        print(BAR2);
 
 	cy = 1;
 	cx = 0;
@@ -43,14 +41,7 @@ int helpMenu(void)
 	for(;;)
 	{
 
-		const int oldcy = cy;
-		cy = 0;
-		print(BAR1);
-                rtc_print_datetime();
-                print(BAR2);
-		cy = oldcy;
-		cx = 0;
-
+		draw_tb();
 		print("Help> ");
 
 		readline(line, INPUT_MAX);

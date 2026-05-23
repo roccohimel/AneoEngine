@@ -33,9 +33,9 @@ typedef unsigned int u32;
 #define RTC_YEAR    0x09
 
 const char *BAR1 = "====";
-const char *BAR2 = "========================================================";
+const char *BAR2 = "===========================================================";
 const char *VERSION = "V0.1";
-const char *BUILD = "V0U1-210526B2";
+const char *BUILD = "V0U1-230526B1";
 unsigned int cx = 0;
 unsigned int cy = 0;
 unsigned int INPUT_MAX = 128;
@@ -356,26 +356,11 @@ int rtc_get_second(void)
 #define RTC_X  4
 #define RTC_Y  0
 
-void draw_topbar_once(void)
-{
-        u8 oldcolor = color;
-	color = 0xF1;
-	cy = 0;
-        cx = 0;
-        print(BAR1);
-
-        cx = RTC_X;
-        cy = RTC_Y;
-        rtc_print_datetime();
-
-        print(BAR2);
-	color = oldcolor;
-}
 
 void update_rtc_only(void)
 {
         u8 oldcolor = color;
-	color = 0xF1;
+	color = 0x0F;
 	int oldcx = cx;
         int oldcy = cy;
 
@@ -385,6 +370,25 @@ void update_rtc_only(void)
 
         cx = oldcx;
         cy = oldcy;
+	color = oldcolor;
+}
+
+void draw_tb(void)
+{
+	u8 oldcolor = color;
+	color = 0x01;
+
+	int oldcx = cx;
+	int oldcy = cy;
+
+	cy = 0;
+	cx = 0;
+	print(BAR1);
+	cx = 20;
+	print(BAR2);
+
+	cy = oldcy;
+	cx = oldcx;
 	color = oldcolor;
 }
 
@@ -483,16 +487,16 @@ void shell(void)
 
 	color = 0x1F;
 	clear();
+	draw_tb();
 	sleep(500);
         nosound();
-	cy = 0;
-	draw_topbar_once();
-	cy = 1;
-	cx = 0;
+
+	draw_tb();
 
 	print(logo);
 	for(;;)
 	{
+		draw_tb();
 		print("> ");
 		color = 0x1A;
 
