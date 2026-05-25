@@ -1,3 +1,4 @@
+//PIT funtions
 #include <stdint.h>
 
 typedef unsigned char u8;
@@ -9,7 +10,7 @@ extern void outb(u16 port, u8 val);
 extern u8 inb(u16 port);
 
 void pit_init_1000hz(void)
-{
+{//initialize sleep funtion
         unsigned int divisor = 1120000 / 1000;
         poutb(0x43, 0x36);
         poutb(0x40, divisor & 0xFF);
@@ -21,7 +22,7 @@ unsigned short pit_read_counter(void)
         unsigned char lo;
         unsigned char hi;
 
-        outb(0x43, 0x00);
+	  outb(0x43, 0x00);
 
         lo = inb(0x40);
         hi = inb(0x40);
@@ -30,7 +31,7 @@ unsigned short pit_read_counter(void)
 }
 
 void sleep(unsigned int ms)
-{
+{//sleep funtion
         unsigned int i;
         unsigned short last;
         unsigned short now;
@@ -51,7 +52,8 @@ void sleep(unsigned int ms)
 }
 
 void beep(u32 freq)
-{
+{//play a certain frequency from the motherboard
+//speaker
 	u32 divisor;
 	u8 tmp;
 
@@ -69,7 +71,7 @@ void beep(u32 freq)
 }
 
 void nosound(void)
-{
+{//stop playing noise from motherboard
 	u8 tmp;
 
 	tmp = inb(0x61) & 0xFC;

@@ -1,3 +1,5 @@
+//AneoEngine Logo string
+
 const char *logo =
 	"---------------------        AneoEngine V0.1\n"
 	"---------------------        x86 Operating System\n"

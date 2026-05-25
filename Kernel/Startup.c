@@ -1,3 +1,5 @@
+//Main startup file that contains memory
+//addresses and starts the shell loop
 #include <stdint.h>
 
 typedef unsigned char u8;
@@ -18,7 +20,7 @@ extern void indprintad(const char *s, uint32_t x);
 extern void indprintadocu(const char *s, uint32_t x1, uint32_t x2);
 extern u8 inb(u16 port);
 
-
+//Addresses not involved in boot
 uint32_t IVT_START = 0x0;
 uint32_t IVT_END = 0x3FF;
 uint32_t FREE_LOW_MEM_START = 0x500;
@@ -29,6 +31,7 @@ uint32_t VGA_MEM_END = 0xAFFFF;
 uint32_t VGA_TEXT_BUF_START = 0xB0000;
 uint32_t VGA_TEXT_BUF_END = 0xBFFFF;
 
+//addresses involved in boot
 uint32_t BIOS_DATA_START = 0x400;
 uint32_t BIOS_DATA_END = 0x4FF;
 uint32_t BOOTLOADER_START = 0x7C00;
@@ -42,7 +45,7 @@ uint32_t KERNEL_DATA_START = 0x1000;
 uint32_t KERNEL_DATA_END = 0x4000;
 
 void waitkey(void)
-{
+{//wait till key is pressed; continue
         u8 sc;
 
         while (inb(0x64) & 1)
@@ -59,7 +62,7 @@ void waitkey(void)
 }
 
 void startupBanner(void)
-{
+{//startup banner
 	print("AneoEngine ");
 	print(VERSION);
 	print(" Build ");

@@ -1,3 +1,4 @@
+//keyboard driver
 #include <stdint.h>
 
 typedef unsigned char u8;
@@ -7,7 +8,7 @@ typedef unsigned int u32;
 extern u8 inb(u16 port);
 
 static const char keymap[128] =
-{
+{//allowed chars
 	0, 27, '1', '2', '3', '4', '5', '6',
 	'7', '8', '9', '0', '-', '=', '\b', '\t',
 	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',
@@ -19,7 +20,7 @@ static const char keymap[128] =
 };
 
 static const char shiftmap[128] =
-{
+{//allowed chars when shift is pressed
 	0, 27, '!', '@', '#', '$', '%', '^',
 	'&', '*', '(', ')', '_', '+', '\b', '\t',
 	'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
@@ -33,7 +34,7 @@ static const char shiftmap[128] =
 int shift = 0;
 
 char getkey(void)
-{
+{//get the current key from keyboard IO port
         u8 sc;
 
         if(!(inb(0x64) & 1))

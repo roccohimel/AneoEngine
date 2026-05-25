@@ -1,5 +1,8 @@
+//File with the main AneoEngine loop and all core
+//funtions
 #include <stdint.h>
 
+//import all AneoEngine funtions
 extern void pit_init_1000hz(void);
 extern void sleep(unsigned int ms);
 extern char getkey(void);
@@ -17,12 +20,9 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 
-#define VGA ((u16*)0xB8000)
-#define W 80
-#define H 50
-#define MAX_FILES 64
-#define MAX_NAME 32
-#define MAX_DATA 512
+#define VGA ((u16*)0xB8000) //VGA buffer address
+#define W 80 //screen width
+#define H 50 //screen hight
 #define CMOS_ADDR 0x70
 #define CMOS_DATA 0x71
 #define RTC_SECONDS 0x00
@@ -34,38 +34,41 @@ typedef unsigned int u32;
 
 const char *BAR1 = "====";
 const char *BAR2 = "===========================================================";
+
+//build information
 const char *VERSION = "V0.1";
-const char *BUILD = "V0U1-230526B1";
+const char *BUILD = "V0U1-240526B2";
+
 unsigned int cx = 0;
 unsigned int cy = 0;
 unsigned int INPUT_MAX = 128;
 u8 color = 0x0F;
 
 void outb(u16 port, u8 val)
-{
+{//write 8-bit value to IO port
 	asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
 u8 inb(u16 port)
-{
+{//read 8-bit value from IO port
 	u8 ret;
 	asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
 	return ret;
 }
 
 void outw(u16 port, u16 val)
-{
+{//write 16-bit value to IO port
 	asm volatile("outw %0, %1" : : "a"(val), "Nd"(port));
 }
 
 u8 cmos_read(u8 reg)
-{
+{//read CMOS data from 0x70
         outb(CMOS_ADDR, reg);
         return inb(CMOS_DATA);
 }
 
 u8 bcd_to_bin(u8 val)
-{
+{//BIN to decimal conversion
         return (val & 0x0F) + ((val >> 4) * 10);
 }
 
@@ -81,7 +84,9 @@ typedef struct {
 } RTCDateTime;
 
 RTCDateTime rtc_get_datetime(void)
-{
+{//write certain RTC values to CMOS to get
+//the date and time from RTC
+
         RTCDateTime t;
 
         t.second = bcd_to_bin(cmos_read(RTC_SECONDS));
@@ -95,7 +100,7 @@ RTCDateTime rtc_get_datetime(void)
 }
 
 void cursor_update(void)
-{
+{//common cursor updater
 	u16 pos = cy * W + cx;
 
 	outb(0x3D4, 0x0F);
@@ -105,7 +110,7 @@ void cursor_update(void)
 }
 
 int strlen(const char *s)
-{
+{//return string length
 	int i = 0;
 
 	while(s[i])
@@ -115,7 +120,7 @@ int strlen(const char *s)
 }
 
 int strcmp(const char *a, const char *b)
-{
+{//compare two strings
 	int i = 0;
 
 	while(a[i] && b[i] && a[i] == b[i])
@@ -125,7 +130,7 @@ int strcmp(const char *a, const char *b)
 }
 
 void strcpy(char *d, const char *s)
-{
+{//copy a string
 	int i = 0;
 
 	while(s[i])
@@ -138,7 +143,7 @@ void strcpy(char *d, const char *s)
 }
 
 void memset(void *p, int v, int n)
-{
+{//set a block value to one byte value
 	u8 *b = (u8*)p;
 	int i = 0;
 
@@ -150,7 +155,7 @@ void memset(void *p, int v, int n)
 }
 
 void scroll(void)
-{
+{//scroll the screen
 	int y;
 	int x;
 
@@ -170,7 +175,7 @@ void scroll(void)
 }
 
 void putc(char c)
-{
+{//place character
 	if(c == '\n')
 	{
 		cx = 0;
@@ -203,7 +208,7 @@ void putc(char c)
 }
 
 void print(const char *s)
-{
+{//simplified putc funtion that prints strings
 	int i = 0;
 
 	while(s[i])
@@ -214,13 +219,13 @@ void print(const char *s)
 }
 
 void print2(u8 n)
-{
+{//print an int with two digits
         putc('0' + (n / 10));
         putc('0' + (n % 10));
 }
 
 void rtc_print_datetime(void)
-{
+{//print RTC information
         RTCDateTime t = rtc_get_datetime();
 
         print2(t.month);
@@ -240,7 +245,7 @@ void rtc_print_datetime(void)
 }
 
 void perror(const char *s)
-{
+{//shell error funtion
 	const u8 oldcolor = color;
 	color = 0x4E;
 
@@ -251,7 +256,7 @@ void perror(const char *s)
 
 
 void clear(void)
-{
+{//clear the screen
 	int i = 0;
 
 	while(i < W * H)
@@ -266,7 +271,7 @@ void clear(void)
 }
 
 void printx(uint32_t x)
-{
+{//print a hexadecimal value
 	char hex[] = "0123456789ABCDEF";
 
 	print("0x");
@@ -279,7 +284,7 @@ void printx(uint32_t x)
 }
 
 void printad(const char *s, uint32_t x)
-{
+{//print a memory address
 	print(s);
 	print(":");
 	printx(x);
@@ -287,7 +292,8 @@ void printad(const char *s, uint32_t x)
 }
 
 void printadocu(const char *s, uint32_t x1, uint32_t x2)
-{
+{//print a memory address that occupies from one address
+//to another one
         print(s);
 	print(":&OCU:");
         printx(x1);
@@ -297,7 +303,7 @@ void printadocu(const char *s, uint32_t x1, uint32_t x2)
 }
 
 void indprintad(const char *s, uint32_t x)
-{
+{//same as printad but with an indentation
         print("        ");
 	print(s);
         print(":");
@@ -306,7 +312,7 @@ void indprintad(const char *s, uint32_t x)
 }
 
 void indprintadocu(const char *s, uint32_t x1, uint32_t x2)
-{
+{//same as printadocu but with an indentation
         print("        ");
 	print(s);
         print(":&OCU:");
@@ -317,7 +323,7 @@ void indprintadocu(const char *s, uint32_t x1, uint32_t x2)
 }
 
 void poutw(u16 port, u16 val)
-{
+{//outw with verbose
 	outw(port, val);
 	print("VAL:");
 	printx(val);
@@ -328,7 +334,7 @@ void poutw(u16 port, u16 val)
 
 
 void poutb(u16 port, u8 val)
-{
+{//outb with verbose
         outb(port, val);
         print("VAL:");
         printx(val);
@@ -338,7 +344,7 @@ void poutb(u16 port, u8 val)
 }
 
 void poutwfail(u16 port, u16 val)
-{
+{//outw failure message
 	print("ERR: Failed to write value to IO port\n");
 	print("        VAL:");
         printx(val);
@@ -348,7 +354,7 @@ void poutwfail(u16 port, u16 val)
 }
 
 int rtc_get_second(void)
-{
+{//get the current second from the RTC
         outb(0x70, 0x00);
         return inb(0x71);
 }
@@ -358,7 +364,7 @@ int rtc_get_second(void)
 
 
 void update_rtc_only(void)
-{
+{//update RTC line
         u8 oldcolor = color;
 	color = 0x0F;
 	int oldcx = cx;
@@ -374,7 +380,7 @@ void update_rtc_only(void)
 }
 
 void draw_tb(void)
-{
+{//draw top bar
 	u8 oldcolor = color;
 	color = 0x01;
 
@@ -393,7 +399,7 @@ void draw_tb(void)
 }
 
 void readline(char *buf, int max)
-{
+{//read input
         int i = 0;
         char c;
         int last_sec = -1;
@@ -402,7 +408,7 @@ void readline(char *buf, int max)
         int oldcy;
 
         for(;;)
-        {
+        {//while waiting, update the RTC from the top bar
                 sec = rtc_get_second();
 
 		if(sec != last_sec)
@@ -479,7 +485,7 @@ int atoi(const char *s)
 }
 
 void shell(void)
-{
+{//shell loop
 
 	char line[INPUT_MAX];
 	char *a;
@@ -523,7 +529,7 @@ void shell(void)
 }
 
 void kmain(void)
-{
+{//main
 	clear();
 	startupBanner();
 	shell();

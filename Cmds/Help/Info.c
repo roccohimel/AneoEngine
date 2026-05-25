@@ -3,7 +3,7 @@ extern const char *VERSION;
 extern const char *BUILD;
 
 void info(void)
-{
+{//print AneoEngine info
 
 	print("AneoEngine x86 Operating System\n");
 	print("\n");
