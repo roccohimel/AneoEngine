@@ -19,6 +19,15 @@ extern int utilsMenu(void);
 extern void addr(void);
 extern const char *logo;
 extern void nosound(void);
+extern void as_init();
+extern int as_mkdir(const char *name);
+extern int as_touch(const char *name);
+extern int as_write(const char *name, const char *text);
+extern void as_cat(const char *name);
+extern void as_ls();
+extern int as_cd(const char *name);
+extern int shift;
+extern void as_pwd();
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -626,6 +635,25 @@ void cpustat(void)
 	}
 }
 
+void trim_end(char *s)
+{
+	int i;
+
+	i = 0;
+	while(s[i])
+		i++;
+
+	while(i > 0 &&
+	      (s[i - 1] == ' ' ||
+	       s[i - 1] == '\n' ||
+	       s[i - 1] == '\r' ||
+	       s[i - 1] == '\t'))
+	{
+		s[i - 1] = 0;
+		i--;
+	}
+}
+
 void shell(void)
 {//shell loop
 
@@ -644,6 +672,7 @@ void shell(void)
 	print(logo);
 	for(;;)
 	{
+		shift = 0;
 		draw_tb();
 		print("> ");
 		color = 0x1A;
@@ -667,8 +696,56 @@ void shell(void)
                         utilsMenu();
 		else if(strcmp(line, "cpustat") == 0)
 			cpustat();
+		else if(strcmp(line, "ls") == 0)
+			as_ls();
+		else if(starts(line, "mkdir "))
+		{
+			char *dir;
+
+			dir = line + 6;
+			trim_end(dir);
+
+			as_mkdir(dir);
+		}
+		else if(starts(line, "touch "))
+			as_touch(line + 6);
+		else if(starts(line, "cat "))
+			as_cat(line + 4);
+		else if(strcmp(line, "pwd") == 0)
+			as_pwd();
+
+		else if(starts(line, "cd "))
+		{
+			char *dir;
+
+			dir = line + 3;
+			trim_end(dir);
+
+			if(as_cd(dir) != 0)
+				print("directory not found\n");
+		}
+		else if(starts(line, "write "))
+		{
+			char *file;
+			char *text;
+			int i;
+
+			file = line + 6;
+
+			for(i = 0; file[i]; i++)
+			{
+				if(file[i] == ' ')
+				{
+					file[i] = 0;
+					text = file + i + 1;
+
+					as_write(file, text);
+					break;
+				}
+			}
+		}
 		else if(line[0])
-			perror("ERR: Unknown command\n");
+                        perror("ERR: Unknown command\n");
 	}
 }
 
@@ -676,6 +753,19 @@ void kmain(void)
 {//main
 	clear();
 	startupBanner();
+	as_init();
+	/* ANCHORSAND SEED START */
+	as_init();
+	as_cd("/");
+	as_touch("CHANGELOG");
+	as_write("CHANGELOG", "there");
+	as_touch("LICENSE");
+	as_write("LICENSE", "AneoEngine License v1.0\n\nCopyright (c) 2026 Rocco Himel\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. You shall NOT publish or modify ANY Software in the\n   /docs folder of this project.");
+	as_touch("mango_on_the_musto");
+	as_write("mango_on_the_musto", "GHJUGHJKGHJKGHGJH EEE EEE EEE");
+	as_touch("README");
+	as_write("README", "test\ntest");
+	/* ANCHORSAND SEED END */
 	shell();
 }
 
