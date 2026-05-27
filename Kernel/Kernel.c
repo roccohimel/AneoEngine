@@ -10,7 +10,7 @@ extern void vmoff(void);
 extern void halt(void);
 extern void startupBanner(void);
 extern int helpMenu(void);
-extern int programsMenu(void);
+extern int utilsMenu(void);
 extern void addr(void);
 extern const char *logo;
 extern void nosound(void);
@@ -37,7 +37,7 @@ const char *BAR2 = "==========================================================="
 
 //build information
 const char *VERSION = "V0.1";
-const char *BUILD = "V0U1-240526B2";
+const char *BUILD = "V0U1-260526B1";
 
 unsigned int cx = 0;
 unsigned int cy = 0;
@@ -521,8 +521,8 @@ void shell(void)
 			halt();
 		else if(strcmp(line, "addr") == 0)
 			addr();
-		else if(strcmp(line, "programs") == 0)
-                        programsMenu();
+		else if(strcmp(line, "utils") == 0)
+                        utilsMenu();
 		else if(line[0])
 			perror("ERR: Unknown command\n");
 	}

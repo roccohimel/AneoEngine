@@ -17,6 +17,7 @@ extern int strcmp(const char *a, const char *b);
 extern void printer(void);
 extern void rtc_print_datetime(void);
 extern void draw_tb(void);
+extern void utilsList(void);
 
 int programsMenu(void)
 {
@@ -25,14 +26,13 @@ int programsMenu(void)
 	char *a;
 	char *b;
 
-	print("Programs:\n");
-	print("00001576  /Programs/Printer\n");
+	utilsList();
 
 	for(;;)
 	{
 
 		draw_tb();
-		print("Programs> ");
+		print("Utils> ");
 
 		readline(line, INPUT_MAX);
 
