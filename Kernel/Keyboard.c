@@ -23,6 +23,7 @@ extern void print(const char *s);
 extern int helpMenu(void);
 extern void reset(void);
 extern int utilsMenu(void);
+extern void cpustat(void);
 
 static const char keymap[128] =
 {//allowed chars
@@ -64,7 +65,7 @@ static void HandleFn(u8 sc)
 			utilsMenu();
                         break;
 		case KEY_F4:
-                        print("This is the F4 key\n");
+			cpustat();
                         break;
 		case KEY_F5:
                         print("This is the F5 key\n");

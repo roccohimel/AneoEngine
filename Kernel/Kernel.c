@@ -5,6 +5,7 @@
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
+typedef unsigned long long u64;
 
 //import all AneoEngine funtions
 extern void pit_init_1000hz(void);
@@ -42,6 +43,20 @@ unsigned int cx = 0;
 unsigned int cy = 0;
 unsigned int INPUT_MAX = 128;
 u8 color = 0x0F;
+
+volatile u64 idle_ticks=0;
+volatile u64 total_ticks=1;
+
+u32 mem_used=0;
+
+u32 total_mem=
+(
+	512U*
+	1024U*
+	1024U
+);
+
+extern u32 heap_ptr;
 
 void outb(u16 port, u8 val)
 {//write 8-bit value to IO port
@@ -514,6 +529,102 @@ int atoi(const char *s)
 	return n;
 }
 
+u32 cpuid_threads()
+{
+	u32 ebx;
+
+	__asm__ volatile(
+		"mov $1, %%eax\n"
+		"cpuid"
+		: "=b"(ebx)
+		:
+		: "eax",
+		  "ecx",
+		  "edx"
+	);
+
+	return
+	(
+		ebx
+		>>
+		16
+	)
+	&
+	255U;
+}
+
+
+void cpustat(void)
+{
+	u32 threads;
+	u32 used_mb;
+	u32 total_mb;
+	u32 i;
+	u32 t;
+
+	while(1)
+	{
+		color=0x0F;
+
+		clear();
+
+		threads=cpuid_threads();
+
+		if(threads==0)
+			threads=1;
+
+		used_mb=mem_used>>20;
+
+		total_mb=total_mem>>20;
+
+		print(
+			"USAGE                                       MEMORY:\n\n"
+		);
+
+		for(i=0;i<threads;i++)
+		{
+			print("CPU Thread ");
+
+			printint(i);
+
+			print(":                 ");
+
+			print("0");
+
+			print("%    ");
+
+			printx(0);
+
+			print("\n");
+		}
+
+		print("\nMemory:     ");
+
+		printint(used_mb);
+
+		print("MB/");
+
+		printint(total_mb);
+
+		print("MB    ");
+
+		printx(mem_used);
+
+		print("\n");
+
+		for(t=0;t<100;t++)
+		{
+			if(getkey()==27)
+			{
+				color = 0x1F;
+				clear();
+				return;
+			}
+
+			sleep(10);
+		}
+	}
+}
 
 void shell(void)
 {//shell loop
@@ -554,6 +665,8 @@ void shell(void)
 			addr();
 		else if(strcmp(line, "utils") == 0)
                         utilsMenu();
+		else if(strcmp(line, "cpustat") == 0)
+			cpustat();
 		else if(line[0])
 			perror("ERR: Unknown command\n");
 	}
