@@ -178,27 +178,99 @@ void as_cat(const char *name)
 void as_ls()
 {
 	int i;
+	int j;
+	int count = 0;
+	int entries[AS_MAX_NODES];
+	int temp;
 
 	print("DIR..........: .\n");
-        print("DIR..........: ..\n");
+	print("DIR..........: ..\n");
 
 	for(i = 0; i < AS_MAX_NODES; i++)
 	{
-		if(as_nodes[i].used && as_nodes[i].parent == as_cwd && i != as_cwd)
+		if(
+			as_nodes[i].used &&
+			as_nodes[i].parent == as_cwd &&
+			i != as_cwd
+		)
 		{
-			if(as_nodes[i].type == AS_DIR)
-			{
-				print("DIR..........: ");
-				print(as_nodes[i].name);
-			} else {
-				print("FILE.........: ");
-				u8 oldcolor = color;
-				color = 0x1C;
-				print(as_nodes[i].name);
-				color = oldcolor;
-			}
-			print("\n");
+			entries[count++] = i;
 		}
+	}
+
+	for(i = 0; i < count - 1; i++)
+	{
+		for(j = i + 1; j < count; j++)
+		{
+			int a = entries[i];
+			int b = entries[j];
+
+			int swap = 0;
+
+			if(
+				as_nodes[a].type != as_nodes[b].type
+			)
+			{
+				if(as_nodes[a].type != AS_DIR)
+					swap = 1;
+			}
+			else
+			{
+				char *na = as_nodes[a].name;
+				char *nb = as_nodes[b].name;
+
+				while(*na && *nb)
+				{
+					if(*na > *nb)
+					{
+						swap = 1;
+						break;
+					}
+
+					if(*na < *nb)
+						break;
+
+					na++;
+					nb++;
+				}
+
+				if(!*na && *nb)
+					swap = 0;
+				else if(*na && !*nb)
+					swap = 1;
+			}
+
+			if(swap)
+			{
+				temp = entries[i];
+				entries[i] = entries[j];
+				entries[j] = temp;
+			}
+		}
+	}
+
+	for(i = 0; i < count; i++)
+	{
+		int idx = entries[i];
+
+		if(as_nodes[idx].type == AS_DIR)
+		{
+			print("DIR..........: ");
+			print(as_nodes[idx].name);
+		}
+		else
+		{
+			print("FILE.........: ");
+
+			u8 oldcolor = color;
+			color = 0x1C;
+
+			print(as_nodes[idx].name);
+
+			color = oldcolor;
+		}
+
+		print("\n");
 	}
 }
 
