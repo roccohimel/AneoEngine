@@ -1,7 +1,9 @@
 #include <stdint.h>
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
+
 extern void print(const char *s);
 extern void printint(int n);
 extern u8 color;
@@ -42,13 +44,60 @@ int as_streq(const char *a, const char *b)
 		a++;
 		b++;
 	}
+
 	return *a == *b;
+}
+
+int as_strlen(const char *s)
+{
+	int i = 0;
+
+	while(s[i])
+		i++;
+
+	return i;
+}
+
+int as_namecmp(const char *a, const char *b)
+{
+	char ca;
+	char cb;
+
+	while(*a && *b)
+	{
+		ca = *a;
+		cb = *b;
+
+		if(ca >= 'A' && ca <= 'Z')
+			ca += 32;
+
+		if(cb >= 'A' && cb <= 'Z')
+			cb += 32;
+
+		if(ca < cb)
+			return -1;
+
+		if(ca > cb)
+			return 1;
+
+		a++;
+		b++;
+	}
+
+	if(!*a && *b)
+		return -1;
+
+	if(*a && !*b)
+		return 1;
+
+	return 0;
 }
 
 void as_init()
 {
-	print("AnchorSand init...\n\n");
 	int i;
+
+	print("AnchorSand init...\n\n");
 
 	for(i = 0; i < AS_MAX_NODES; i++)
 		as_nodes[i].used = 0;
@@ -56,6 +105,7 @@ void as_init()
 	as_nodes[0].used = 1;
 	as_nodes[0].type = AS_DIR;
 	as_nodes[0].parent = 0;
+	as_nodes[0].size = 0;
 	as_strcpy(as_nodes[0].name, "/");
 }
 
@@ -78,67 +128,226 @@ int as_find_child(int parent, const char *name)
 
 	for(i = 0; i < AS_MAX_NODES; i++)
 	{
-		if(as_nodes[i].used == 1 &&
-		   as_nodes[i].parent == parent &&
-		   as_streq(as_nodes[i].name, name))
+		if(
+			as_nodes[i].used &&
+			as_nodes[i].parent == parent &&
+			as_streq(as_nodes[i].name, name)
+		)
 			return i;
 	}
 
 	return -1;
 }
 
-int as_mkdir(const char *name) {
+void as_split_path(const char *path, char *parent, char *name)
+{
+	int len;
+	int i;
+	int slash;
+
+	parent[0] = 0;
+	name[0] = 0;
+
+	len = as_strlen(path);
+	slash = -1;
+
+	for(i = 0; i < len; i++)
+	{
+		if(path[i] == '/')
+			slash = i;
+	}
+
+	if(slash == -1)
+	{
+		as_strcpy(parent, ".");
+		as_strcpy(name, path);
+		return;
+	}
+
+	if(slash == 0)
+	{
+		as_strcpy(parent, "/");
+		as_strcpy(name, path + 1);
+		return;
+	}
+
+	for(i = 0; i < slash; i++)
+		parent[i] = path[i];
+
+	parent[slash] = 0;
+	as_strcpy(name, path + slash + 1);
+}
+
+int as_resolve(const char *path)
+{
+	int cur;
+	int i;
+	int j;
+	int n;
+	char part[AS_NAME_MAX];
+
+	if(!path || !path[0])
+		return as_cwd;
+
+	if(path[0] == '/')
+	{
+		cur = 0;
+		i = 1;
+	}
+	else
+	{
+		cur = as_cwd;
+		i = 0;
+	}
+
+	while(1)
+	{
+		while(path[i] == '/')
+			i++;
+
+		if(!path[i])
+			return cur;
+
+		j = 0;
+
+		while(path[i] && path[i] != '/' && j < AS_NAME_MAX - 1)
+			part[j++] = path[i++];
+
+		part[j] = 0;
+
+		if(as_streq(part, "."))
+			continue;
+
+		if(as_streq(part, ".."))
+		{
+			if(cur != 0)
+				cur = as_nodes[cur].parent;
+
+			continue;
+		}
+
+		n = as_find_child(cur, part);
+
+		if(n == -1)
+			return -1;
+
+		cur = n;
+	}
+}
+
+int as_mkdir_at(int parent, const char *name)
+{
 	int n;
 
-	if(as_find_child(as_cwd, name) != -1)
+	if(!name[0])
+		return -1;
+
+	if(as_find_child(parent, name) != -1)
 		return -1;
 
 	n = as_alloc();
+
 	if(n == -1)
 		return -1;
 
 	as_nodes[n].used = 1;
 	as_nodes[n].type = AS_DIR;
 	as_nodes[n].size = 0;
-	as_nodes[n].parent = as_cwd;
+	as_nodes[n].parent = parent;
 	as_strcpy(as_nodes[n].name, name);
+
 	return 0;
 }
 
-int as_touch(const char *name)
+int as_touch_at(int parent, const char *name)
 {
 	int n;
 
-	if(as_find_child(as_cwd, name) != -1)
+	if(!name[0])
+		return -1;
+
+	if(as_find_child(parent, name) != -1)
 		return -1;
 
 	n = as_alloc();
+
 	if(n == -1)
 		return -1;
 
 	as_nodes[n].used = 1;
 	as_nodes[n].type = AS_FILE;
 	as_nodes[n].size = 0;
-	as_nodes[n].parent = as_cwd;
+	as_nodes[n].parent = parent;
 	as_strcpy(as_nodes[n].name, name);
 	as_nodes[n].data[0] = 0;
 
 	return 0;
 }
 
-int as_write(const char *name, const char *text)
+int as_mkdir(const char *path)
 {
+	char parent_path[AS_NAME_MAX * 4];
+	char name[AS_NAME_MAX];
+	int parent;
+
+	as_split_path(path, parent_path, name);
+
+	parent = as_resolve(parent_path);
+
+	if(parent == -1)
+		return -1;
+
+	if(as_nodes[parent].type != AS_DIR)
+		return -1;
+
+	return as_mkdir_at(parent, name);
+}
+
+int as_touch(const char *path)
+{
+	char parent_path[AS_NAME_MAX * 4];
+	char name[AS_NAME_MAX];
+	int parent;
+
+	as_split_path(path, parent_path, name);
+
+	parent = as_resolve(parent_path);
+
+	if(parent == -1)
+		return -1;
+
+	if(as_nodes[parent].type != AS_DIR)
+		return -1;
+
+	return as_touch_at(parent, name);
+}
+
+int as_write(const char *path, const char *text)
+{
+	char parent_path[AS_NAME_MAX * 4];
+	char name[AS_NAME_MAX];
+	int parent;
 	int n;
 	int i;
 
-	n = as_find_child(as_cwd, name);
+	as_split_path(path, parent_path, name);
+
+	parent = as_resolve(parent_path);
+
+	if(parent == -1)
+		return -1;
+
+	if(as_nodes[parent].type != AS_DIR)
+		return -1;
+
+	n = as_find_child(parent, name);
 
 	if(n == -1)
 	{
-		if(as_touch(name) != 0)
+		if(as_touch_at(parent, name) != 0)
 			return -1;
 
-		n = as_find_child(as_cwd, name);
+		n = as_find_child(parent, name);
 	}
 
 	if(as_nodes[n].type != AS_FILE)
@@ -153,11 +362,11 @@ int as_write(const char *name, const char *text)
 	return 0;
 }
 
-void as_cat(const char *name)
+void as_cat(const char *path)
 {
 	int n;
 
-	n = as_find_child(as_cwd, name);
+	n = as_resolve(path);
 
 	if(n == -1)
 	{
@@ -175,7 +384,7 @@ void as_cat(const char *name)
 	print("\n");
 }
 
-void as_ls()
+void as_ls_node(int dir)
 {
 	int i;
 	int j;
@@ -190,8 +399,8 @@ void as_ls()
 	{
 		if(
 			as_nodes[i].used &&
-			as_nodes[i].parent == as_cwd &&
-			i != as_cwd
+			as_nodes[i].parent == dir &&
+			i != dir
 		)
 		{
 			entries[count++] = i;
@@ -204,48 +413,16 @@ void as_ls()
 		{
 			int a = entries[i];
 			int b = entries[j];
-
 			int swap = 0;
 
-			if(
-				as_nodes[a].type != as_nodes[b].type
-			)
+			if(as_nodes[a].type != as_nodes[b].type)
 			{
 				if(as_nodes[a].type != AS_DIR)
 					swap = 1;
 			}
 			else
 			{
-				char *na = as_nodes[a].name;
-				char *nb = as_nodes[b].name;
-
-				while(*na && *nb)
-				{
-					char ca = *na;
-					char cb = *nb;
-
-					if(ca >= 'A' && ca <= 'Z')
-						ca += 32;
-
-					if(cb >= 'A' && cb <= 'Z')
-						cb += 32;
-
-					if(ca > cb)
-					{
-						swap = 1;
-						break;
-					}
-
-					if(ca < cb)
-						break;
-
-					na++;
-					nb++;
-				}
-
-				if(!*na && *nb)
-					swap = 0;
-				else if(*na && !*nb)
+				if(as_namecmp(as_nodes[a].name, as_nodes[b].name) > 0)
 					swap = 1;
 			}
 
@@ -269,13 +446,13 @@ void as_ls()
 		}
 		else
 		{
+			u8 oldcolor;
+
 			print("FILE.........: ");
 
-			u8 oldcolor = color;
+			oldcolor = color;
 			color = 0x1C;
-
 			print(as_nodes[idx].name);
-
 			color = oldcolor;
 		}
 
@@ -283,25 +460,37 @@ void as_ls()
 	}
 }
 
-int as_cd(const char *name)
+void as_ls()
+{
+	as_ls_node(as_cwd);
+}
+
+void as_ls_path(const char *path)
 {
 	int n;
 
-	if(as_streq(name, "/"))
+	n = as_resolve(path);
+
+	if(n == -1)
 	{
-		as_cwd = 0;
-		return 0;
+		print("path not found\n");
+		return;
 	}
 
-	if(as_streq(name, ".."))
+	if(as_nodes[n].type != AS_DIR)
 	{
-		if(as_cwd != 0)
-			as_cwd = as_nodes[as_cwd].parent;
-
-		return 0;
+		print("not a directory\n");
+		return;
 	}
 
-	n = as_find_child(as_cwd, name);
+	as_ls_node(n);
+}
+
+int as_cd(const char *path)
+{
+	int n;
+
+	n = as_resolve(path);
 
 	if(n == -1)
 		return -1;
@@ -310,6 +499,7 @@ int as_cd(const char *name)
 		return -1;
 
 	as_cwd = n;
+
 	return 0;
 }
 

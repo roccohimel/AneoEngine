@@ -27,6 +27,7 @@ extern void as_ls();
 extern int as_cd(const char *name);
 extern int shift;
 extern void as_pwd();
+extern void as_ls_path(const char *path);
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -667,11 +668,11 @@ void run_commands(void)
 {//put your run commands here:
 	as_cd("Misc");
 
-	comment("`cd Misc, cat Logo.TXT`");
+	comment("run `cat /Misc/Logo.TXT`");
 	as_cat("Logo.TXT");
 	as_cd("/");
-	comment("`ls`");
-	as_ls("`ls`");
+	comment("run `ls /`");
+	as_ls("");
 }
 
 void shell(void)
@@ -717,6 +718,15 @@ void shell(void)
 			cpustat();
 		else if(strcmp(line, "ls") == 0)
 			as_ls();
+		else if(starts(line, "ls "))
+		{
+			char *dir;
+
+			dir = line + 3;
+			trim_end(dir);
+
+			as_ls_path(dir);
+		}
 		else if(starts(line, "mkdir "))
 		{
 			char *dir;

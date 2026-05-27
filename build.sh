@@ -151,9 +151,6 @@ $CC -c Kernel/Logo.c -o Logo.o
 echo "[CC] Compiling help menu..."
 $CC -c Cmds/Help/Menu.c -o HelpMenu.o
 
-echo "[CC] Compiling Help/Info..."
-$CC -c Cmds/Help/Info.c -o HelpInfo.o
-
 echo "[CC] Compiling 'addr' command..."
 $CC -c Cmds/Addr.c -o Addr.o
 
@@ -170,7 +167,7 @@ echo "[CC] Compiling 'Printer' utility..."
 $CC -c Utils/Printer.c -o Printer.o
 
 echo "[LD] Creating kernel binary..."
-ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary KEntry.o Kernel.o AnchorSand.o PIT.o Haltage.o Keyboard.o Startup.o Logo.o HelpMenu.o Addr.o UtilsMenu.o Printer.o Entropy.o HelpInfo.o UtilsList.o -o Boot/KERNEL.BIN
+ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary KEntry.o Kernel.o AnchorSand.o PIT.o Haltage.o Keyboard.o Startup.o Logo.o HelpMenu.o Addr.o UtilsMenu.o Printer.o Entropy.o UtilsList.o -o Boot/KERNEL.BIN
 
 echo "[DD] Initializing AneoEngine CDROM image"
 dd if=/dev/zero of=AneoEngine.ISO bs=512 count=2880

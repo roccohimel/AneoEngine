@@ -17,6 +17,8 @@ extern int strcmp(const char *a, const char *b);
 extern void info(void);
 extern void rtc_print_datetime(void);
 extern void draw_tb(void);
+extern void comment(const char *s);
+extern void as_cat(const char *name);
 
 int helpMenu(void)
 {
@@ -26,27 +28,27 @@ int helpMenu(void)
 	char *b;
 
 	color = 0x1F;
-	clear();
-	cy = 0;
-
-	cy = 1;
-	cx = 0;
-
-	color = 0x12;
+	u8 oldcolor = color;
+	color = 0x1A;
 	print("        AneoEngine Help Menu\n");
-	color = 0x1F;
+	color = 0x1D;
 	print("\n");
-	print("/Cmds/Help/Info\n");
-	print("/Cmds/Help/Commands\n");
-	print("/Cmds/Help/HowItWorks\n");
+	print("Controls and Shortcuts [Controls]\n");
+	print("About AneoEngine [Abt]\n");
+	print("Command Help [Cmds]\n");
+	print("Keymap [KM]\n");
+	print("Memory Addresses [Addr]\n");
+	print("F.A.Q. [FAQ]\n");
+	color = oldcolor;
 	for(;;)
 	{
 
 		draw_tb();
+		color = oldcolor;
 		print("Help> ");
-
+		color = 0x1A;
 		readline(line, INPUT_MAX);
-
+		color = oldcolor;
 		if(strcmp(line, "cls") == 0)
 			clear();
 		else if(strcmp(line, "exit") == 0)
@@ -54,8 +56,11 @@ int helpMenu(void)
 			print("Exiting...\n");
 			return 0;
 		}
-		else if(strcmp(line, "Info") == 0)
-			info();
+		else if(strcmp(line, "Controls") == 0)
+		{
+			comment("/Help/Controls.TXT");
+			as_cat("/Help/Controls.TXT");
+		}
 		else if(line[0])
 			perror("ERR: Unknown command\n");
 	}
