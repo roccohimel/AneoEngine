@@ -17,7 +17,6 @@ extern void startupBanner(void);
 extern int helpMenu(void);
 extern int utilsMenu(void);
 extern void addr(void);
-extern const char *logo;
 extern void nosound(void);
 extern void as_init();
 extern int as_mkdir(const char *name);
@@ -333,6 +332,16 @@ void printad(const char *s, uint32_t x)
 	print(":");
 	printx(x);
 	putc('\n');
+}
+
+void comment(const char *s)
+{//comment something
+	u8 oldcolor = color;
+	color = 0x1A;
+	print("//");
+	print(s);
+	putc('\n');
+	color = oldcolor;
 }
 
 void printadocu(const char *s, uint32_t x1, uint32_t x2)
@@ -654,9 +663,18 @@ void trim_end(char *s)
 	}
 }
 
+void run_commands(void)
+{//put your run commands here:
+	as_cd("Misc");
+
+	comment("run `cd Misc, cat Logo.TXT` for this output");
+	as_cat("Logo.TXT");
+	as_cd("/");
+	as_ls("");
+}
+
 void shell(void)
 {//shell loop
-
 	char line[INPUT_MAX];
 	char *a;
 	char *b;
@@ -668,12 +686,12 @@ void shell(void)
         nosound();
 
 	draw_tb();
-
-	print(logo);
+	run_commands();
 	for(;;)
 	{
 		shift = 0;
 		draw_tb();
+		as_pwd();
 		print("> ");
 		color = 0x1A;
 
@@ -711,9 +729,6 @@ void shell(void)
 			as_touch(line + 6);
 		else if(starts(line, "cat "))
 			as_cat(line + 4);
-		else if(strcmp(line, "pwd") == 0)
-			as_pwd();
-
 		else if(starts(line, "cd "))
 		{
 			char *dir;
@@ -755,6 +770,11 @@ void kmain(void)
 	startupBanner();
 	/* ANCHORSAND SEED START */
 	as_cd("/");
+	as_mkdir("Misc");
+	as_cd("Misc");
+	as_touch("Logo.TXT");
+	as_write("Logo.TXT", "---------------------        AneoEngine V0.1\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
+	as_cd("..");
 	as_touch("CHANGELOG");
 	as_write("CHANGELOG", "there");
 	as_touch("LICENSE");

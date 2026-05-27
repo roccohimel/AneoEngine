@@ -186,5 +186,6 @@ rm *.o
 
 echo "[+] Done!"
 echo "[*] Running 'AneoEngine.ISO'..."
-qemu-system-x86_64 -fda AneoEngine.ISO
+qemu-system-x86_64 -m 1 -fda AneoEngine.ISO
+
 

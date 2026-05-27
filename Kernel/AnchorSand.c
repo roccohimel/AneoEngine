@@ -4,6 +4,7 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 extern void print(const char *s);
 extern void printint(int n);
+extern u8 color;
 
 #define AS_MAX_NODES	64
 #define AS_NAME_MAX	32
@@ -178,16 +179,24 @@ void as_ls()
 {
 	int i;
 
+	print("DIR..........: .\n");
+        print("DIR..........: ..\n");
+
 	for(i = 0; i < AS_MAX_NODES; i++)
 	{
 		if(as_nodes[i].used && as_nodes[i].parent == as_cwd && i != as_cwd)
 		{
 			if(as_nodes[i].type == AS_DIR)
-				print("Directory      ");
-			else
-				print("Regular File   ");
-
-			print(as_nodes[i].name);
+			{
+				print("DIR..........: ");
+				print(as_nodes[i].name);
+			} else {
+				print("FILE.........: ");
+				u8 oldcolor = color;
+				color = 0x1C;
+				print(as_nodes[i].name);
+				color = oldcolor;
+			}
 			print("\n");
 		}
 	}
@@ -196,10 +205,6 @@ void as_ls()
 int as_cd(const char *name)
 {
 	int n;
-
-	print("cd arg=[");
-	print(name);
-	print("]\n");
 
 	if(as_streq(name, "/"))
 	{
@@ -217,16 +222,8 @@ int as_cd(const char *name)
 
 	n = as_find_child(as_cwd, name);
 
-	print("find=");
-	printint(n);
-	print("\n");
-
 	if(n == -1)
 		return -1;
-
-	print("type=");
-	printint(as_nodes[n].type);
-	print("\n");
 
 	if(as_nodes[n].type != AS_DIR)
 		return -1;
@@ -254,5 +251,4 @@ void as_pwd_rec(int n)
 void as_pwd()
 {
 	as_pwd_rec(as_cwd);
-	print("\n");
 }
