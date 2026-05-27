@@ -18,8 +18,9 @@ extern void printer(void);
 extern void rtc_print_datetime(void);
 extern void draw_tb(void);
 extern void utilsList(void);
+extern void entropy(void);
 
-int programsMenu(void)
+int utilsMenu(void)
 {
 
 	char line[INPUT_MAX];
@@ -45,6 +46,8 @@ int programsMenu(void)
 		}
 		else if(strcmp(line, "Printer") == 0)
 			printer();
+		else if(strcmp(line, "Entropy") == 0)
+                        entropy();
 		else if(line[0])
 			perror("ERR: Unknown command\n");
 	}

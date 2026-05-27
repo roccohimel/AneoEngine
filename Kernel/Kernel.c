@@ -14,7 +14,6 @@ extern int utilsMenu(void);
 extern void addr(void);
 extern const char *logo;
 extern void nosound(void);
-
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -37,7 +36,7 @@ const char *BAR2 = "==========================================================="
 
 //build information
 const char *VERSION = "V0.1";
-const char *BUILD = "V0U1-260526B1";
+const char *BUILD = "V0U1-270526B6";
 
 unsigned int cx = 0;
 unsigned int cy = 0;
@@ -283,6 +282,27 @@ void printx(uint32_t x)
 	}
 }
 
+void printint(unsigned int n)
+{//print an integer
+	char buf[16];
+	int i = 0;
+
+	if (n == 0)
+	{
+		print("0");
+		return;
+	}
+
+	while (n)
+	{
+		buf[i++] = '0' + (n % 10);
+		n /= 10;
+	}
+
+	while (i--)
+		putc(buf[i]);
+}
+
 void printad(const char *s, uint32_t x)
 {//print a memory address
 	print(s);
@@ -351,6 +371,16 @@ void poutwfail(u16 port, u16 val)
         print("->IOP:");
         printx(port);
 	putc('\n');
+}
+
+void poutbfail(u16 port, u8 val)
+{//outb failure message
+        print("ERR: Failed to write value to IO port\n");
+        print("        VAL:");
+        printx(val);
+        print("->IOP:");
+        printx(port);
+        putc('\n');
 }
 
 int rtc_get_second(void)
@@ -483,6 +513,7 @@ int atoi(const char *s)
 
 	return n;
 }
+
 
 void shell(void)
 {//shell loop

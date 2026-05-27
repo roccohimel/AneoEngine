@@ -5,16 +5,13 @@ typedef unsigned int u32;
 
 extern unsigned int INPUT_MAX;
 extern u8 color;
-extern const char *BAR1;
-extern const char *BAR2;
-extern unsigned int cy;
-extern unsigned int cx;
 extern void print(const char *s);
 extern void perror(const char *s);
 extern void clear(void);
 extern void readline(char *buf, int max);
 extern int strcmp(const char *a, const char *b);
 extern void rtc_print_datetime(void);
+extern void draw_tb(void);
 
 int printer(void)
 {
@@ -23,18 +20,10 @@ int printer(void)
 	char *a;
 	char *b;
 
-	print("Kernel loaded /Programs/Printer\n");
+	print("Kernel loaded Utils/Printer\n");
 	for(;;)
 	{
-
-		const int oldcy = cy;
-		cy = 0;
-		print(BAR1);
-		rtc_print_datetime();
-		print(BAR2);
-		cy = oldcy;
-		cx = 0;
-
+		draw_tb();
 		print("Printer> ");
 
 		readline(line, INPUT_MAX);

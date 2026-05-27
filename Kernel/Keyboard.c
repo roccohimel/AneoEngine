@@ -5,7 +5,22 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
+#define KEY_F1  0x3B
+#define KEY_F2  0x3C
+#define KEY_F3  0x3D
+#define KEY_F4  0x3E
+#define KEY_F5  0x3F
+#define KEY_F6  0x40
+#define KEY_F7  0x41
+#define KEY_F8  0x42
+#define KEY_F9  0x43
+#define KEY_F10 0x44
+#define KEY_F11 0x57
+#define KEY_F12 0x58
+
 extern u8 inb(u16 port);
+extern void print(const char *s);
+extern void helpMenu(void);
 
 static const char keymap[128] =
 {//allowed chars
@@ -33,6 +48,43 @@ static const char shiftmap[128] =
 
 int shift = 0;
 
+static void HandleFn(u8 sc)
+{
+	switch(sc)
+	{
+		case KEY_F1:
+			helpMenu();
+			break;
+		case KEY_F2:
+                        print("This is the F2 key\n");
+                        break;
+		case KEY_F3:
+                        print("This is the F3 key\n");
+                        break;
+		case KEY_F4:
+                        print("This is the F4 key\n");
+                        break;
+		case KEY_F5:
+                        print("This is the F5 key\n");
+                        break;
+		case KEY_F6:
+                        print("This is the F6 key\n");
+                        break;
+		case KEY_F7:
+                        print("This is the F7 key\n");
+                        break;
+		case KEY_F8:
+                        print("This is the F8 key\n");
+                        break;
+		case KEY_F9:
+                        print("This is the F9 key\n");
+                        break;
+		case KEY_F10:
+                        print("This is the F10 key\n");
+                        break;
+	}
+}
+
 char getkey(void)
 {//get the current key from keyboard IO port
         u8 sc;
@@ -56,9 +108,22 @@ char getkey(void)
 
         if(sc & 0x80)
                 return 0;
+	if(
+		(sc >= KEY_F1 && sc <= KEY_F10) ||
+		sc == KEY_F11 ||
+		sc == KEY_F12
+	)
+	{
+		HandleFn(sc);
+		return 0;
+	}
 
-        if(shift)
-                return shiftmap[sc];
+	if(sc >= 128)
+		return 0;
 
-        return keymap[sc];
+	if(shift)
+		return shiftmap[sc];
+
+	return keymap[sc];
 }
+

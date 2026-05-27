@@ -12,7 +12,9 @@ extern unsigned int cx;
 extern u8 color;
 extern void outw(u16 port, u16 val);
 extern void poutw(u16 port, u16 val);
+extern void poutb(u16 port, u16 val);
 extern void poutwfail(u16 port, u16 val);
+extern void poutbfail(u16 port, u8 val);
 
 //values
 #define VAL1 0x2000
@@ -55,4 +57,17 @@ void halt(void)
 	sleep(1000);
 	for (;;)
 		asm volatile("hlt");
+}
+
+void reset(void)
+{
+/*        color = 0x0F;
+        unsigned int oldcy = cy;
+        unsigned int oldcx = cx;
+        cy = 0;
+
+        poutb(0xCF9, 0x06);
+        poutbfail(0xCF9, 0x06);
+*/
+	print("Hello there\n");
 }
