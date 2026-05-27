@@ -61,13 +61,15 @@ void halt(void)
 
 void reset(void)
 {
-/*        color = 0x0F;
+        color = 0x0F;
         unsigned int oldcy = cy;
         unsigned int oldcx = cx;
         cy = 0;
+	cx = 0;
+
+	print("Resetting the system...\n");
+	sleep(1000);
 
         poutb(0xCF9, 0x06);
         poutbfail(0xCF9, 0x06);
-*/
-	print("Hello there\n");
 }

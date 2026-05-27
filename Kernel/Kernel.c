@@ -2,6 +2,10 @@
 //funtions
 #include <stdint.h>
 
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+
 //import all AneoEngine funtions
 extern void pit_init_1000hz(void);
 extern void sleep(unsigned int ms);
@@ -14,10 +18,6 @@ extern int utilsMenu(void);
 extern void addr(void);
 extern const char *logo;
 extern void nosound(void);
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width

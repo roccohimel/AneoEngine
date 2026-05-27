@@ -55,7 +55,7 @@ echo "[CC] Compiling 'Printer' utility..."
 $CC -c Utils/Printer.c -o Printer.o
 
 echo "[LD] Creating kernel binary..."
-ld -m elf_i386 -Ttext 0x1000 -e _start --oformat binary KEntry.o Kernel.o PIT.o Haltage.o Keyboard.o Startup.o Logo.o HelpMenu.o Addr.o UtilsMenu.o Printer.o Entropy.o HelpInfo.o UtilsList.o -o Boot/KERNEL.BIN
+ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary KEntry.o Kernel.o PIT.o Haltage.o Keyboard.o Startup.o Logo.o HelpMenu.o Addr.o UtilsMenu.o Printer.o Entropy.o HelpInfo.o UtilsList.o -o Boot/KERNEL.BIN
 
 echo "[DD] Initializing AneoEngine CDROM image"
 dd if=/dev/zero of=AneoEngine.ISO bs=512 count=2880

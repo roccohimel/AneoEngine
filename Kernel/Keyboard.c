@@ -20,7 +20,9 @@ typedef unsigned int u32;
 
 extern u8 inb(u16 port);
 extern void print(const char *s);
-extern void helpMenu(void);
+extern int helpMenu(void);
+extern void reset(void);
+extern int utilsMenu(void);
 
 static const char keymap[128] =
 {//allowed chars
@@ -56,10 +58,10 @@ static void HandleFn(u8 sc)
 			helpMenu();
 			break;
 		case KEY_F2:
-                        print("This is the F2 key\n");
+			reset();
                         break;
 		case KEY_F3:
-                        print("This is the F3 key\n");
+			utilsMenu();
                         break;
 		case KEY_F4:
                         print("This is the F4 key\n");

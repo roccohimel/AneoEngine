@@ -27,6 +27,7 @@ int utilsMenu(void)
 	char *a;
 	char *b;
 
+	color = 0x1F;
 	utilsList();
 
 	for(;;)

@@ -40,9 +40,9 @@ uint32_t GTD_START = 0x7CDA;
 uint32_t GTD_END = 0x7CF2;
 uint32_t GTD_CODE = 0x7CE2;
 uint32_t GTD_DATA = 0x7CEA;
-uint32_t KERNEL_ENTRY = 0x1000;
-uint32_t KERNEL_DATA_START = 0x1000;
-uint32_t KERNEL_DATA_END = 0x4000;
+uint32_t KERNEL_ENTRY = 0x10000;
+uint32_t KERNEL_DATA_START = 0x10000;
+uint32_t KERNEL_DATA_END = 0x20000;
 
 void waitkey(void)
 {//wait till key is pressed; continue
