@@ -221,13 +221,22 @@ void as_ls()
 
 				while(*na && *nb)
 				{
-					if(*na > *nb)
+					char ca = *na;
+					char cb = *nb;
+
+					if(ca >= 'A' && ca <= 'Z')
+						ca += 32;
+
+					if(cb >= 'A' && cb <= 'Z')
+						cb += 32;
+
+					if(ca > cb)
 					{
 						swap = 1;
 						break;
 					}
 
-					if(*na < *nb)
+					if(ca < cb)
 						break;
 
 					na++;
