@@ -667,10 +667,11 @@ void run_commands(void)
 {//put your run commands here:
 	as_cd("Misc");
 
-	comment("run `cd Misc, cat Logo.TXT` for this output");
+	comment("`cd Misc, cat Logo.TXT`");
 	as_cat("Logo.TXT");
 	as_cd("/");
-	as_ls("");
+	comment("`ls`");
+	as_ls("`ls`");
 }
 
 void shell(void)
