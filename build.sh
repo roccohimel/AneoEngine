@@ -68,7 +68,6 @@ gen_dir()
 
 {
 	echo "	$START"
-	echo "	as_init();"
 	echo "	as_cd(\"/\");"
 
 	if [ -d "$ROOT" ]; then

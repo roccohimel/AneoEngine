@@ -19,6 +19,7 @@ extern void nosound(void);
 extern void indprintad(const char *s, uint32_t x);
 extern void indprintadocu(const char *s, uint32_t x1, uint32_t x2);
 extern u8 inb(u16 port);
+extern void as_init();
 
 //Addresses not involved in boot
 uint32_t IVT_START = 0x0;
@@ -70,7 +71,6 @@ void startupBanner(void)
         print("\n\n");
 	print("Initializing PIT...\n");
 	pit_init_1000hz();
-        sleep(500);
 	print("Data addresses listed\n");
         putc('\n');
         printadocu("IVT", IVT_START, IVT_END);
@@ -79,7 +79,6 @@ void startupBanner(void)
 	printadocu("VGA memory", VGA_MEM_START, VGA_MEM_END);
 	printadocu("VGA text buffer", VGA_TEXT_BUF_START, VGA_TEXT_BUF_END);
 	putc('\n');
-        sleep(500);
         print("Boot sequence:\n");
 	printadocu("BIOS data", BIOS_DATA_START, BIOS_DATA_END);
 	printadocu("AEBoot bootloader", BOOTLOADER_START, BOOTLOADER_END);
@@ -89,6 +88,7 @@ void startupBanner(void)
 	indprintad("Kernel entry", KERNEL_ENTRY);
 	printadocu("Kernel data", KERNEL_DATA_START, KERNEL_DATA_END);
 	putc('\n');
+	as_init();
 	print("Press any key to continue...\n");
 	waitkey();
 	beep(1000);

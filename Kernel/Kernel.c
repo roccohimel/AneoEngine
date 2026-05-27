@@ -753,16 +753,12 @@ void kmain(void)
 {//main
 	clear();
 	startupBanner();
-	as_init();
 	/* ANCHORSAND SEED START */
-	as_init();
 	as_cd("/");
 	as_touch("CHANGELOG");
 	as_write("CHANGELOG", "there");
 	as_touch("LICENSE");
 	as_write("LICENSE", "AneoEngine License v1.0\n\nCopyright (c) 2026 Rocco Himel\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. You shall NOT publish or modify ANY Software in the\n   /docs folder of this project.");
-	as_touch("mango_on_the_musto");
-	as_write("mango_on_the_musto", "GHJUGHJKGHJKGHGJH EEE EEE EEE");
 	as_touch("README");
 	as_write("README", "test\ntest");
 	/* ANCHORSAND SEED END */

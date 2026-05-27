@@ -46,6 +46,7 @@ int as_streq(const char *a, const char *b)
 
 void as_init()
 {
+	print("AnchorSand init...\n\n");
 	int i;
 
 	for(i = 0; i < AS_MAX_NODES; i++)
