@@ -1,5 +1,6 @@
+AneoEngine V0.2.1 Change log
+- Changed V0.1 to 0.2 in /Misc/Logo.TXT
 AneoEngine V0.2 Change log
-
 - Fixed hexadecimal printing
 - Added consistant address printing
 - Added RTC clock printing
