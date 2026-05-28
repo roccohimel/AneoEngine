@@ -46,7 +46,7 @@ const char *BAR1 = "====";
 const char *BAR2 = "===========================================================";
 
 //build information
-const char *VERSION = "V0.2";
+const char *VERSION = "V0.2.1";
 
 unsigned int cx = 0;
 unsigned int cy = 0;
