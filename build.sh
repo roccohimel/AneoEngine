@@ -3,9 +3,9 @@
 
 set -e
 
-cp README Root
-cp CHANGELOG Root
-cp LICENSE Root
+cp README Root/Home
+cp CHANGELOG Root/Home
+cp LICENSE Root/Docs
 
 #!/bin/sh
 

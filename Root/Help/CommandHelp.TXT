@@ -1,0 +1,13 @@
+addr:........................List all memory addresses used by AneoEngine
+cat /Directory/File.TXT:.....Prints the contents of a file
+cd:..........................Changes your directory to "/Home"
+cd /Directory:...............Manually changes your directory
+cls:.........................Clears your screen
+cpustat:.....................Shows system stats
+halt:........................Stops the system
+ls:..........................Lists the contents of the current directory
+ls /Directory:...............Lists the contents of the selected directory
+mkdir /Directory/Name:.......Create a directory
+touch........................Create a file
+vmoff:.......................Turns off your VM
+write........................Write text to a file

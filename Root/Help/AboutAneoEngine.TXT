@@ -1,0 +1,19 @@
+Official Website: https://roccohimel.github.io/AneoEngine
+
+Creator: Rocco Himel
+
+The first language I ever learned was BASH. I was very young when my mom gave
+me her 2015 MacBook Pro running MacOS Mojave. I was very curious when I
+opened the terminal and I wanted to learn how to use what I didn't know was,
+a shell. I then taught my self how to use it.
+
+The first PROGRAMMING language I ever learned was C++. I was also younger at
+the time, when I became a small indie developer making random games in Unity.
+I of course, only made them to mess around and just to have fun.
+
+I then of course learned C, standalone C, and x86 Assembly. I taught my self
+with the OS Dev Wiki and other online forums
+
+I skipped 7th grade math and Pre-Algebra. Right now, I currently study Algebra
+1 and Physical Science. In my free time, I study electronics, more x86
+Assembly, and more C. Soon, I will study Geometry 1 and Biology.

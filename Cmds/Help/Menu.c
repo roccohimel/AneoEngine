@@ -19,7 +19,13 @@ extern void rtc_print_datetime(void);
 extern void draw_tb(void);
 extern void comment(const char *s);
 extern void as_cat(const char *name);
+extern void addr(void);
 
+const char *CONTROLS = "/Help/Controls.TXT";
+const char *ABT = "/Help/AboutAneoEngine.TXT";
+const char *CMDS = "/Help/CommandHelp.TXT";
+const char *KM = "/Misc/Keymap.c";
+const char *FAQ = "/Docs/FAQ.TXT";
 int helpMenu(void)
 {
 
@@ -58,11 +64,41 @@ int helpMenu(void)
 		}
 		else if(strcmp(line, "Controls") == 0)
 		{
-			comment("/Help/Controls.TXT");
-			as_cat("/Help/Controls.TXT");
+			comment(CONTROLS);
+			as_cat(CONTROLS);
+		}
+		else if(strcmp(line, "Abt") == 0)
+                {
+                        comment(ABT);
+                        as_cat(ABT);
+                }
+		else if(strcmp(line, "Cmds") == 0)
+                {
+                        comment(CMDS);
+                        as_cat(CMDS);
+                }
+		else if(strcmp(line, "KM") == 0)
+                {
+                        comment(KM);
+			comment("This is a snippet from the AneoEngine");
+			comment("source code, in Kernel/Keyboard.c. This");
+			comment("cannot be found on this machine.");
+                        as_cat(KM);
+                }
+		else if(strcmp(line, "Addr") == 0)
+                {
+			addr();
+                }
+		else if(strcmp(line, "FAQ") == 0)
+                {
+                        comment(FAQ);
+			comment("Frequently Asked Questions");
+                	as_cat(FAQ);
 		}
 		else if(line[0])
-			perror("ERR: Unknown command\n");
+			perror(line);
+
 	}
+
 }
 

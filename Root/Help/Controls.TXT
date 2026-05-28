@@ -1,0 +1,12 @@
+ F1 -- Open the help menu
+ F2 -- Reset the system
+ F3 -- Open the utilities menu
+ F4 -- Open the CpuStat menu
+ F5 -- Nothing yet
+ F6 -- Nothing yet
+ F7 -- Nothing yet
+ F8 -- Nothing yet
+ F9 -- Nothing yet
+F10 -- Nothing yet
+F11 -- Nothing yet
+F12 -- Nothing yets 

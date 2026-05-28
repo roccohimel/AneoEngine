@@ -66,11 +66,11 @@ void startupBanner(void)
 {//startup banner
 	print("AneoEngine ");
 	print(VERSION);
-	print(" Build ");
-        print(BUILD);
         print("\n\n");
 	print("Initializing PIT...\n");
 	pit_init_1000hz();
+	print("Initializing AnchorSand Filesystem...\n");
+	as_init();
 	print("Data addresses listed\n");
         putc('\n');
         printadocu("IVT", IVT_START, IVT_END);
@@ -88,7 +88,6 @@ void startupBanner(void)
 	indprintad("Kernel entry", KERNEL_ENTRY);
 	printadocu("Kernel data", KERNEL_DATA_START, KERNEL_DATA_END);
 	putc('\n');
-	as_init();
 	print("Press any key to continue...\n");
 	waitkey();
 	beep(1000);

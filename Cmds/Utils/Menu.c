@@ -50,6 +50,6 @@ int utilsMenu(void)
 		else if(strcmp(line, "Entropy") == 0)
                         entropy();
 		else if(line[0])
-			perror("ERR: Unknown command\n");
+			perror(line);
 	}
 }

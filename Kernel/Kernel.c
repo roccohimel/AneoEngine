@@ -40,13 +40,13 @@ extern void as_ls_path(const char *path);
 #define RTC_DAY     0x07
 #define RTC_MONTH   0x08
 #define RTC_YEAR    0x09
+#define GVN(var) #var
 
 const char *BAR1 = "====";
 const char *BAR2 = "===========================================================";
 
 //build information
-const char *VERSION = "V0.1";
-const char *BUILD = "V0U1-270526B6";
+const char *VERSION = "V0.2";
 
 unsigned int cx = 0;
 unsigned int cy = 0;
@@ -267,13 +267,15 @@ void rtc_print_datetime(void)
         print2(t.second);
 }
 
-void perror(const char *s)
+void perror(char *line)
 {//shell error funtion
 	const u8 oldcolor = color;
-	color = 0x4E;
-
-	print(s);
-
+	color = 0xCF;
+	print("ERROR:");
+	color = 0x1C;
+	print(" Unknown refrence to \"");
+	print(line);
+	print("\" in `line`\n");
 	color = oldcolor;
 }
 
@@ -666,12 +668,10 @@ void trim_end(char *s)
 
 void run_commands(void)
 {//put your run commands here:
-	as_cd("Misc");
-
-	comment("run `cat /Misc/Logo.TXT`");
-	as_cat("Logo.TXT");
-	as_cd("/");
-	comment("run `ls /`");
+	comment("cat /Misc/Logo.TXT");
+	as_cat("/Misc/Logo.TXT");
+	as_cd("/Home");
+	comment("ls /Home");
 	as_ls("");
 }
 
@@ -718,6 +718,8 @@ void shell(void)
 			cpustat();
 		else if(strcmp(line, "ls") == 0)
 			as_ls();
+		else if(strcmp(line, "cd") == 0)
+                        as_cd("/Home");
 		else if(starts(line, "ls "))
 		{
 			char *dir;
@@ -771,7 +773,7 @@ void shell(void)
 			}
 		}
 		else if(line[0])
-                        perror("ERR: Unknown command\n");
+                        perror(line);
 	}
 }
 
@@ -781,17 +783,36 @@ void kmain(void)
 	startupBanner();
 	/* ANCHORSAND SEED START */
 	as_cd("/");
+	as_mkdir("Docs");
+	as_cd("Docs");
+	as_touch("FAQ.TXT");
+	as_write("FAQ.TXT", ">Why do you use your own license? Why not use the MIT License, Apache License,\n        or even the GNU GPL? Why would I use someone else's license when I\n        can build my own? After all, a project that is hand-crafted from\n        scratch should also have a license that is also hand-crafted from\n        scratch. I also think that yes, the GPL does already have what mine\n        does, but it feels better comming from my words, because they're mine.\n\n>Is it really built from scratch? You used GNU compilers, linkers, and\n        assemblers, that arent yours. Technically, you would be incorrect. The\n        operating system, including the boot loader and kernel, is built from\n        scratch. I used standard C and standard ASM. However, I never said I\n        made the build tools from scratch.\n\n>What operating system do you use daily?\n        Currently, I use Debian GNU/Linux 13.4 with the XFCE 4 desktop\n        enviornment. I run it both on my Intel Xeon E3-1230 v6 desktop, and my\n        AMD Ryzen 5 4650U laptop (Lenovo Thinkpad E14 Gen2)\n\n>Why do you use capital letters for your source file names?\n        Because thats what they start with, I give my kernel respect.");
+	as_touch("LICENSE");
+	as_write("LICENSE", "AneoEngine License v1.0\n\nCopyright (c) 2026 Rocco Himel\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. You shall NOT publish or modify ANY Software in the\n   /docs folder of this project.");
+	as_cd("..");
+	as_mkdir("Help");
+	as_cd("Help");
+	as_touch("AboutAneoEngine.TXT");
+	as_write("AboutAneoEngine.TXT", "Official Website: https://roccohimel.github.io/AneoEngine\n\nCreator: Rocco Himel\n\nThe first language I ever learned was BASH. I was very young when my mom gave\nme her 2015 MacBook Pro running MacOS Mojave. I was very curious when I\nopened the terminal and I wanted to learn how to use what I didn't know was,\na shell. I then taught my self how to use it.\n\nThe first PROGRAMMING language I ever learned was C++. I was also younger at\nthe time, when I became a small indie developer making random games in Unity.\nI of course, only made them to mess around and just to have fun.\n\nI then of course learned C, standalone C, and x86 Assembly. I taught my self\nwith the OS Dev Wiki and other online forums\n\nI skipped 7th grade math and Pre-Algebra. Right now, I currently study Algebra\n1 and Physical Science. In my free time, I study electronics, more x86\nAssembly, and more C. Soon, I will study Geometry 1 and Biology.");
+	as_touch("CommandHelp.TXT");
+	as_write("CommandHelp.TXT", "addr:........................List all memory addresses used by AneoEngine\ncat /Directory/File.TXT:.....Prints the contents of a file\ncd:..........................Changes your directory to \"/Home\"\ncd /Directory:...............Manually changes your directory\ncls:.........................Clears your screen\ncpustat:.....................Shows system stats\nhalt:........................Stops the system\nls:..........................Lists the contents of the current directory\nls /Directory:...............Lists the contents of the selected directory\nmkdir /Directory/Name:.......Create a directory\ntouch........................Create a file\nvmoff:.......................Turns off your VM\nwrite........................Write text to a file");
+	as_touch("Controls.TXT");
+	as_write("Controls.TXT", " F1 -- Open the help menu\n F2 -- Reset the system\n F3 -- Open the utilities menu\n F4 -- Open the CpuStat menu\n F5 -- Nothing yet\n F6 -- Nothing yet\n F7 -- Nothing yet\n F8 -- Nothing yet\n F9 -- Nothing yet\nF10 -- Nothing yet\nF11 -- Nothing yet\nF12 -- Nothing yets ");
+	as_cd("..");
+	as_mkdir("Home");
+	as_cd("Home");
+	as_touch("CHANGELOG");
+	as_write("CHANGELOG", "there");
+	as_touch("README");
+	as_write("README", "test\ntest");
+	as_cd("..");
 	as_mkdir("Misc");
 	as_cd("Misc");
+	as_touch("Keymap.c");
+	as_write("Keymap.c", "static const char keymap[128] =\n{//allowed chars\n        0, 27, '1', '2', '3', '4', '5', '6',\n        '7', '8', '9', '0', '-', '=', '\\b', '\\t',\n        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',\n        'o', 'p', '[', ']', '\\n', 0, 'a', 's',\n        'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',\n        '\\'', '`', 0, '\\\\', 'z', 'x', 'c', 'v',\n        'b', 'n', 'm', ',', '.', '/', 0, '*',\n        0, ' ', 0\n};\n\nstatic const char shiftmap[128] =\n{//allowed chars when shift is pressed\n        0, 27, '!', '@', '#', '$', '%', '^',\n        '&', '*', '(', ')', '_', '+', '\\b', '\\t',\n        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',\n        'O', 'P', '{', '}', '\\n', 0, 'A', 'S',\n        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',\n        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V',\n        'B', 'N', 'M', '<', '>', '?', 0, '*',\n        0, ' ', 0\n};");
 	as_touch("Logo.TXT");
 	as_write("Logo.TXT", "---------------------        AneoEngine V0.1\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
-	as_touch("CHANGELOG");
-	as_write("CHANGELOG", "there");
-	as_touch("LICENSE");
-	as_write("LICENSE", "AneoEngine License v1.0\n\nCopyright (c) 2026 Rocco Himel\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. You shall NOT publish or modify ANY Software in the\n   /docs folder of this project.");
-	as_touch("README");
-	as_write("README", "test\ntest");
 	/* ANCHORSAND SEED END */
 	shell();
 }

@@ -97,8 +97,13 @@ void as_init()
 {
 	int i;
 
-	print("AnchorSand init...\n\n");
-
+	print("AS_MAX_NODES=");
+	printint(AS_MAX_NODES);
+	print("\nAS_NAME_MAX=");
+	printint(AS_NAME_MAX);
+	print("\nAS_DATA_MAX=");
+	printint(AS_DATA_MAX);
+	print("\nIf you have file listing issues, ajust these settings.\n");
 	for(i = 0; i < AS_MAX_NODES; i++)
 		as_nodes[i].used = 0;
 
