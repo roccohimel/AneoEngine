@@ -275,7 +275,21 @@ void perror(char *line)
 	color = oldcolor;
 	print(" Undefined refrence to \"");
 	print(line);
-	print("\" in `line`\n");
+	print("\" in line.\n");
+	print("You can see ");
+	color = 0x1C;
+	print("/Help/CommandHelp.TXT");
+	color = oldcolor;
+
+	print(" for help on AneoEngine shell commands or you\ncan press ");
+	color = 0x1C;
+	print("F1");
+	color = oldcolor;
+	print(" to easily get to the help menu. You can also run ");
+	color = 0x1C;
+	print("help");
+	color = oldcolor;
+	print(" to get there as well.\n");
 }
 
 
