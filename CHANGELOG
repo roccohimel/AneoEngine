@@ -1,1 +1,9 @@
-there
+AneoEngine V0.2 Change log
+
+- Fixed hexadecimal printing
+- Added consistant address printing
+- Added RTC clock printing
+- Added a status bar
+- Added a help menu
+- Added more commands
+- Added a filesystem

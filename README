@@ -1,2 +1,19 @@
-test
-test
+                   The AneoEngine Operating System
+
+You can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.
+You can also boot it via virtual machine as long as yours supports
+floppy disc drives, which most of them do. I recommend QEMU since you
+are not installing anything, AneoEngine is a live image.
+
+AneoEngine is supported by any 32-bit CPU, any 64-bit CPU that supports
+Legacy BIOS boot will also run AneoEngine. ARM-64 and RISC-V are not
+supported.
+
+AneoEngine requires ar least 512 megabytes of RAM.
+
+AneoEngine files are initialized via the official shell script which
+scans files from the "Root" folder in the AneoEngine source code,
+and makes AnchorSand commands of them and puts them into kmain. I know
+this sounds inefficient, but it happens VERY fast. AnchorSand is a
+custom filesystem that is used exclusively in AneoEngine and doesn't
+support FAT12 or FAT32, but is 100% open-source.
