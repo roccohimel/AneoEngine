@@ -272,11 +272,10 @@ void perror(char *line)
 	const u8 oldcolor = color;
 	color = 0xCF;
 	print("ERROR:");
-	color = 0x1C;
-	print(" Unknown refrence to \"");
+	color = oldcolor;
+	print(" Undefined refrence to \"");
 	print(line);
 	print("\" in `line`\n");
-	color = oldcolor;
 }
 
 

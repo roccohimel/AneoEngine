@@ -15,6 +15,15 @@ extern u8 color;
 #define AS_FILE		1
 #define AS_DIR		2
 
+void pred(char *s)
+{//shell error funtion
+        const u8 oldcolor = color;
+        color = 0xCF;
+        print("ERROR:");
+	color = oldcolor;
+        print(s);
+}
+
 typedef struct
 {
 	char name[AS_NAME_MAX];
@@ -103,7 +112,7 @@ void as_init()
 	printint(AS_NAME_MAX);
 	print("\nAS_DATA_MAX=");
 	printint(AS_DATA_MAX);
-	print("\nIf you have file listing issues, ajust these settings.\n");
+	print("\nIf you have file listing issues, ajust these settings.\n\n");
 	for(i = 0; i < AS_MAX_NODES; i++)
 		as_nodes[i].used = 0;
 
@@ -375,13 +384,13 @@ void as_cat(const char *path)
 
 	if(n == -1)
 	{
-		print("file not found\n");
+		pred("File not found\n");
 		return;
 	}
 
 	if(as_nodes[n].type != AS_FILE)
 	{
-		print("not a file\n");
+		pred("Not a readable file\n");
 		return;
 	}
 
@@ -478,13 +487,13 @@ void as_ls_path(const char *path)
 
 	if(n == -1)
 	{
-		print("path not found\n");
+		pred("Directory not found\n");
 		return;
 	}
 
 	if(as_nodes[n].type != AS_DIR)
 	{
-		print("not a directory\n");
+		print("Not a directory\n");
 		return;
 	}
 
