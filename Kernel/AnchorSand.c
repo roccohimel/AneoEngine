@@ -21,7 +21,8 @@ void pred(char *s)
         color = 0xCF;
         print("ERROR:");
 	color = oldcolor;
-        print(s);
+        print(" ");
+	print(s);
 }
 
 typedef struct
