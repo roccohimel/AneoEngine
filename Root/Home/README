@@ -1,5 +1,7 @@
                    The AneoEngine Operating System
 
+Please read the LICENSE before software redistribution.
+
 You can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.
 You can also boot it via virtual machine as long as yours supports
 floppy disc drives, which most of them do. I recommend QEMU since you
