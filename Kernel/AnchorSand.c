@@ -7,6 +7,11 @@ typedef unsigned int u32;
 extern void print(const char *s);
 extern void printint(int n);
 extern u8 color;
+extern int getkey(void);
+extern unsigned int cx;
+extern unsigned int cy;
+extern int shift;
+extern void cursor_update(void);
 
 #define AS_MAX_NODES	64
 #define AS_NAME_MAX	32
@@ -538,3 +543,79 @@ void as_pwd()
 {
 	as_pwd_rec(as_cwd);
 }
+
+#define EDIT_KEY_UP    1
+#define EDIT_KEY_DOWN  2
+#define EDIT_KEY_LEFT  3
+#define EDIT_KEY_RIGHT 4
+#define EDIT_TOP       3
+
+#define VGA_TEXT ((u16*)0xB8000)
+#define EDIT_W 80
+#define EDIT_H 50
+
+u16 edit_saved_vga[EDIT_W * EDIT_H];
+
+void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor)
+{
+	int i;
+
+	*oldcx = cx;
+	*oldcy = cy;
+	*oldcolor = color;
+
+	for (i = 0; i < EDIT_W * EDIT_H; i++)
+		edit_saved_vga[i] = VGA_TEXT[i];
+}
+
+void as_edit_restore_screen(unsigned int oldcx, unsigned int oldcy, u8 oldcolor)
+{
+	for (i = 0; i < EDIT_W * EDIT_H; i++)
+                VGA_TEXT[i] = edit_saved_vga[i];
+
+	cy = oldcy;
+	cx = oldcx;
+	color = oldcolor;
+	cursor_update();
+}
+
+
+
+
+
+
+
+int as_edit_line_start(int n, int pos)
+{
+	while(pos > 0 && as_nodes[n].data[pos - 1] != '\n')
+		pos--;
+	return pos;
+}
+
+int as_edit_line_end(int n, int pos)
+{
+	while(pos < as_nodes[n].size && as_nodes[n].data[pos] != '\n')
+		pos++;
+	return pos;
+}
+
+int as_edit_prev_line(int n, int pos)
+{
+	int start;
+	int col;
+	int prev_start;
+	int prev_end;
+	int prev_len;
+
+	start = as_edit_line_start(n, pos);
+
+	if(start == 0)
+		return pos;
+
+	col = pos - start;
+	prev_end = start - 1;
+	prev_start = as_edit_line_start(n, prev_end);
+	prev_len = prev_end - prev_start;
+
+//LEFT OFF HERE
+

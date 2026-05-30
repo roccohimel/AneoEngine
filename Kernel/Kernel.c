@@ -10,7 +10,7 @@ typedef unsigned long long u64;
 //import all AneoEngine funtions
 extern void pit_init_1000hz(void);
 extern void sleep(unsigned int ms);
-extern char getkey(void);
+extern int getkey(void);
 extern void vmoff(void);
 extern void halt(void);
 extern void startupBanner(void);
@@ -490,7 +490,7 @@ void draw_tb(void)
 void readline(char *buf, int max)
 {//read input
         int i = 0;
-        char c;
+        int c;
         int last_sec = -1;
         int sec;
         int oldcx;

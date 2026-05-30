@@ -51,6 +51,14 @@ static const char shiftmap[128] =
 
 int shift = 0;
 
+#define KEY_UP    1
+#define KEY_DOWN  2
+#define KEY_LEFT  3
+#define KEY_RIGHT 4
+
+int ctrl = 0;
+int ext = 0;
+
 static void HandleFn(u8 sc)
 {
 	switch(sc)
@@ -88,16 +96,36 @@ static void HandleFn(u8 sc)
 	}
 }
 
-char getkey(void)
+int getkey(void)
 {//get the current key from keyboard IO port
         u8 sc;
+	char c;
 
         if(!(inb(0x64) & 1))
                 return 0;
 
         sc = inb(0x60);
 
-        if(sc == 42 || sc == 54)
+        if(sc == 0xE0)
+	{
+		ext = 1;
+		return 0;
+	}
+
+	if(ext)
+	{
+		if(sc == 0x48)
+			return KEY_UP;
+		if(sc == 0x50)
+			return KEY_DOWN;
+		if(sc == 0x4B)
+			return KEY_LEFT;
+		if(sc == 0x4D)
+			return KEY_RIGHT;
+		return 0;
+	}
+
+	if(sc == 42 || sc == 54)
         {
                 shift = 1;
                 return 0;
@@ -109,7 +137,19 @@ char getkey(void)
                 return 0;
         }
 
-        if(sc & 0x80)
+        if(sc == 29)
+	{
+		ctrl = 1;
+		return 0;
+	}
+
+	if(sc == 157)
+	{
+		ctrl = 0;
+		return 0;
+	}
+
+	if(sc & 0x80)
                 return 0;
 	if(
 		(sc >= KEY_F1 && sc <= KEY_F10) ||
@@ -125,8 +165,10 @@ char getkey(void)
 		return 0;
 
 	if(shift)
-		return shiftmap[sc];
+		c = shiftmap[sc];
+	else
+		c = keymap[sc];
 
-	return keymap[sc];
+	return c;
 }
 
