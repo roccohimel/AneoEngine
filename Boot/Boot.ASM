@@ -1,9 +1,9 @@
 [org 0x7C00]
 [bits 16]
 
-KERNEL_OFFSET		equ 0x10000
-KERNEL_SEGMENT		equ 0x1000
-KERNEL_SECTORS		equ 128
+KERNEL_OFFSET  equ 0x10000
+KERNEL_SEGMENT equ 0x1000
+KERNEL_SECTORS equ 128
 
 start:
 	cli
@@ -27,6 +27,7 @@ start:
 	mov si, msg_boot
 	call print16
 
+	call enable_a20
 	call load_kernel
 
 	mov si, msg_loaded
@@ -40,10 +41,19 @@ start:
 
 	cli
 	lgdt [gdt_descriptor]
+
 	mov eax, cr0
 	or eax, 1
 	mov cr0, eax
+
 	jmp CODE_SEG:init_pm
+
+enable_a20:
+	in al, 0x92
+	or al, 00000010b
+	and al, 11111110b
+	out 0x92, al
+	ret
 
 print16:
 	lodsb
@@ -99,6 +109,7 @@ load_kernel:
 
 	mov byte [sector], 1
 	inc byte [head]
+
 	mov al, [heads]
 	cmp [head], al
 	jne .next
@@ -120,13 +131,16 @@ disk_error:
 
 init_pm:
 	cld
+
 	mov ax, DATA_SEG
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
 	mov ss, ax
+
 	mov esp, 0x90000
+
 	jmp CODE_SEG:KERNEL_OFFSET
 
 gdt_start:
@@ -154,20 +168,22 @@ gdt_descriptor:
 	dw gdt_end - gdt_start - 1
 	dd gdt_start
 
-CODE_SEG	equ gdt_code - gdt_start
-DATA_SEG	equ gdt_data - gdt_start
+CODE_SEG equ gdt_code - gdt_start
+DATA_SEG equ gdt_data - gdt_start
 
-BOOT_DRIVE	db 0
-sector		db 0
-head		db 0
-track		db 0
-spt		db 18
-heads		db 2
+BOOT_DRIVE db 0
 
-msg_boot	db 13,10,13,10,13,10,13,10,"AneoEngine Boot Loader",13,10,0
-msg_loaded	db "Kernel found...",13,10,0
-msg_prompt	db 13,10,"Press any key to continue...",13,10,0
-msg_disk	db "Kernel read error!",13,10,0
+sector db 0
+head   db 0
+track  db 0
+
+spt   db 18
+heads db 2
+
+msg_boot   db 13,10,13,10,13,10,13,10,"AneoEngine Boot Loader",13,10,0
+msg_loaded db "Kernel found...",13,10,0
+msg_prompt db 13,10,"Press any key to continue...",13,10,0
+msg_disk   db "Kernel read error!",13,10,0
 
 times 510 - ($ - $$) db 0
 dw 0xAA55

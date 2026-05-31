@@ -727,7 +727,7 @@ void shell_exec(char *line)
 	else if(starts(line, "run "))
 		run_script(line + 4);
 	else if(starts(line, "comment "))
-                run_script(line + 8);
+                comment(line + 8);
 	else if(starts(line, "cd "))
 	{
 		if(as_cd(line + 3) != 0)
