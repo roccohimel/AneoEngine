@@ -12,6 +12,7 @@ extern unsigned int cx;
 extern unsigned int cy;
 extern int shift;
 extern void cursor_update(void);
+extern void clear(void);
 
 #define AS_MAX_NODES	64
 #define AS_NAME_MAX	32
@@ -548,11 +549,12 @@ void as_pwd()
 #define EDIT_KEY_DOWN  2
 #define EDIT_KEY_LEFT  3
 #define EDIT_KEY_RIGHT 4
-#define EDIT_TOP       3
+
+#define EDIT_TOP 3
+#define EDIT_W	 80
+#define EDIT_H   50
 
 #define VGA_TEXT ((u16*)0xB8000)
-#define EDIT_W 80
-#define EDIT_H 50
 
 u16 edit_saved_vga[EDIT_W * EDIT_H];
 
@@ -564,31 +566,51 @@ void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor)
 	*oldcy = cy;
 	*oldcolor = color;
 
-	for (i = 0; i < EDIT_W * EDIT_H; i++)
+	for(i = 0; i < EDIT_W * EDIT_H; i++)
 		edit_saved_vga[i] = VGA_TEXT[i];
 }
 
 void as_edit_restore_screen(unsigned int oldcx, unsigned int oldcy, u8 oldcolor)
 {
-	for (i = 0; i < EDIT_W * EDIT_H; i++)
-                VGA_TEXT[i] = edit_saved_vga[i];
+	int i;
 
-	cy = oldcy;
+	for(i = 0; i < EDIT_W * EDIT_H; i++)
+		VGA_TEXT[i] = edit_saved_vga[i];
+
 	cx = oldcx;
+	cy = oldcy;
 	color = oldcolor;
 	cursor_update();
 }
 
+void as_edit_put_at(int x, int y, char c, u8 col)
+{
+	if(x < 0 || x >= EDIT_W)
+		return;
 
+	if(y < 0 || y >= EDIT_H)
+		return;
 
+	VGA_TEXT[y * EDIT_W + x] = (col << 8) | c;
+}
 
+void as_edit_clear_editor_area(void)
+{
+	int x;
+	int y;
 
-
+	for(y = EDIT_TOP; y < EDIT_H; y++)
+	{
+		for(x = 0; x < EDIT_W; x++)
+			as_edit_put_at(x, y, ' ', color);
+	}
+}
 
 int as_edit_line_start(int n, int pos)
 {
 	while(pos > 0 && as_nodes[n].data[pos - 1] != '\n')
 		pos--;
+
 	return pos;
 }
 
@@ -596,15 +618,21 @@ int as_edit_line_end(int n, int pos)
 {
 	while(pos < as_nodes[n].size && as_nodes[n].data[pos] != '\n')
 		pos++;
+
 	return pos;
+}
+
+int as_edit_col(int n, int pos)
+{
+	return pos - as_edit_line_start(n, pos);
 }
 
 int as_edit_prev_line(int n, int pos)
 {
 	int start;
 	int col;
-	int prev_start;
 	int prev_end;
+	int prev_start;
 	int prev_len;
 
 	start = as_edit_line_start(n, pos);
@@ -625,14 +653,14 @@ int as_edit_prev_line(int n, int pos)
 
 int as_edit_next_line(int n, int pos)
 {
-	int start;
-        int col;
-        int next_start;
-        int next_end;
-        int next_len;
+	int col;
+	int end;
+	int next_start;
+	int next_end;
+	int next_len;
 
 	col = as_edit_col(n, pos);
-	end = as_edit_lime_end(n, pos);
+	end = as_edit_line_end(n, pos);
 
 	if(end >= as_nodes[n].size)
 		return pos;
@@ -659,7 +687,7 @@ void as_edit_cursor(int n, int pos)
 		if(as_nodes[n].data[i] == '\n')
 		{
 			cx = 0;
-			cy ++;
+			cy++;
 		}
 		else
 		{
@@ -671,57 +699,250 @@ void as_edit_cursor(int n, int pos)
 				cy++;
 			}
 		}
+
+		if(cy >= EDIT_H)
+		{
+			cy = EDIT_H - 1;
+			cx = EDIT_W - 1;
+			break;
+		}
 	}
 
 	cursor_update();
 }
 
-void as_edit_redraw(int n, const char *path, int pos)
+void as_edit_draw_header(const char *path)
 {
 	clear();
+
+	cx = 0;
+	cy = 1;
 
 	print("EDITOR: ");
 	print(path);
 	print("\n\n");
+}
 
-	print(as_nodes[n].data);
+void as_edit_redraw(int n, const char *path, int pos)
+{
+	int i;
+	int x;
+	int y;
+
+	as_edit_draw_header(path);
+	as_edit_clear_editor_area();
+
+	x = 0;
+	y = EDIT_TOP;
+
+	for(i = 0; i < as_nodes[n].size; i++)
+	{
+		if(as_nodes[n].data[i] == '\n')
+		{
+			x = 0;
+			y++;
+		}
+		else
+		{
+			as_edit_put_at(x, y, as_nodes[n].data[i], color);
+			x++;
+
+			if(x >= EDIT_W)
+			{
+				x = 0;
+				y++;
+			}
+		}
+
+		if(y >= EDIT_H)
+			break;
+	}
 
 	as_edit_cursor(n, pos);
+}
+
+void as_edit_insert(int n, int *pos, int c)
+{
+	int i;
+
+	if(as_nodes[n].size >= AS_DATA_MAX - 1)
+		return;
+
+	i = as_nodes[n].size;
+
+	while(i >= *pos)
+	{
+		as_nodes[n].data[i + 1] = as_nodes[n].data[i];
+
+		if(i == 0)
+			break;
+
+		i--;
+	}
+
+	as_nodes[n].data[*pos] = c;
+	(*pos)++;
+	as_nodes[n].size++;
+	as_nodes[n].data[as_nodes[n].size] = 0;
+}
+
+void as_edit_backspace(int n, int *pos)
+{
+	int i;
+
+	if(*pos <= 0)
+		return;
+
+	for(i = *pos - 1; i < as_nodes[n].size; i++)
+		as_nodes[n].data[i] = as_nodes[n].data[i + 1];
+
+	(*pos)--;
+	as_nodes[n].size--;
+
+	if(as_nodes[n].size < 0)
+		as_nodes[n].size = 0;
+
+	as_nodes[n].data[as_nodes[n].size] = 0;
+}
+
+void as_edit_restore_file(int n, char *olddata, int oldsize)
+{
+	int i;
+
+	for(i = 0; i <= oldsize && i < AS_DATA_MAX; i++)
+		as_nodes[n].data[i] = olddata[i];
+
+	as_nodes[n].size = oldsize;
+	as_nodes[n].data[as_nodes[n].size] = 0;
 }
 
 void as_edit(const char *path)
 {
 	char parent_path[AS_NAME_MAX * 4];
-	char name[AS_NAME_MAX]
+	char name[AS_NAME_MAX];
+
+	char olddata[AS_DATA_MAX];
+	int oldsize;
+
 	int parent;
 	int n;
 	int i;
 	int pos;
 	int c;
+
 	unsigned int oldcx;
 	unsigned int oldcy;
-	u8 color;
+	u8 oldcolor;
 
 	as_edit_save_screen(&oldcx, &oldcy, &oldcolor);
 
 	as_split_path(path, parent_path, name);
+	parent = as_resolve(parent_path);
 
 	if(parent == -1)
 	{
-		as_edit_restore_screen(&oldcx, &oldcy, &oldcolor);
-		pred("Directory not found");
+		as_edit_restore_screen(oldcx, oldcy, oldcolor);
+		pred("Directory not found\n");
 		return;
 	}
 
 	if(as_nodes[parent].type != AS_DIR)
 	{
-		as_edit_restore_screen(&oldcx, &oldcy, &oldcolor);
-                pred("Not a directory");
-                return;
+		as_edit_restore_screen(oldcx, oldcy, oldcolor);
+		pred("Not a directory\n");
+		return;
 	}
 
 	n = as_find_child(parent, name);
 
-//LEFT OFF HERE
+	if(n == -1)
+	{
+		if(as_touch_at(parent, name) != 0)
+		{
+			as_edit_restore_screen(oldcx, oldcy, oldcolor);
+			pred("Could not create file\n");
+			return;
+		}
 
-	if(n == 
+		n = as_find_child(parent, name);
+	}
+
+	if(as_nodes[n].type != AS_FILE)
+	{
+		as_edit_restore_screen(oldcx, oldcy, oldcolor);
+		pred("Not a readable file\n");
+		return;
+	}
+
+	oldsize = as_nodes[n].size;
+
+	for(i = 0; i <= oldsize && i < AS_DATA_MAX; i++)
+		olddata[i] = as_nodes[n].data[i];
+
+	pos = as_nodes[n].size;
+
+	as_edit_redraw(n, path, pos);
+
+	for(;;)
+	{
+		c = getkey();
+
+		if(!c)
+			continue;
+
+		if(c == 19)
+		{
+			as_edit_restore_screen(oldcx, oldcy, oldcolor);
+			return;
+		}
+
+		if(c == 16 && shift)
+		{
+			as_edit_restore_file(n, olddata, oldsize);
+			as_edit_restore_screen(oldcx, oldcy, oldcolor);
+			return;
+		}
+
+		if(c == EDIT_KEY_LEFT)
+		{
+			if(pos > 0)
+				pos--;
+
+			as_edit_cursor(n, pos);
+			continue;
+		}
+
+		if(c == EDIT_KEY_RIGHT)
+		{
+			if(pos < as_nodes[n].size)
+				pos++;
+
+			as_edit_cursor(n, pos);
+			continue;
+		}
+
+		if(c == EDIT_KEY_UP)
+		{
+			pos = as_edit_prev_line(n, pos);
+			as_edit_cursor(n, pos);
+			continue;
+		}
+
+		if(c == EDIT_KEY_DOWN)
+		{
+			pos = as_edit_next_line(n, pos);
+			as_edit_cursor(n, pos);
+			continue;
+		}
+
+		if(c == '\b')
+		{
+			as_edit_backspace(n, &pos);
+			as_edit_redraw(n, path, pos);
+			continue;
+		}
+
+		as_edit_insert(n, &pos, c);
+		as_edit_redraw(n, path, pos);
+	}
+}

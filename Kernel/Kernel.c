@@ -29,6 +29,7 @@ extern int shift;
 extern void as_pwd();
 extern void as_ls_path(const char *path);
 extern void idt_init();
+extern void as_edit(const char *path);
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -765,6 +766,8 @@ void shell(void)
 			as_touch(line + 6);
 		else if(starts(line, "cat "))
 			as_cat(line + 4);
+		else if(starts(line, "edit "))
+                        as_edit(line + 5);
 		else if(strcmp(line, "fault") == 0)
 		{
 			__asm__ __volatile__(

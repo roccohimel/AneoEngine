@@ -97,16 +97,16 @@ static void HandleFn(u8 sc)
 }
 
 int getkey(void)
-{//get the current key from keyboard IO port
-        u8 sc;
+{
+	u8 sc;
 	char c;
 
-        if(!(inb(0x64) & 1))
-                return 0;
+	if(!(inb(0x64) & 1))
+		return 0;
 
-        sc = inb(0x60);
+	sc = inb(0x60);
 
-        if(sc == 0xE0)
+	if(sc == 0xE0)
 	{
 		ext = 1;
 		return 0;
@@ -114,6 +114,8 @@ int getkey(void)
 
 	if(ext)
 	{
+		ext = 0;
+
 		if(sc == 0x48)
 			return KEY_UP;
 		if(sc == 0x50)
@@ -122,22 +124,23 @@ int getkey(void)
 			return KEY_LEFT;
 		if(sc == 0x4D)
 			return KEY_RIGHT;
+
 		return 0;
 	}
 
 	if(sc == 42 || sc == 54)
-        {
-                shift = 1;
-                return 0;
-        }
+	{
+		shift = 1;
+		return 0;
+	}
 
-        if(sc == 170 || sc == 182)
-        {
-                shift = 0;
-                return 0;
-        }
+	if(sc == 170 || sc == 182)
+	{
+		shift = 0;
+		return 0;
+	}
 
-        if(sc == 29)
+	if(sc == 29)
 	{
 		ctrl = 1;
 		return 0;
@@ -150,7 +153,8 @@ int getkey(void)
 	}
 
 	if(sc & 0x80)
-                return 0;
+		return 0;
+
 	if(
 		(sc >= KEY_F1 && sc <= KEY_F10) ||
 		sc == KEY_F11 ||
@@ -169,6 +173,11 @@ int getkey(void)
 	else
 		c = keymap[sc];
 
+	if(ctrl && c >= 'a' && c <= 'z')
+		return c - 'a' + 1;
+
+	if(ctrl && c >= 'A' && c <= 'Z')
+		return c - 'A' + 1;
+
 	return c;
 }
-
