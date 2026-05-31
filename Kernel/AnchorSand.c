@@ -946,3 +946,21 @@ void as_edit(const char *path)
 		as_edit_redraw(n, path, pos);
 	}
 }
+
+int as_get_file_data(const char *path, char **data, int *size)
+{
+	int n;
+
+	n = as_resolve(path);
+
+	if(n == -1)
+		return -1;
+
+	if(as_nodes[n].type != AS_FILE)
+		return -1;
+
+	*data = as_nodes[n].data;
+	*size = as_nodes[n].size;
+
+	return 0;
+}

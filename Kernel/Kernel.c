@@ -32,6 +32,8 @@ extern void idt_init();
 extern void as_edit(const char *path);
 extern int ctrl;
 extern int ext;
+extern int as_get_file_data(const char *path, char **data, int *size);
+extern void pred(const char *s);
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -289,11 +291,7 @@ void perror(char *line)
 	color = 0x1C;
 	print("F1");
 	color = oldcolor;
-	print(" to easily get to the help menu. You can also run ");
-	color = 0x1C;
-	print("help");
-	color = oldcolor;
-	print(" to get there as well.\n");
+	print(" to easily get to the help menu.\n");
 }
 
 
@@ -692,13 +690,90 @@ void trim_end(char *s)
 	}
 }
 
-void run_commands(void)
-{//put your run commands here:
-	comment("cat /Misc/Logo.TXT");
-	as_cat("/Misc/Logo.TXT");
-	as_cd("/Home");
-	comment("ls /Home");
-	as_ls("");
+void run_script(const char *path);
+
+void shell_exec(char *line)
+{
+	color = 0x1F;
+
+	if(strcmp(line, "cls") == 0)
+		clear();
+	else if(strcmp(line, "help") == 0)
+		helpMenu();
+	else if(starts(line, "color "))
+		color = atoi(skip(line + 5));
+	else if(strcmp(line, "vmoff") == 0)
+		vmoff();
+	else if(strcmp(line, "halt") == 0)
+		halt();
+	else if(strcmp(line, "addr") == 0)
+		addr();
+	else if(strcmp(line, "utils") == 0)
+		utilsMenu();
+	else if(strcmp(line, "cpustat") == 0)
+		cpustat();
+	else if(strcmp(line, "ls") == 0)
+		as_ls();
+	else if(starts(line, "ls "))
+		as_ls_path(line + 3);
+	else if(starts(line, "mkdir "))
+		as_mkdir(line + 6);
+	else if(starts(line, "touch "))
+		as_touch(line + 6);
+	else if(starts(line, "cat "))
+		as_cat(line + 4);
+	else if(starts(line, "edit "))
+		as_edit(line + 5);
+	else if(starts(line, "run "))
+		run_script(line + 4);
+	else if(starts(line, "comment "))
+                run_script(line + 8);
+	else if(starts(line, "cd "))
+	{
+		if(as_cd(line + 3) != 0)
+			pred("Directory not found\n");
+	}
+	else if(line[0])
+		perror(line);
+}
+
+void run_script(const char *path)
+{
+	char *data;
+	int size;
+	int i;
+	int j;
+	char line[128];
+
+	if(as_get_file_data(path, &data, &size) != 0)
+	{
+		pred("File not found\n");
+		return;
+	}
+
+	i = 0;
+	while(i < size)
+	{
+		j = 0;
+
+		while(i < size && data[i] != '\n' && j < 127)
+			line[j++] = data[i++];
+
+		line[j] = 0;
+
+		if(data[i] == '\n')
+			i++;
+
+		trim_end(line);
+
+		if(line[0] == 0)
+			continue;
+
+		if(line[0] == '/' && line[1] == '/')
+			continue;
+
+		shell_exec(line);
+	}
 }
 
 void shell(void)
@@ -714,7 +789,7 @@ void shell(void)
         nosound();
 
 	draw_tb();
-	run_commands();
+	run_script("/RunCmds.c");
 	for(;;)
 	{
 		shift = 0;
@@ -728,92 +803,7 @@ void shell(void)
 		readline(line, INPUT_MAX);
 
 		color = 0x1F;
-		if(strcmp(line, "cls") == 0)
-			clear();
-		else if(strcmp(line, "help") == 0)
-			helpMenu();
-		else if(starts(line, "color "))
-			color = atoi(skip(line + 5));
-		else if(strcmp(line, "vmoff") == 0)
-			vmoff();
-		else if(strcmp(line, "halt") == 0)
-			halt();
-		else if(strcmp(line, "addr") == 0)
-			addr();
-		else if(strcmp(line, "utils") == 0)
-                        utilsMenu();
-		else if(strcmp(line, "cpustat") == 0)
-			cpustat();
-		else if(strcmp(line, "ls") == 0)
-			as_ls();
-		else if(strcmp(line, "cd") == 0)
-                        as_cd("/Home");
-		else if(starts(line, "ls "))
-		{
-			char *dir;
-
-			dir = line + 3;
-			trim_end(dir);
-
-			as_ls_path(dir);
-		}
-		else if(starts(line, "mkdir "))
-		{
-			char *dir;
-
-			dir = line + 6;
-			trim_end(dir);
-
-			as_mkdir(dir);
-		}
-		else if(starts(line, "touch "))
-			as_touch(line + 6);
-		else if(starts(line, "cat "))
-			as_cat(line + 4);
-		else if(starts(line, "edit "))
-                        as_edit(line + 5);
-		else if(strcmp(line, "fault") == 0)
-		{
-			__asm__ __volatile__(
-				"mov $0x20, %%ax\n"
-				"mov %%ax, %%ds"
-				:
-				:
-				: "ax"
-			);
-		}
-		else if(starts(line, "cd "))
-		{
-			char *dir;
-
-			dir = line + 3;
-			trim_end(dir);
-
-			if(as_cd(dir) != 0)
-				print("directory not found\n");
-		}
-		else if(starts(line, "write "))
-		{
-			char *file;
-			char *text;
-			int i;
-
-			file = line + 6;
-
-			for(i = 0; file[i]; i++)
-			{
-				if(file[i] == ' ')
-				{
-					file[i] = 0;
-					text = file + i + 1;
-
-					as_write(file, text);
-					break;
-				}
-			}
-		}
-		else if(line[0])
-                        perror(line);
+		shell_exec(line);
 	}
 }
 
@@ -856,6 +846,8 @@ void kmain(void)
 	as_touch("Logo.TXT");
 	as_write("Logo.TXT", "---------------------        AneoEngine V0.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
+	as_touch("RunCmds.c");
+	as_write("RunCmds.c", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment cat /Misc/Logo.TXT\ncat /Misc/Logo.TXT\ncd /Home\ncomment ls /Home\nls");
 	/* ANCHORSAND SEED END */
 	shell();
 }
