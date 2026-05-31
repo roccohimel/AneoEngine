@@ -30,6 +30,8 @@ extern void as_pwd();
 extern void as_ls_path(const char *path);
 extern void idt_init();
 extern void as_edit(const char *path);
+extern int ctrl;
+extern int ext;
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -716,6 +718,8 @@ void shell(void)
 	for(;;)
 	{
 		shift = 0;
+		ctrl = 0;
+		ext = 0;
 		draw_tb();
 		as_pwd();
 		print("> ");
