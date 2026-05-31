@@ -499,7 +499,7 @@ void as_ls_path(const char *path)
 
 	if(as_nodes[n].type != AS_DIR)
 	{
-		print("Not a directory\n");
+		pred("Not a directory\n");
 		return;
 	}
 
@@ -617,5 +617,111 @@ int as_edit_prev_line(int n, int pos)
 	prev_start = as_edit_line_start(n, prev_end);
 	prev_len = prev_end - prev_start;
 
+	if(col > prev_len)
+		col = prev_len;
+
+	return prev_start + col;
+}
+
+int as_edit_next_line(int n, int pos)
+{
+	int start;
+        int col;
+        int next_start;
+        int next_end;
+        int next_len;
+
+	col = as_edit_col(n, pos);
+	end = as_edit_lime_end(n, pos);
+
+	if(end >= as_nodes[n].size)
+		return pos;
+
+	next_start = end + 1;
+	next_end = as_edit_line_end(n, next_start);
+	next_len = next_end - next_start;
+
+	if(col > next_len)
+		col = next_len;
+
+	return next_start + col;
+}
+
+void as_edit_cursor(int n, int pos)
+{
+	int i;
+
+	cx = 0;
+	cy = EDIT_TOP;
+
+	for(i = 0; i < pos; i++)
+	{
+		if(as_nodes[n].data[i] == '\n')
+		{
+			cx = 0;
+			cy ++;
+		}
+		else
+		{
+			cx++;
+
+			if(cx >= EDIT_W)
+			{
+				cx = 0;
+				cy++;
+			}
+		}
+	}
+
+	cursor_update();
+}
+
+void as_edit_redraw(int n, const char *path, int pos)
+{
+	clear();
+
+	print("EDITOR: ");
+	print(path);
+	print("\n\n");
+
+	print(as_nodes[n].data);
+
+	as_edit_cursor(n, pos);
+}
+
+void as_edit(const char *path)
+{
+	char parent_path[AS_NAME_MAX * 4];
+	char name[AS_NAME_MAX]
+	int parent;
+	int n;
+	int i;
+	int pos;
+	int c;
+	unsigned int oldcx;
+	unsigned int oldcy;
+	u8 color;
+
+	as_edit_save_screen(&oldcx, &oldcy, &oldcolor);
+
+	as_split_path(path, parent_path, name);
+
+	if(parent == -1)
+	{
+		as_edit_restore_screen(&oldcx, &oldcy, &oldcolor);
+		pred("Directory not found");
+		return;
+	}
+
+	if(as_nodes[parent].type != AS_DIR)
+	{
+		as_edit_restore_screen(&oldcx, &oldcy, &oldcolor);
+                pred("Not a directory");
+                return;
+	}
+
+	n = as_find_child(parent, name);
+
 //LEFT OFF HERE
 
+	if(n == 
