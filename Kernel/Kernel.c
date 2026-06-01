@@ -35,6 +35,8 @@ extern int ext;
 extern int as_get_file_data(const char *path, char **data, int *size);
 extern void pred(const char *s);
 extern void beep(u32 freq);
+extern void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor);
+extern void as_edit_restore_screen(unsigned int oldcx, unsigned int oldcy, u8 oldcolor);
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -58,7 +60,11 @@ const char *VERSION = "V0.2.2";
 unsigned int cx = 0;
 unsigned int cy = 0;
 unsigned int INPUT_MAX = 128;
+unsigned int raw = 0;
+unsigned int screen_saved = 0;
+
 u8 color = 0x0F;
+u8 defcolor = 0x1F;
 
 volatile u64 idle_ticks=0;
 volatile u64 total_ticks=1;
@@ -132,7 +138,6 @@ RTCDateTime rtc_get_datetime(void)
 void cursor_update(void)
 {//common cursor updater
 	u16 pos = cy * W + cx;
-
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, pos & 0xFF);
 	outb(0x3D4, 0x0E);
@@ -204,8 +209,20 @@ void scroll(void)
 	cy = H - 1;
 }
 
+void run_script(const char *path);
+void clear(void);
+
 void putc(char c)
 {//place character
+	int oldcx;
+	int oldcy;
+	u8 oldcolor;
+
+	if(raw == 1)
+	{
+		color = defcolor;
+	}
+
 	if(c == '\n')
 	{
 		cx = 0;
@@ -237,6 +254,21 @@ void putc(char c)
 	cursor_update();
 }
 
+void printx(uint32_t x)
+{//print a hexadecimal value
+        char hex[] = "0123456789ABCDEF";
+
+        putc('0');
+	putc('x');
+
+        for (int i = 28; i >= 0; i -= 4)
+        {
+                uint8_t digit = (x >> i) &  0xF;
+                putc(hex[digit]);
+        }
+}
+
+
 void print(const char *s)
 {//simplified putc funtion that prints strings
 	int i = 0;
@@ -246,6 +278,7 @@ void print(const char *s)
 		putc(s[i]);
 		i++;
 	}
+
 }
 
 void print2(u8 n)
@@ -309,19 +342,6 @@ void clear(void)
 	cx = 0;
 	cy = 1;
 	cursor_update();
-}
-
-void printx(uint32_t x)
-{//print a hexadecimal value
-	char hex[] = "0123456789ABCDEF";
-
-	print("0x");
-
-	for (int i = 28; i >= 0; i -= 4)
-	{
-		uint8_t digit = (x >> i) &  0xF;
-		putc(hex[digit]);
-	}
 }
 
 void printint(unsigned int n)
@@ -727,8 +747,6 @@ void trim_end(char *s)
 		i--;
 	}
 }
-
-void run_script(const char *path);
 
 void shell_exec(char *line)
 {

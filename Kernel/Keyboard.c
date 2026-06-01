@@ -25,6 +25,10 @@ extern void reset(void);
 extern int utilsMenu(void);
 extern void cpustat(void);
 extern void clear(void);
+extern unsigned int raw;
+extern void run_script(const char *path);
+extern void update_rtc_only(void);
+extern void draw_tb(void);
 
 static const char keymap[128] =
 {//allowed chars
@@ -60,6 +64,14 @@ int shift = 0;
 int ctrl = 0;
 int ext = 0;
 
+void clearet(void)
+{
+	clear();
+	draw_tb();
+	update_rtc_only();
+	run_script("/RunCmds.c");
+}
+
 static void HandleFn(u8 sc)
 {
 	switch(sc)
@@ -68,11 +80,13 @@ static void HandleFn(u8 sc)
 			helpMenu();
 			break;
 		case KEY_F2:
-			reset();
-                        break;
+			raw = 1;
+                        clearet();
+			break;
 		case KEY_F3:
-			utilsMenu();
-                        break;
+			raw = 0;
+                        clearet();
+			break;
 		case KEY_F4:
 			cpustat();
                         break;
