@@ -24,6 +24,7 @@ extern int helpMenu(void);
 extern void reset(void);
 extern int utilsMenu(void);
 extern void cpustat(void);
+extern void clear(void);
 
 static const char keymap[128] =
 {//allowed chars

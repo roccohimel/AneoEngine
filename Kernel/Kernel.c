@@ -34,6 +34,7 @@ extern int ctrl;
 extern int ext;
 extern int as_get_file_data(const char *path, char **data, int *size);
 extern void pred(const char *s);
+extern void beep(u32 freq);
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -52,7 +53,7 @@ const char *BAR1 = "====";
 const char *BAR2 = "===========================================================";
 
 //build information
-const char *VERSION = "V0.2.1";
+const char *VERSION = "V0.2.2";
 
 unsigned int cx = 0;
 unsigned int cy = 0;
@@ -488,6 +489,11 @@ void draw_tb(void)
 	color = oldcolor;
 }
 
+#define KEY_UP    1
+#define KEY_DOWN  2
+#define KEY_LEFT  3
+#define KEY_RIGHT 4
+
 void readline(char *buf, int max)
 {//read input
         int i = 0;
@@ -528,7 +534,39 @@ void readline(char *buf, int max)
                         continue;
                 }
 
-                if(i < max - 1)
+		if(c == KEY_UP)
+		{
+			cy--;
+			continue;
+		}
+
+		if(c == KEY_DOWN)
+		{
+			cy++;
+			continue;
+		}
+
+		if(c == KEY_LEFT)
+		{
+			cx--;
+			continue;
+		}
+
+		if(c == KEY_RIGHT)
+		{
+			cx++;
+			continue;
+		}
+
+		if(c == 12)
+		{
+			clear();
+			draw_tb();
+			update_rtc_only();
+			continue;
+		}
+
+		if(i < max - 1)
                 {
                         buf[i] = c;
                         i++;
@@ -728,6 +766,12 @@ void shell_exec(char *line)
 		run_script(line + 4);
 	else if(starts(line, "comment "))
                 comment(line + 8);
+	else if(starts(line, "beep "))
+                beep(atoi(line + 5) * 1000);
+	else if(starts(line, "sleep "))
+                beep(atoi(line + 6) * 1000);
+	else if(strcmp(line, "nosound") == 0)
+                nosound();
 	else if(starts(line, "cd "))
 	{
 		if(as_cd(line + 3) != 0)
@@ -797,7 +841,7 @@ void shell(void)
 		ext = 0;
 		draw_tb();
 		as_pwd();
-		print("> ");
+		print(">");
 		color = 0x1A;
 
 		readline(line, INPUT_MAX);
@@ -844,7 +888,7 @@ void kmain(void)
 	as_touch("Keymap.c");
 	as_write("Keymap.c", "static const char keymap[128] =\n{//allowed chars\n        0, 27, '1', '2', '3', '4', '5', '6',\n        '7', '8', '9', '0', '-', '=', '\\b', '\\t',\n        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',\n        'o', 'p', '[', ']', '\\n', 0, 'a', 's',\n        'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',\n        '\\'', '`', 0, '\\\\', 'z', 'x', 'c', 'v',\n        'b', 'n', 'm', ',', '.', '/', 0, '*',\n        0, ' ', 0\n};\n\nstatic const char shiftmap[128] =\n{//allowed chars when shift is pressed\n        0, 27, '!', '@', '#', '$', '%', '^',\n        '&', '*', '(', ')', '_', '+', '\\b', '\\t',\n        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',\n        'O', 'P', '{', '}', '\\n', 0, 'A', 'S',\n        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',\n        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V',\n        'B', 'N', 'M', '<', '>', '?', 0, '*',\n        0, ' ', 0\n};");
 	as_touch("Logo.TXT");
-	as_write("Logo.TXT", "---------------------        AneoEngine V0.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
+	as_write("Logo.TXT", "---------------------        AneoEngine V0.2.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
 	as_touch("RunCmds.c");
 	as_write("RunCmds.c", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment cat /Misc/Logo.TXT\ncat /Misc/Logo.TXT\ncd /Home\ncomment ls /Home\nls");
