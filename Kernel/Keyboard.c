@@ -29,6 +29,7 @@ extern unsigned int raw;
 extern void run_script(const char *path);
 extern void update_rtc_only(void);
 extern void draw_tb(void);
+extern int F4(void);
 
 static const char keymap[128] =
 {//allowed chars
@@ -60,6 +61,7 @@ int shift = 0;
 #define KEY_DOWN  2
 #define KEY_LEFT  3
 #define KEY_RIGHT 4
+#define ESC       27
 
 int ctrl = 0;
 int ext = 0;
@@ -88,7 +90,7 @@ static void HandleFn(u8 sc)
                         clearet();
 			break;
 		case KEY_F4:
-			cpustat();
+			F4();
                         break;
 		case KEY_F5:
                         print("This is the F5 key\n");
@@ -127,6 +129,11 @@ int getkey(void)
 		return 0;
 	}
 
+	if(sc == 0x01)
+	{
+		return ESC;
+	}
+
 	if(ext)
 	{
 		ext = 0;
@@ -139,7 +146,6 @@ int getkey(void)
 			return KEY_LEFT;
 		if(sc == 0x4D)
 			return KEY_RIGHT;
-
 		return 0;
 	}
 

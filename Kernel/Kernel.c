@@ -514,7 +514,7 @@ void draw_tb(void)
 #define KEY_LEFT  3
 #define KEY_RIGHT 4
 
-void readline(char *buf, int max)
+int readline(char *buf, int max)
 {//read input
         int i = 0;
         int c;
@@ -541,7 +541,7 @@ void readline(char *buf, int max)
                 {
                         buf[i] = 0;
                         putc('\n');
-                        return;
+                        return 0;
                 }
 
                 if(c == '\b')
@@ -593,6 +593,7 @@ void readline(char *buf, int max)
                         putc(c);
                 }
         }
+	return 0;
 }
 
 int starts(const char *s, const char *p)
@@ -838,7 +839,7 @@ void run_script(const char *path)
 	}
 }
 
-void shell(void)
+int shell(void)
 {//shell loop
 	char line[INPUT_MAX];
 	char *a;

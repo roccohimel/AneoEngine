@@ -1,12 +1,12 @@
 //Help menu
+#include <stdint.h>
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
 extern unsigned int INPUT_MAX;
 extern u8 color;
-extern const char *BAR1;
-extern const char *BAR2;
 extern unsigned int cy;
 extern unsigned int cx;
 extern void print(const char *s);
@@ -15,7 +15,6 @@ extern void clear(void);
 extern void readline(char *buf, int max);
 extern int strcmp(const char *a, const char *b);
 extern void info(void);
-extern void rtc_print_datetime(void);
 extern void draw_tb(void);
 extern void comment(const char *s);
 extern void as_cat(const char *name);
@@ -51,7 +50,7 @@ int helpMenu(void)
 
 		draw_tb();
 		color = oldcolor;
-		print("Help> ");
+		print("Help>");
 		color = 0x1A;
 		readline(line, INPUT_MAX);
 		color = oldcolor;
