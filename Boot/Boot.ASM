@@ -180,7 +180,7 @@ track  db 0
 spt   db 18
 heads db 2
 
-msg_boot   db 13,10,13,10,13,10,13,10,"AneoEngine Boot Loader",13,10,0
+msg_boot   db 13,10,13,10,13,10,13,10,"AneoEngine Boot Loader",13,10,"Searching kernel from CD-ROM...",13,10,0
 msg_loaded db "Kernel found...",13,10,0
 msg_prompt db 13,10,"Press any key to continue...",13,10,0
 msg_disk   db "Kernel read error!",13,10,0

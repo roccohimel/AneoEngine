@@ -121,8 +121,11 @@ echo "[*] Counting lines per file... "
 git ls-files | grep '\.c' | xargs wc -l
 git ls-files | grep '\.ASM' | xargs wc -l
 
-echo "[ASM] Assembling bootloader..."
+echo "[ASM] Assembling ISO9660 bootloader..."
 nasm -f bin Boot/Boot.ASM -o Boot/AEBOOT.BIN
+
+echo "[ASM] Assembling AEBOOT floppy image bootloader..."
+nasm -f bin Boot/FIBoot.ASM -o Boot/FIAEBOOT.BIN
 
 echo "[ASM] Assembling kernel entry point..."
 nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
@@ -173,20 +176,30 @@ $CC -c Utils/Printer.c -o Printer.o
 echo "[LD] Creating kernel binary..."
 ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary KEntry.o Kernel.o AnchorSand.o PIT.o Haltage.o Keyboard.o Startup.o IDT.o ISR.o HelpMenu.o Addr.o F4.o UtilsMenu.o Printer.o Entropy.o UtilsList.o -o Boot/KERNEL.BIN
 
-echo "[DD] Initializing AneoEngine CDROM image"
-dd if=/dev/zero of=AneoEngine.ISO bs=512 count=2880
+echo "[DD] Initializing AneoEngine floppy image"
+rm *.ISO
+dd if=/dev/zero of=AneoEngine.IMG bs=512 count=2880
 
-echo "[DD] Adding bootloader to 'AneoEngine.ISO'"
-dd if=Boot/AEBOOT.BIN of=AneoEngine.ISO conv=notrunc
+echo "[DD] Adding ISO9660 bootloader to 'AneoEngine.IMG'"
+dd if=Boot/AEBOOT.BIN of=AneoEngine.IMG conv=notrunc
 
-echo "[DD] Adding kernel to 'AneoEngine.ISO'..."
-dd if=Boot/KERNEL.BIN of=AneoEngine.ISO bs=512 seek=1 conv=notrunc
+echo "[DD] Adding kernel to 'AneoEngine.IMG'..."
+dd if=Boot/KERNEL.BIN of=AneoEngine.IMG bs=512 seek=1 conv=notrunc
+
+echo "[ISO] Building bootable CD-ROM image..."
+genisoimage \
+	-o AneoEngine.ISO \
+	-b AneoEngine.IMG \
+	-c Boot.CAT \
+	.
+
+echo "[DD] Patching AEBOOT floppy image bootloader boot sector into ISO..."
+dd if=Boot/FIAEBOOT.BIN of=AneoEngine.ISO bs=512 count=1 conv=notrunc
 
 echo "[*] Removing trash..."
-rm *.o
+
+rm -f *.o
 
 echo "[+] Done!"
 echo "[*] Running 'AneoEngine.ISO'..."
-qemu-system-x86_64 -fda AneoEngine.ISO
-
-
+qemu-system-x86_64 -cdrom AneoEngine.ISO
