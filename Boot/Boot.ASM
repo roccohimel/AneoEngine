@@ -26,6 +26,8 @@ start:
 
 	mov si, msg_boot
 	call print16
+	mov si, msg_type
+	call print16
 
 	call enable_a20
 	call load_kernel
@@ -181,6 +183,7 @@ spt   db 18
 heads db 2
 
 msg_boot   db 13,10,13,10,13,10,13,10,"AneoEngine Boot Loader",13,10,0
+msg_type   db "Reading kernel from CD-ROM...",13,10,0
 msg_loaded db "Kernel found...",13,10,0
 msg_prompt db 13,10,"Press any key to continue...",13,10,0
 msg_disk   db "Kernel read error!",13,10,0
