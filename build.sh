@@ -127,13 +127,19 @@ build()
 	nasm -f bin Boot/FIBoot.ASM -o Boot/FIAEBOOT.BIN
 
 	echo "[ASM] Assembling kernel entry point..."
-	nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
+	nasm -f elf32 Kernel/DiskThunk.ASM -o DiskThunk.o
 
 	echo "[CC] Compiling kernel..."
 	$CC -c Kernel/Kernel.c -o Kernel.o
 
 	echo "[CC] Compiling AnchorSand..."
 	$CC -c Kernel/AnchorSand.c -o AnchorSand.o
+
+	echo "[ASM] Assembling AnchorSand disk drivers..."
+	nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
+
+	echo "[CC] Compiling AnchorSand disk save funtions..."
+        $CC -c Kernel/FSSave.c -o FSSave.o
 
 	echo "[CC] Compiling PIT functions..."
 	$CC -c Kernel/PIT.c -o PIT.o
@@ -177,6 +183,8 @@ build()
 		KEntry.o \
 		Kernel.o \
 		AnchorSand.o \
+		DiskThunk.o \
+		FSSave.o \
 		PIT.o \
 		Haltage.o \
 		Keyboard.o \
@@ -199,20 +207,20 @@ build()
 	rm *.ISO
 
 	echo "[DD] Initializing AneoEngine floppy disk image..."
-	dd if=/dev/zero of=AneoEngine.IMG bs=512 count=2880
+	dd if=/dev/zero of=Boot/AneoEngine.IMG bs=512 count=2880
 
 	echo "[DD] Adding bootloader to 'AneoEngine.IMG'..."
-	dd if=Boot/AEBOOT.BIN of=AneoEngine.IMG conv=notrunc
+	dd if=Boot/AEBOOT.BIN of=Boot/AneoEngine.IMG conv=notrunc
 
 	echo "[DD] Adding kernel to 'AneoEngine.IMG'..."
-	dd if=Boot/KERNEL.BIN of=AneoEngine.IMG bs=512 seek=1 conv=notrunc
+	dd if=Boot/KERNEL.BIN of=Boot/AneoEngine.IMG bs=512 seek=1 conv=notrunc
 
 	genisoimage \
 		-V "AneoEngine Media" \
 		-o AneoEngine.ISO \
 		-b AneoEngine.IMG \
 		-c Boot.CAT \
-		.
+		Boot
 
 	echo "[DD] Patching floppy disk/USB bootloader boot sector into ISO..."
 	dd if=Boot/FIAEBOOT.BIN of=AneoEngine.ISO bs=512 count=1 conv=notrunc

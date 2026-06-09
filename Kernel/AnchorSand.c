@@ -13,6 +13,9 @@ extern unsigned int cy;
 extern int shift;
 extern void cursor_update(void);
 extern void clear(void);
+extern int as_save_to_disk(void);
+
+unsigned int saveit = 0;
 
 #define AS_MAX_NODES	64
 #define AS_NAME_MAX	32
@@ -119,7 +122,6 @@ void as_init()
 	printint(AS_NAME_MAX);
 	print("\nAS_DATA_MAX=");
 	printint(AS_DATA_MAX);
-	print("\nIf you have file listing issues, ajust these settings.\n\n");
 	for(i = 0; i < AS_MAX_NODES; i++)
 		as_nodes[i].used = 0;
 
@@ -277,6 +279,9 @@ int as_mkdir_at(int parent, const char *name)
 	as_nodes[n].parent = parent;
 	as_strcpy(as_nodes[n].name, name);
 
+	if(saveit == 1)
+		as_save_to_disk();
+
 	return 0;
 }
 
@@ -301,6 +306,9 @@ int as_touch_at(int parent, const char *name)
 	as_nodes[n].parent = parent;
 	as_strcpy(as_nodes[n].name, name);
 	as_nodes[n].data[0] = 0;
+
+	if(saveit == 1)
+                as_save_to_disk();
 
 	return 0;
 }
@@ -379,6 +387,9 @@ int as_write(const char *path, const char *text)
 
 	as_nodes[n].data[i] = 0;
 	as_nodes[n].size = i;
+
+	if(saveit == 1)
+                as_save_to_disk();
 
 	return 0;
 }
@@ -558,6 +569,22 @@ void as_pwd()
 
 u16 edit_saved_vga[EDIT_W * EDIT_H];
 
+int as_edit_line_of_pos(int n, int pos)
+{
+	int i;
+	int line;
+
+	line = 0;
+
+	for(i = 0; i < pos && i < as_nodes[n].size; i++)
+	{
+		if(as_nodes[n].data[i] == '\n')
+			line++;
+	}
+
+	return line;
+}
+
 void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor)
 {
 	int i;
@@ -675,38 +702,44 @@ int as_edit_next_line(int n, int pos)
 	return next_start + col;
 }
 
-void as_edit_cursor(int n, int pos)
+void as_edit_cursor(int n, int pos, int scroll)
 {
 	int i;
+	int x;
+	int y;
+	int line;
 
-	cx = 0;
-	cy = EDIT_TOP;
+	x = 0;
+	y = EDIT_TOP;
+	line = 0;
 
 	for(i = 0; i < pos; i++)
 	{
 		if(as_nodes[n].data[i] == '\n')
 		{
-			cx = 0;
-			cy++;
+			line++;
+			x = 0;
 		}
 		else
 		{
-			cx++;
+			x++;
 
-			if(cx >= EDIT_W)
+			if(x >= EDIT_W)
 			{
-				cx = 0;
-				cy++;
+				x = 0;
+				line++;
 			}
 		}
-
-		if(cy >= EDIT_H)
-		{
-			cy = EDIT_H - 1;
-			cx = EDIT_W - 1;
-			break;
-		}
 	}
+
+	cx = x;
+	cy = EDIT_TOP + (line - scroll);
+
+	if(cy < EDIT_TOP)
+		cy = EDIT_TOP;
+
+	if(cy >= EDIT_H)
+		cy = EDIT_H - 1;
 
 	cursor_update();
 }
@@ -723,42 +756,46 @@ void as_edit_draw_header(const char *path)
 	print("\n\n");
 }
 
-void as_edit_redraw(int n, const char *path, int pos)
+void as_edit_redraw(int n, const char *path, int pos, int scroll)
 {
 	int i;
 	int x;
 	int y;
+	int line;
 
 	as_edit_draw_header(path);
 	as_edit_clear_editor_area();
 
 	x = 0;
-	y = EDIT_TOP;
+	line = 0;
 
 	for(i = 0; i < as_nodes[n].size; i++)
 	{
+		y = EDIT_TOP + (line - scroll);
+
 		if(as_nodes[n].data[i] == '\n')
 		{
 			x = 0;
-			y++;
+			line++;
+			continue;
 		}
-		else
-		{
+
+		if(y >= EDIT_TOP && y < EDIT_H)
 			as_edit_put_at(x, y, as_nodes[n].data[i], color);
-			x++;
 
-			if(x >= EDIT_W)
-			{
-				x = 0;
-				y++;
-			}
+		x++;
+
+		if(x >= EDIT_W)
+		{
+			x = 0;
+			line++;
 		}
 
-		if(y >= EDIT_H)
+		if(y >= EDIT_H && line > scroll + EDIT_H)
 			break;
 	}
 
-	as_edit_cursor(n, pos);
+	as_edit_cursor(n, pos, scroll);
 }
 
 void as_edit_insert(int n, int *pos, int c)
@@ -816,6 +853,24 @@ void as_edit_restore_file(int n, char *olddata, int oldsize)
 	as_nodes[n].data[as_nodes[n].size] = 0;
 }
 
+void as_edit_fix_scroll(int n, int pos, int *scroll)
+{
+	int cursor_line;
+	int visible_lines;
+
+	cursor_line = as_edit_line_of_pos(n, pos);
+	visible_lines = EDIT_H - EDIT_TOP;
+
+	if(cursor_line < *scroll)
+		*scroll = cursor_line;
+
+	if(cursor_line >= *scroll + visible_lines)
+		*scroll = cursor_line - visible_lines + 1;
+
+	if(*scroll < 0)
+		*scroll = 0;
+}
+
 void as_edit(const char *path)
 {
 	char parent_path[AS_NAME_MAX * 4];
@@ -829,6 +884,7 @@ void as_edit(const char *path)
 	int i;
 	int pos;
 	int c;
+	int scroll;
 
 	unsigned int oldcx;
 	unsigned int oldcy;
@@ -880,8 +936,10 @@ void as_edit(const char *path)
 		olddata[i] = as_nodes[n].data[i];
 
 	pos = as_nodes[n].size;
+	scroll = 0;
 
-	as_edit_redraw(n, path, pos);
+	as_edit_fix_scroll(n, pos, &scroll);
+	as_edit_redraw(n, path, pos, scroll);
 
 	for(;;)
 	{
@@ -893,6 +951,10 @@ void as_edit(const char *path)
 		if(c == 19)
 		{
 			as_edit_restore_screen(oldcx, oldcy, oldcolor);
+
+			if(saveit == 1)
+				as_save_to_disk();
+
 			return;
 		}
 
@@ -908,7 +970,8 @@ void as_edit(const char *path)
 			if(pos > 0)
 				pos--;
 
-			as_edit_cursor(n, pos);
+			as_edit_fix_scroll(n, pos, &scroll);
+			as_edit_redraw(n, path, pos, scroll);
 			continue;
 		}
 
@@ -917,36 +980,44 @@ void as_edit(const char *path)
 			if(pos < as_nodes[n].size)
 				pos++;
 
-			as_edit_cursor(n, pos);
+			as_edit_fix_scroll(n, pos, &scroll);
+			as_edit_redraw(n, path, pos, scroll);
 			continue;
 		}
 
 		if(c == EDIT_KEY_UP)
 		{
 			pos = as_edit_prev_line(n, pos);
-			as_edit_cursor(n, pos);
+
+			as_edit_fix_scroll(n, pos, &scroll);
+			as_edit_redraw(n, path, pos, scroll);
 			continue;
 		}
 
 		if(c == EDIT_KEY_DOWN)
 		{
 			pos = as_edit_next_line(n, pos);
-			as_edit_cursor(n, pos);
+
+			as_edit_fix_scroll(n, pos, &scroll);
+			as_edit_redraw(n, path, pos, scroll);
 			continue;
 		}
 
 		if(c == '\b')
 		{
 			as_edit_backspace(n, &pos);
-			as_edit_redraw(n, path, pos);
+
+			as_edit_fix_scroll(n, pos, &scroll);
+			as_edit_redraw(n, path, pos, scroll);
 			continue;
 		}
 
 		as_edit_insert(n, &pos, c);
-		as_edit_redraw(n, path, pos);
+
+		as_edit_fix_scroll(n, pos, &scroll);
+		as_edit_redraw(n, path, pos, scroll);
 	}
 }
-
 int as_get_file_data(const char *path, char **data, int *size)
 {
 	int n;
@@ -963,4 +1034,51 @@ int as_get_file_data(const char *path, char **data, int *size)
 	*size = as_nodes[n].size;
 
 	return 0;
+}
+
+void as_rm_recursive(int node)
+{
+	int i;
+
+	if (!as_nodes[node].used)
+		return;
+
+	/* Delete children first if directory */
+	if (as_nodes[node].type == AS_DIR)
+	{
+		for (i = 0; i < AS_MAX_NODES; i++)
+		{
+			if (as_nodes[i].used && as_nodes[i].parent == node)
+				as_rm_recursive(i);
+		}
+	}
+
+	as_nodes[node].used = 0;
+	as_nodes[node].size = 0;
+	as_nodes[node].name[0] = 0;
+	as_nodes[node].data[0] = 0;
+	as_nodes[node].parent = -1;
+}
+
+void as_rm(char *name)
+{
+	int i;
+
+	for (i = 0; i < AS_MAX_NODES; i++)
+	{
+		if (as_nodes[i].used &&
+		    as_nodes[i].parent == as_cwd &&
+		    as_streq(as_nodes[i].name, name))
+		{
+			as_rm_recursive(i);
+			if(saveit == 1)
+		                as_save_to_disk();
+			print("Removed: ");
+			print(name);
+			print("\n");
+			return;
+		}
+	}
+
+	print("rm: not found\n");
 }

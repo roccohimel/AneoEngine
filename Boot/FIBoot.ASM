@@ -5,7 +5,7 @@ KERNEL_OFFSET  equ 0x10000
 KERNEL_SEGMENT equ 0x1000
 KERNEL_SECTORS equ 128
 
-FLOPPY_KERNEL_LBA equ 241
+FLOPPY_KERNEL_LBA equ 105
 
 start:
 	cli
@@ -18,6 +18,7 @@ start:
 	sti
 
 	mov [BOOT_DRIVE], dl
+	mov [0x0500], dl
 
 	mov ax, 0x0003
 	int 0x10

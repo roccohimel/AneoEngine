@@ -20,6 +20,7 @@ extern void indprintad(const char *s, uint32_t x);
 extern void indprintadocu(const char *s, uint32_t x1, uint32_t x2);
 extern u8 inb(u16 port);
 extern void as_init();
+extern int as_load_from_disk(void);
 
 //Addresses not involved in boot
 uint32_t IVT_START = 0x0;

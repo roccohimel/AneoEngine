@@ -5,3 +5,4 @@ cat /Misc/Logo.TXT
 cd /Home
 comment ls /Home
 ls
+comment Run "install" to install to current disk.

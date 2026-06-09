@@ -37,6 +37,11 @@ extern void pred(const char *s);
 extern void beep(u32 freq);
 extern void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor);
 extern void as_edit_restore_screen(unsigned int oldcx, unsigned int oldcy, u8 oldcolor);
+extern int as_save_to_disk(void);
+extern int as_load_from_disk(void);
+extern void as_rm(char *name);
+extern void as_rm_recursive(int node);
+extern unsigned int saveit;
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -279,6 +284,19 @@ void print(const char *s)
 		i++;
 	}
 
+}
+
+void ata_debug(void) {
+	u8 s = inb(0x1F7);
+
+	print("ATA status: ");
+
+	if (s == 0xFF)
+		print("no ATA bus / floating\n");
+	else if (s == 0x00)
+		print("no drive ready\n");
+	else
+		print("some ATA device exists\n");
 }
 
 void print2(u8 n)
@@ -749,10 +767,28 @@ void trim_end(char *s)
 	}
 }
 
+void install(void)
+{
+	as_cd("/");
+
+	print("[*] Removing /RunCmds.c\n");
+	as_rm("RunCmds.c");
+
+	print("[*] Creating /RunCmds.c\n");
+	as_touch("RunCmds.c");
+
+	print("[*] Writing to /RunCmds.c\n");
+	as_write("RunCmds.c", "cd /Home\nls\nsaveity");
+
+	print("[*] Saving to disk...\n");
+	as_save_to_disk();
+
+	print("[!] Done! Please reboot the machine.\n");
+}
+
 void shell_exec(char *line)
 {
 	color = 0x1F;
-
 	if(strcmp(line, "cls") == 0)
 		clear();
 	else if(strcmp(line, "help") == 0)
@@ -786,11 +822,89 @@ void shell_exec(char *line)
 	else if(starts(line, "comment "))
                 comment(line + 8);
 	else if(starts(line, "beep "))
-                beep(atoi(line + 5) * 1000);
+                beep(atoi(line + 5));
 	else if(starts(line, "sleep "))
-                beep(atoi(line + 6) * 1000);
+                sleep(atoi(line + 6));
 	else if(strcmp(line, "nosound") == 0)
                 nosound();
+	else if(strcmp(line, "save") == 0)
+		as_save_to_disk();
+	else if(strcmp(line, "load") == 0)
+		as_load_from_disk();
+	else if(strcmp(line, "atadbg") == 0)
+		ata_debug();
+	else if(starts(line, "rm "))
+		as_rm(line + 3);
+	else if(strcmp(line, "saveity") == 0)
+		saveit = 1;
+	else if(strcmp(line, "saveitn") == 0) 
+                saveit = 0;
+	else if(strcmp(line, "install") == 0)
+                install();
+	else if(starts(line, "print "))
+        {
+                u8 oldcolor = color;
+                color = defcolor;
+
+                print(line + 6);
+
+                color = oldcolor;
+        }
+
+        else if(starts(line, "printg "))
+        {
+                u8 oldcolor = color;
+                color = 0x1A;
+
+                print(line + 7);
+
+                color = oldcolor;
+        }
+
+        else if(starts(line, "printr "))
+        {
+                u8 oldcolor = color;
+                color = 0x1C;
+
+                print(line + 7);
+
+                color = oldcolor;
+        }
+
+
+	else if(starts(line, "printn "))
+	{
+	        u8 oldcolor = color;
+	        color = defcolor;
+
+		print(line + 7);
+		putc('\n');
+
+		color = oldcolor;
+	}
+
+	else if(starts(line, "printng "))
+        {
+                u8 oldcolor = color;
+                color = 0x1A;
+
+                print(line + 8);
+                putc('\n');
+
+                color = oldcolor;
+        }
+
+	else if(starts(line, "printnr "))
+        {
+                u8 oldcolor = color;
+                color = 0x1C;
+
+                print(line + 8);
+                putc('\n');
+
+                color = oldcolor;
+        }
+
 	else if(starts(line, "cd "))
 	{
 		if(as_cd(line + 3) != 0)
@@ -852,6 +966,9 @@ int shell(void)
         nosound();
 
 	draw_tb();
+	print("Loading files...\n");
+	update_rtc_only();
+	as_load_from_disk();
 	run_script("/RunCmds.c");
 	for(;;)
 	{
@@ -910,7 +1027,7 @@ void kmain(void)
 	as_write("Logo.TXT", "---------------------        AneoEngine V0.2.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
 	as_touch("RunCmds.c");
-	as_write("RunCmds.c", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment cat /Misc/Logo.TXT\ncat /Misc/Logo.TXT\ncd /Home\ncomment ls /Home\nls");
+	as_write("RunCmds.c", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment cat /Misc/Logo.TXT\ncat /Misc/Logo.TXT\ncd /Home\ncomment ls /Home\nls\ncomment Run \"install\" to install to current disk.");
 	/* ANCHORSAND SEED END */
 	shell();
 }

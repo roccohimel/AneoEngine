@@ -16,6 +16,7 @@ start:
 	sti
 
 	mov [BOOT_DRIVE], dl
+	mov [0x0500], dl
 
 	mov ax, 0x0003
 	int 0x10
