@@ -1,0 +1,131 @@
+//Jeopardy Theme Song
+//Performed by Rocco Himel
+print It's fi
+beep 750
+sleep 1000
+print nal
+beep 1000
+sleep 1000
+print  Jeo
+beep 750
+sleep 1000
+print par
+beep 500
+sleep 500
+print dy
+beep 500
+sleep 500
+print , and what
+beep 750
+sleep 1000
+print  do I
+beep 1000
+sleep 1000
+printn  do?
+beep 750
+sleep 1000
+nosound
+//first pause
+sleep 1000
+print The o
+beep 750
+sleep 1000
+print thers
+beep 1000
+sleep 1000
+print  are
+beep 750
+sleep 1000
+print  writing
+beep 1000
+sleep 1000
+print  but
+beep 1250
+sleep 250
+print .
+sleep 250
+print .
+sleep 250
+print .
+sleep 250
+print .
+sleep 250
+print .
+//go down part
+print I
+beep 1050
+sleep 500
+print  don't
+beep 1000
+sleep 500
+print  have 
+beep 900
+sleep 500
+print  a
+beep 800
+sleep 500
+printn  clue.
+beep 700
+sleep 500
+//next part
+print They
+beep 750
+sleep 1000
+print  say
+beep 1000
+sleep 1000
+printg  pride
+beep 750
+sleep 1000
+print  comes
+beep 500
+sleep 500
+print  be
+beep 500
+sleep 500
+print fore
+beep 750
+sleep 1000
+print  the
+beep 1000
+sleep 1000
+printr  fall
+printn .
+beep 750
+sleep 1000
+nosound
+//second pause
+sleep 1000
+//next part
+print Why
+beep 1000
+sleep 500
+nosound
+sleep 1000
+print , oh why
+beep 900
+sleep 500
+print  did
+beep 750
+sleep 500
+nosound
+sleep 500
+printn  I
+beep 700
+sleep 1000
+printr bet
+beep 600
+sleep 500
+nosound
+sleep 1000
+printr  it
+beep 550
+sleep 500
+nosound
+sleep 1000
+printnr  all?
+beep 500
+sleep 500
+nosound
+//do not delete this
+nosound

@@ -42,6 +42,8 @@ extern int as_load_from_disk(void);
 extern void as_rm(char *name);
 extern void as_rm_recursive(int node);
 extern unsigned int saveit;
+extern int as_cp(const char *src_path, const char *dst_path);
+extern int as_mv(const char *src_path, const char *dst_path);
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -786,8 +788,33 @@ void install(void)
 	print("[!] Done! Please reboot the machine.\n");
 }
 
+void as_two_args(const char *s, char *a, char *b)
+{
+	int i = 0;
+	int j = 0;
+
+	while(*s == ' ')
+		s++;
+
+	while(*s && *s != ' ')
+		a[i++] = *s++;
+
+	a[i] = 0;
+
+	while(*s == ' ')
+		s++;
+
+	while(*s && *s != ' ')
+		b[j++] = *s++;
+
+	b[j] = 0;
+}
+
 void shell_exec(char *line)
 {
+	char arg1[INPUT_MAX];
+	char arg2[INPUT_MAX];
+
 	color = 0x1F;
 	if(strcmp(line, "cls") == 0)
 		clear();
@@ -841,6 +868,17 @@ void shell_exec(char *line)
                 saveit = 0;
 	else if(strcmp(line, "install") == 0)
                 install();
+	else if(starts(line, "cp "))
+	{
+		as_two_args(line + 3, arg1, arg2);
+		as_cp(arg1, arg2);
+	}
+
+	else if(starts(line, "mv "))
+	{
+		as_two_args(line + 3, arg1, arg2);
+		as_mv(arg1, arg2);
+	}
 	else if(starts(line, "print "))
         {
                 u8 oldcolor = color;
@@ -1000,6 +1038,16 @@ void kmain(void)
 	as_write("FAQ.TXT", ">Why do you use your own license? Why not use the MIT License, Apache License,\n        or even the GNU GPL? Why would I use someone else's license when I\n        can build my own? After all, a project that is hand-crafted from\n        scratch should also have a license that is also hand-crafted from\n        scratch. I also think that yes, the GPL does already have what mine\n        does, but it feels better comming from my words, because they're mine.\n\n>Is it really built from scratch? You used GNU compilers, linkers, and\n        assemblers, that arent yours. Technically, you would be incorrect. The\n        operating system, including the boot loader and kernel, is built from\n        scratch. I used standard C and standard ASM. However, I never said I\n        made the build tools from scratch.\n\n>What operating system do you use daily?\n        Currently, I use Debian GNU/Linux 13.4 with the XFCE 4 desktop\n        enviornment. I run it both on my Intel Xeon E3-1230 v6 desktop, and my\n        AMD Ryzen 5 4650U laptop (Lenovo Thinkpad E14 Gen2)\n\n>Why do you use capital letters for your source file names?\n        Because thats what they start with, I give my kernel respect.");
 	as_touch("LICENSE");
 	as_write("LICENSE", "AneoEngine License V1.1\n\n28 May, 2026\nCopyright (C) 2026 Rocco Himel, All Rights Reserved.\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. The contents of the /docs directory are excluded\n   from this license. No permission is granted to\n   copy, modify, distribute, mirror, republish, or\n   otherwise redistribute any files contained within\n   the /docs directory without prior written\n   permission from the copyright holder.\n\n9. You shall NOT call or classify your copy of the \n   Software as official.\n\n10. Any redistributed version of the Software must\n    remain licensed under the AneoEngine License\n    version under which it was received, or a later\n    official version of the AneoEngine License.\n\n11. You shall not intentionally submit, promote,\n    request indexing of, or otherwise cause any\n    redistributed or modified copy of the Software\n    to be indexed by search engines. Only the\n    official AneoEngine project may be intentionally\n    indexed.\n\n12. You shall not redistribute the Software under\n    any license other than the AneoEngine License\n    V1.1.");
+	as_cd("..");
+	as_mkdir("Everist");
+	as_cd("Everist");
+	as_mkdir("Music");
+	as_cd("Music");
+	as_touch("0_0Note.TXT");
+	as_write("0_0Note.TXT", "All of these files can be played!\nJust press F4 followed by the song or tune\nyou want to play.");
+	as_touch("0_Jeopardy");
+	as_write("0_Jeopardy", "//Jeopardy Theme Song\n//Performed by Rocco Himel\nprint It's fi\nbeep 750\nsleep 1000\nprint nal\nbeep 1000\nsleep 1000\nprint  Jeo\nbeep 750\nsleep 1000\nprint par\nbeep 500\nsleep 500\nprint dy\nbeep 500\nsleep 500\nprint , and what\nbeep 750\nsleep 1000\nprint  do I\nbeep 1000\nsleep 1000\nprintn  do?\nbeep 750\nsleep 1000\nnosound\n//first pause\nsleep 1000\nprint The o\nbeep 750\nsleep 1000\nprint thers\nbeep 1000\nsleep 1000\nprint  are\nbeep 750\nsleep 1000\nprint  writing\nbeep 1000\nsleep 1000\nprint  but\nbeep 1250\nsleep 250\nprint .\nsleep 250\nprint .\nsleep 250\nprint .\nsleep 250\nprint .\nsleep 250\nprint .\n//go down part\nprint I\nbeep 1050\nsleep 500\nprint  don't\nbeep 1000\nsleep 500\nprint  have \nbeep 900\nsleep 500\nprint  a\nbeep 800\nsleep 500\nprintn  clue.\nbeep 700\nsleep 500\n//next part\nprint They\nbeep 750\nsleep 1000\nprint  say\nbeep 1000\nsleep 1000\nprintg  pride\nbeep 750\nsleep 1000\nprint  comes\nbeep 500\nsleep 500\nprint  be\nbeep 500\nsleep 500\nprint fore\nbeep 750\nsleep 1000\nprint  the\nbeep 1000\nsleep 1000\nprintr  fall\nprintn .\nbeep 750\nsleep 1000\nnosound\n//second pause\nsleep 1000\n//next part\nprint Why\nbeep 1000\nsleep 500\nnosound\nsleep 1000\nprint , oh why\nbeep 900\nsleep 500\nprint  did\nbeep 750\nsleep 500\nnosound\nsleep 500\nprintn  I\nbeep 700\nsleep 1000\nprintr bet\nbeep 600\nsleep 500\nnosound\nsleep 1000\nprintr  it\nbeep 550\nsleep 500\nnosound\nsleep 1000\nprintnr  all?\nbeep 500\nsleep 500\nnosound\n//do not delete this\nnosound");
+	as_cd("..");
 	as_cd("..");
 	as_mkdir("Help");
 	as_cd("Help");

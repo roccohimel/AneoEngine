@@ -1082,3 +1082,136 @@ void as_rm(char *name)
 
 	print("rm: not found\n");
 }
+
+int as_path_parent_name(const char *path, int *parent, char *name)
+{
+	char parent_path[AS_NAME_MAX * 4];
+
+	as_split_path(path, parent_path, name);
+
+	if(!name[0])
+		return -1;
+
+	*parent = as_resolve(parent_path);
+
+	if(*parent == -1)
+		return -1;
+
+	if(as_nodes[*parent].type != AS_DIR)
+		return -1;
+
+	return 0;
+}
+
+int as_copy_node_recursive(int src, int dst_parent, const char *newname)
+{
+	int n;
+	int i;
+
+	if(as_find_child(dst_parent, newname) != -1)
+		return -1;
+
+	n = as_alloc();
+
+	if(n == -1)
+		return -1;
+
+	as_nodes[n] = as_nodes[src];
+	as_nodes[n].parent = dst_parent;
+	as_strcpy(as_nodes[n].name, newname);
+
+	if(as_nodes[src].type == AS_DIR)
+	{
+		for(i = 0; i < AS_MAX_NODES; i++)
+		{
+			if(as_nodes[i].used && as_nodes[i].parent == src && i != src)
+			{
+				if(as_copy_node_recursive(i, n, as_nodes[i].name) != 0)
+					return -1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+int as_cp(const char *src_path, const char *dst_path)
+{
+	int src;
+	int dst_parent;
+	char dst_name[AS_NAME_MAX];
+
+	src = as_resolve(src_path);
+
+	if(src == -1)
+	{
+		pred("cp: source not found\n");
+		return -1;
+	}
+
+	if(src == 0)
+	{
+		pred("cp: cannot copy root\n");
+		return -1;
+	}
+
+	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0)
+	{
+		pred("cp: bad destination\n");
+		return -1;
+	}
+
+	if(as_copy_node_recursive(src, dst_parent, dst_name) != 0)
+	{
+		pred("cp: failed\n");
+		return -1;
+	}
+
+	if(saveit == 1)
+		as_save_to_disk();
+
+	return 0;
+}
+
+int as_mv(const char *src_path, const char *dst_path)
+{
+	int src;
+	int dst_parent;
+	char dst_name[AS_NAME_MAX];
+
+	src = as_resolve(src_path);
+
+	if(src == -1)
+	{
+		pred("mv: source not found\n");
+		return -1;
+	}
+
+	if(src == 0)
+	{
+		pred("mv: cannot move root\n");
+		return -1;
+	}
+
+	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0)
+	{
+		pred("mv: bad destination\n");
+		return -1;
+	}
+
+	if(as_find_child(dst_parent, dst_name) != -1)
+	{
+		pred("mv: destination exists\n");
+		return -1;
+	}
+
+	as_nodes[src].parent = dst_parent;
+	as_strcpy(as_nodes[src].name, dst_name);
+
+	if(saveit == 1)
+		as_save_to_disk();
+
+	return 0;
+}
+
+
