@@ -1,21 +1,63 @@
-                   The AneoEngine Operating System
+# The AneoEngine Operating System
 
-Please read the LICENSE before software redistribution.
+A small, hand-written **32-bit x86 operating system** that boots from BIOS,
+enters protected mode, and gives you a text-mode shell with its own
+filesystem. Built from scratch in freestanding C and NASM — no libc, no
+standard library. Read the [LICENSE](LICENSE) before redistributing.
 
-You can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.
-You can also boot it via virtual machine as long as yours supports
-floppy disc drives, which most of them do. I recommend QEMU since you
-are not installing anything, AneoEngine is a live image.
+## What it is
 
-AneoEngine is supported by any 32-bit CPU, any 64-bit CPU that supports
-Legacy BIOS boot will also run AneoEngine. ARM-64 and RISC-V are not
-supported.
+AneoEngine is a **single-task, ring-0 kernel** (~4,800 lines) with:
 
-AneoEngine requires ar least 512 megabytes of RAM.
+- A two-stage **BIOS bootloader** (CHS for CD/floppy, LBA for HDD/USB)
+  that enables A20, sets up a GDT, and drops into 32-bit protected mode.
+- An **IDT + ISR crash handler** that reports CPU exceptions
+  (divide-by-zero, GPF, page fault, …) with a full register dump.
+- A custom in-RAM **filesystem called AnchorSand**: a tree of up to 64
+  nodes with 4 KB files, `ls`/`cd`/`cat`/`edit`/`cp`/`mv`/`rm`, and a
+  built-in full-screen text editor.
+- A **shell that is also a scripting language** — `run <file>` executes
+  stored programs (the bundled "Jeopardy" file plays a song).
+- **Disk persistence** via a 32-bit ↔ real-mode BIOS thunk
+  (`INT 13h` LBA read/write). AnchorSand does **not** use FAT12/FAT32.
 
-AneoEngine files are initialized via the official shell script which
-scans files from the "Root" folder in the AneoEngine source code,
-and makes AnchorSand commands of them and puts them into kmain. I know
-this sounds inefficient, but it happens VERY fast. AnchorSand is a
-custom filesystem that is used exclusively in AneoEngine and doesn't
-support FAT12 or FAT32, but is 100% open-source.
+## Requirements
+
+- Any **32-bit x86 CPU**, or a **64-bit CPU with Legacy BIOS boot**
+  (no UEFI-only). **ARM-64 and RISC-V are not supported.**
+- **512 MB RAM** (hardcoded in the kernel).
+- Boots from **CD/DVD, USB, or a VM.** Use writable media (USB/HDD) for
+  file persistence — a read-only CD-ROM gives a fresh filesystem each boot.
+
+## Running
+
+```bash
+# Recommended: QEMU (AneoEngine is a live image, nothing is installed)
+qemu-system-x86_64 -cdrom AneoEngine.ISO
+# or:
+qemu-system-x86_64 -drive file=AneoEngine.ISO,format=raw
+```
+
+Or burn `AneoEngine.ISO` to a CD/DVD, or flash it to a USB drive.
+
+## Building
+
+Requires `nasm`, `gcc` (with `-m32`), `ld` (`elf_i386`), `genisoimage`,
+`dd`, `awk`, and `sed`.
+
+```bash
+./build.sh              # builds AneoEngine.ISO
+./build.sh -RC1         # build, then boot via QEMU (-cdrom)
+```
+
+The `Root/` folder is the default filesystem. At build time, `build.sh`
+scans it and compiles every file into the kernel as AnchorSand commands,
+so they exist in RAM on first boot.
+
+## Learn more
+
+- Press **F1** in the shell for the help menu.
+- Run **`addr`** to see the kernel's memory map.
+- See `/Help/` and `/Docs/FAQ.TXT` inside the OS.
+
+Creator: Rocco Himel — https://roccohimel.github.io/AneoEngine
