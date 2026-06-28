@@ -1,20 +1,20 @@
 //This file contains funtions for halting the system
 #include <stdint.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
+TD U C u8;
+TD U S u16;
+TD U INT u32;
 
-extern void print(const char *s);
-extern void sleep(unsigned int ms);
-extern unsigned int cy;
-extern unsigned int cx;
+extern VD print(CC *s);
+extern VD sleep(U INT ms);
+extern U INT cy;
+extern U INT cx;
 extern u8 color;
-extern void outw(u16 port, u16 val);
-extern void poutw(u16 port, u16 val);
-extern void poutb(u16 port, u16 val);
-extern void poutwfail(u16 port, u16 val);
-extern void poutbfail(u16 port, u8 val);
+extern VD outw(u16 port, u16 val);
+extern VD poutw(u16 port, u16 val);
+extern VD poutb(u16 port, u16 val);
+extern VD poutwfail(u16 port, u16 val);
+extern VD poutbfail(u16 port, u8 val);
 
 //values
 #define VAL1 0x2000
@@ -25,12 +25,12 @@ extern void poutbfail(u16 port, u8 val);
 #define IOP2 0xB004
 #define IOP3 0x4004
 
-void vmoff(void)
+VD vmoff(VD)
 {//turn the VM off, only works on virtual machines,
 //otherwise will crash your machine
 	color = 0x0F;
-	unsigned int oldcy = cy;
-	unsigned int oldcx = cx;
+	U INT oldcy = cy;
+	U INT oldcx = cx;
 	cy = 0;
 
 	poutw(IOP1, VAL1);
@@ -49,7 +49,7 @@ void vmoff(void)
 		asm volatile("hlt");
 }
 
-void halt(void)
+VD halt(VD)
 {//purposfuly halt your system
 	color = 0x0F;
 	cy = 0;
@@ -59,11 +59,11 @@ void halt(void)
 		asm volatile("hlt");
 }
 
-void reset(void)
+VD reset(VD)
 {
         color = 0x0F;
-        unsigned int oldcy = cy;
-        unsigned int oldcx = cx;
+        U INT oldcy = cy;
+        U INT oldcx = cx;
         cy = 0;
 	cx = 0;
 

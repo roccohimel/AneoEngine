@@ -1,30 +1,28 @@
-#include <stdint.h>
+#include <stdINT.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
+TD U C u8;
+TD U S u16;
+TD U INT u32;
 
-extern void print(const char *s);
-extern void printint(int n);
+extern VD print(CC *s);
+extern VD printint(INT n);
 extern u8 color;
-extern int getkey(void);
-extern unsigned int cx;
-extern unsigned int cy;
-extern int shift;
-extern void cursor_update(void);
-extern void clear(void);
-extern int as_save_to_disk(void);
-
-unsigned int saveit = 0;
+extern INT getkey(VD);
+extern U INT cx;
+extern U INT cy;
+extern INT shift;
+extern VD cursor_update(VD);
+extern VD clear(VD);
+extern INT as_save_to_disk(VD);
+U INT saveit = 0;
 
 #define AS_MAX_NODES	64
 #define AS_NAME_MAX	32
 #define AS_DATA_MAX	4096
-
 #define AS_FILE		1
 #define AS_DIR		2
 
-void pred(char *s)
+VD pred(C *s)
 {//shell error funtion
         const u8 oldcolor = color;
         color = 0xCF;
@@ -34,27 +32,27 @@ void pred(char *s)
 	print(s);
 }
 
-typedef struct
+TD ST
 {
-	char name[AS_NAME_MAX];
-	char data[AS_DATA_MAX];
-	int size;
-	int type;
-	int used;
-	int parent;
+	C name[AS_NAME_MAX];
+	C data[AS_DATA_MAX];
+	INT size;
+	INT type;
+	INT used;
+	INT parent;
 } ASNode;
 
 ASNode as_nodes[AS_MAX_NODES];
-int as_cwd = 0;
+INT as_cwd = 0;
 
-void as_strcpy(char *d, const char *s)
+VD as_strcpy(C *d, CC *s)
 {
 	while(*s)
 		*d++ = *s++;
 	*d = 0;
 }
 
-int as_streq(const char *a, const char *b)
+INT as_streq(CC *a, CC *b)
 {
 	while(*a && *b)
 	{
@@ -67,38 +65,32 @@ int as_streq(const char *a, const char *b)
 	return *a == *b;
 }
 
-int as_strlen(const char *s)
+INT as_strlen(CC *s)
 {
-	int i = 0;
+	INT i = 0;
 
 	while(s[i])
 		i++;
-
 	return i;
 }
 
-int as_namecmp(const char *a, const char *b)
+INT as_namecmp(CC *a, CC *b)
 {
-	char ca;
-	char cb;
+	C ca;
+	C cb;
 
 	while(*a && *b)
 	{
 		ca = *a;
 		cb = *b;
-
 		if(ca >= 'A' && ca <= 'Z')
 			ca += 32;
-
 		if(cb >= 'A' && cb <= 'Z')
 			cb += 32;
-
 		if(ca < cb)
 			return -1;
-
 		if(ca > cb)
 			return 1;
-
 		a++;
 		b++;
 	}
@@ -112,16 +104,18 @@ int as_namecmp(const char *a, const char *b)
 	return 0;
 }
 
-void as_init()
+VD as_init()
 {
-	int i;
+	INT i;
 
+	print("Init AnchorSand Filesystem\n");
 	print("AS_MAX_NODES=");
 	printint(AS_MAX_NODES);
-	print("\nAS_NAME_MAX=");
+	print(" AS_NAME_MAX=");
 	printint(AS_NAME_MAX);
-	print("\nAS_DATA_MAX=");
+	print(" AS_DATA_MAX=");
 	printint(AS_DATA_MAX);
+	print("\n");
 	for(i = 0; i < AS_MAX_NODES; i++)
 		as_nodes[i].used = 0;
 
@@ -132,9 +126,9 @@ void as_init()
 	as_strcpy(as_nodes[0].name, "/");
 }
 
-int as_alloc()
+INT as_alloc()
 {
-	int i;
+	INT i;
 
 	for(i = 1; i < AS_MAX_NODES; i++)
 	{
@@ -145,9 +139,9 @@ int as_alloc()
 	return -1;
 }
 
-int as_find_child(int parent, const char *name)
+INT as_find_child(INT parent, CC *name)
 {
-	int i;
+	INT i;
 
 	for(i = 0; i < AS_MAX_NODES; i++)
 	{
@@ -162,11 +156,11 @@ int as_find_child(int parent, const char *name)
 	return -1;
 }
 
-void as_split_path(const char *path, char *parent, char *name)
+VD as_split_path(CC *path, C *parent, C *name)
 {
-	int len;
-	int i;
-	int slash;
+	INT len;
+	INT i;
+	INT slash;
 
 	parent[0] = 0;
 	name[0] = 0;
@@ -201,13 +195,13 @@ void as_split_path(const char *path, char *parent, char *name)
 	as_strcpy(name, path + slash + 1);
 }
 
-int as_resolve(const char *path)
+INT as_resolve(CC *path)
 {
-	int cur;
-	int i;
-	int j;
-	int n;
-	char part[AS_NAME_MAX];
+	INT cur;
+	INT i;
+	INT j;
+	INT n;
+	C part[AS_NAME_MAX];
 
 	if(!path || !path[0])
 		return as_cwd;
@@ -258,9 +252,9 @@ int as_resolve(const char *path)
 	}
 }
 
-int as_mkdir_at(int parent, const char *name)
+INT as_mkdir_at(INT parent, CC *name)
 {
-	int n;
+	INT n;
 
 	if(!name[0])
 		return -1;
@@ -285,9 +279,9 @@ int as_mkdir_at(int parent, const char *name)
 	return 0;
 }
 
-int as_touch_at(int parent, const char *name)
+INT as_touch_at(INT parent, CC *name)
 {
-	int n;
+	INT n;
 
 	if(!name[0])
 		return -1;
@@ -313,11 +307,11 @@ int as_touch_at(int parent, const char *name)
 	return 0;
 }
 
-int as_mkdir(const char *path)
+INT as_mkdir(CC *path)
 {
-	char parent_path[AS_NAME_MAX * 4];
-	char name[AS_NAME_MAX];
-	int parent;
+	C parent_path[AS_NAME_MAX * 4];
+	C name[AS_NAME_MAX];
+	INT parent;
 
 	as_split_path(path, parent_path, name);
 
@@ -332,11 +326,11 @@ int as_mkdir(const char *path)
 	return as_mkdir_at(parent, name);
 }
 
-int as_touch(const char *path)
+INT as_touch(CC *path)
 {
-	char parent_path[AS_NAME_MAX * 4];
-	char name[AS_NAME_MAX];
-	int parent;
+	C parent_path[AS_NAME_MAX * 4];
+	C name[AS_NAME_MAX];
+	INT parent;
 
 	as_split_path(path, parent_path, name);
 
@@ -351,13 +345,13 @@ int as_touch(const char *path)
 	return as_touch_at(parent, name);
 }
 
-int as_write(const char *path, const char *text)
+INT as_write(CC *path, CC *text)
 {
-	char parent_path[AS_NAME_MAX * 4];
-	char name[AS_NAME_MAX];
-	int parent;
-	int n;
-	int i;
+	C parent_path[AS_NAME_MAX * 4];
+	C name[AS_NAME_MAX];
+	INT parent;
+	INT n;
+	INT i;
 
 	as_split_path(path, parent_path, name);
 
@@ -394,9 +388,9 @@ int as_write(const char *path, const char *text)
 	return 0;
 }
 
-void as_cat(const char *path)
+VD as_cat(CC *path)
 {
-	int n;
+	INT n;
 
 	n = as_resolve(path);
 
@@ -416,13 +410,13 @@ void as_cat(const char *path)
 	print("\n");
 }
 
-void as_ls_node(int dir)
+VD as_ls_node(INT dir)
 {
-	int i;
-	int j;
-	int count = 0;
-	int entries[AS_MAX_NODES];
-	int temp;
+	INT i;
+	INT j;
+	INT count = 0;
+	INT entries[AS_MAX_NODES];
+	INT temp;
 
 	print("DIR..........: .\n");
 	print("DIR..........: ..\n");
@@ -443,9 +437,9 @@ void as_ls_node(int dir)
 	{
 		for(j = i + 1; j < count; j++)
 		{
-			int a = entries[i];
-			int b = entries[j];
-			int swap = 0;
+			INT a = entries[i];
+			INT b = entries[j];
+			INT swap = 0;
 
 			if(as_nodes[a].type != as_nodes[b].type)
 			{
@@ -469,7 +463,7 @@ void as_ls_node(int dir)
 
 	for(i = 0; i < count; i++)
 	{
-		int idx = entries[i];
+		INT idx = entries[i];
 
 		if(as_nodes[idx].type == AS_DIR)
 		{
@@ -492,14 +486,14 @@ void as_ls_node(int dir)
 	}
 }
 
-void as_ls()
+VD as_ls()
 {
 	as_ls_node(as_cwd);
 }
 
-void as_ls_path(const char *path)
+VD as_ls_path(CC *path)
 {
-	int n;
+	INT n;
 
 	n = as_resolve(path);
 
@@ -518,9 +512,9 @@ void as_ls_path(const char *path)
 	as_ls_node(n);
 }
 
-int as_cd(const char *path)
+INT as_cd(CC *path)
 {
-	int n;
+	INT n;
 
 	n = as_resolve(path);
 
@@ -535,7 +529,7 @@ int as_cd(const char *path)
 	return 0;
 }
 
-void as_pwd_rec(int n)
+VD as_pwd_rec(INT n)
 {
 	if(n == 0)
 	{
@@ -551,7 +545,7 @@ void as_pwd_rec(int n)
 	print(as_nodes[n].name);
 }
 
-void as_pwd()
+VD as_pwd()
 {
 	as_pwd_rec(as_cwd);
 }
@@ -569,10 +563,10 @@ void as_pwd()
 
 u16 edit_saved_vga[EDIT_W * EDIT_H];
 
-int as_edit_line_of_pos(int n, int pos)
+INT as_edit_line_of_pos(INT n, INT pos)
 {
-	int i;
-	int line;
+	INT i;
+	INT line;
 
 	line = 0;
 
@@ -585,9 +579,9 @@ int as_edit_line_of_pos(int n, int pos)
 	return line;
 }
 
-void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor)
+VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor)
 {
-	int i;
+	INT i;
 
 	*oldcx = cx;
 	*oldcy = cy;
@@ -597,9 +591,9 @@ void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor)
 		edit_saved_vga[i] = VGA_TEXT[i];
 }
 
-void as_edit_restore_screen(unsigned int oldcx, unsigned int oldcy, u8 oldcolor)
+VD as_edit_restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
 {
-	int i;
+	INT i;
 
 	for(i = 0; i < EDIT_W * EDIT_H; i++)
 		VGA_TEXT[i] = edit_saved_vga[i];
@@ -610,7 +604,7 @@ void as_edit_restore_screen(unsigned int oldcx, unsigned int oldcy, u8 oldcolor)
 	cursor_update();
 }
 
-void as_edit_put_at(int x, int y, char c, u8 col)
+VD as_edit_put_at(INT x, INT y, C c, u8 col)
 {
 	if(x < 0 || x >= EDIT_W)
 		return;
@@ -621,10 +615,10 @@ void as_edit_put_at(int x, int y, char c, u8 col)
 	VGA_TEXT[y * EDIT_W + x] = (col << 8) | c;
 }
 
-void as_edit_clear_editor_area(void)
+VD as_edit_clear_editor_area(VD)
 {
-	int x;
-	int y;
+	INT x;
+	INT y;
 
 	for(y = EDIT_TOP; y < EDIT_H; y++)
 	{
@@ -633,7 +627,7 @@ void as_edit_clear_editor_area(void)
 	}
 }
 
-int as_edit_line_start(int n, int pos)
+INT as_edit_line_start(INT n, INT pos)
 {
 	while(pos > 0 && as_nodes[n].data[pos - 1] != '\n')
 		pos--;
@@ -641,7 +635,7 @@ int as_edit_line_start(int n, int pos)
 	return pos;
 }
 
-int as_edit_line_end(int n, int pos)
+INT as_edit_line_end(INT n, INT pos)
 {
 	while(pos < as_nodes[n].size && as_nodes[n].data[pos] != '\n')
 		pos++;
@@ -649,18 +643,18 @@ int as_edit_line_end(int n, int pos)
 	return pos;
 }
 
-int as_edit_col(int n, int pos)
+INT as_edit_col(INT n, INT pos)
 {
 	return pos - as_edit_line_start(n, pos);
 }
 
-int as_edit_prev_line(int n, int pos)
+INT as_edit_prev_line(INT n, INT pos)
 {
-	int start;
-	int col;
-	int prev_end;
-	int prev_start;
-	int prev_len;
+	INT start;
+	INT col;
+	INT prev_end;
+	INT prev_start;
+	INT prev_len;
 
 	start = as_edit_line_start(n, pos);
 
@@ -678,13 +672,13 @@ int as_edit_prev_line(int n, int pos)
 	return prev_start + col;
 }
 
-int as_edit_next_line(int n, int pos)
+INT as_edit_next_line(INT n, INT pos)
 {
-	int col;
-	int end;
-	int next_start;
-	int next_end;
-	int next_len;
+	INT col;
+	INT end;
+	INT next_start;
+	INT next_end;
+	INT next_len;
 
 	col = as_edit_col(n, pos);
 	end = as_edit_line_end(n, pos);
@@ -702,12 +696,12 @@ int as_edit_next_line(int n, int pos)
 	return next_start + col;
 }
 
-void as_edit_cursor(int n, int pos, int scroll)
+VD as_edit_cursor(INT n, INT pos, INT scroll)
 {
-	int i;
-	int x;
-	int y;
-	int line;
+	INT i;
+	INT x;
+	INT y;
+	INT line;
 
 	x = 0;
 	y = EDIT_TOP;
@@ -744,7 +738,7 @@ void as_edit_cursor(int n, int pos, int scroll)
 	cursor_update();
 }
 
-void as_edit_draw_header(const char *path)
+VD as_edit_draw_header(CC *path)
 {
 	clear();
 
@@ -756,12 +750,12 @@ void as_edit_draw_header(const char *path)
 	print("\n\n");
 }
 
-void as_edit_redraw(int n, const char *path, int pos, int scroll)
+VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
 {
-	int i;
-	int x;
-	int y;
-	int line;
+	INT i;
+	INT x;
+	INT y;
+	INT line;
 
 	as_edit_draw_header(path);
 	as_edit_clear_editor_area();
@@ -798,9 +792,9 @@ void as_edit_redraw(int n, const char *path, int pos, int scroll)
 	as_edit_cursor(n, pos, scroll);
 }
 
-void as_edit_insert(int n, int *pos, int c)
+VD as_edit_insert(INT n, INT *pos, INT c)
 {
-	int i;
+	INT i;
 
 	if(as_nodes[n].size >= AS_DATA_MAX - 1)
 		return;
@@ -823,9 +817,9 @@ void as_edit_insert(int n, int *pos, int c)
 	as_nodes[n].data[as_nodes[n].size] = 0;
 }
 
-void as_edit_backspace(int n, int *pos)
+VD as_edit_backspace(INT n, INT *pos)
 {
-	int i;
+	INT i;
 
 	if(*pos <= 0)
 		return;
@@ -842,9 +836,9 @@ void as_edit_backspace(int n, int *pos)
 	as_nodes[n].data[as_nodes[n].size] = 0;
 }
 
-void as_edit_restore_file(int n, char *olddata, int oldsize)
+VD as_edit_restore_file(INT n, C *olddata, INT oldsize)
 {
-	int i;
+	INT i;
 
 	for(i = 0; i <= oldsize && i < AS_DATA_MAX; i++)
 		as_nodes[n].data[i] = olddata[i];
@@ -853,10 +847,10 @@ void as_edit_restore_file(int n, char *olddata, int oldsize)
 	as_nodes[n].data[as_nodes[n].size] = 0;
 }
 
-void as_edit_fix_scroll(int n, int pos, int *scroll)
+VD as_edit_fix_scroll(INT n, INT pos, INT *scroll)
 {
-	int cursor_line;
-	int visible_lines;
+	INT cursor_line;
+	INT visible_lines;
 
 	cursor_line = as_edit_line_of_pos(n, pos);
 	visible_lines = EDIT_H - EDIT_TOP;
@@ -871,23 +865,23 @@ void as_edit_fix_scroll(int n, int pos, int *scroll)
 		*scroll = 0;
 }
 
-void as_edit(const char *path)
+VD as_edit(CC *path)
 {
-	char parent_path[AS_NAME_MAX * 4];
-	char name[AS_NAME_MAX];
+	C parent_path[AS_NAME_MAX * 4];
+	C name[AS_NAME_MAX];
 
-	char olddata[AS_DATA_MAX];
-	int oldsize;
+	C olddata[AS_DATA_MAX];
+	INT oldsize;
 
-	int parent;
-	int n;
-	int i;
-	int pos;
-	int c;
-	int scroll;
+	INT parent;
+	INT n;
+	INT i;
+	INT pos;
+	INT c;
+	INT scroll;
 
-	unsigned int oldcx;
-	unsigned int oldcy;
+	U INT oldcx;
+	U INT oldcy;
 	u8 oldcolor;
 
 	as_edit_save_screen(&oldcx, &oldcy, &oldcolor);
@@ -1018,9 +1012,9 @@ void as_edit(const char *path)
 		as_edit_redraw(n, path, pos, scroll);
 	}
 }
-int as_get_file_data(const char *path, char **data, int *size)
+INT as_get_file_data(CC *path, C **data, INT *size)
 {
-	int n;
+	INT n;
 
 	n = as_resolve(path);
 
@@ -1036,9 +1030,9 @@ int as_get_file_data(const char *path, char **data, int *size)
 	return 0;
 }
 
-void as_rm_recursive(int node)
+VD as_rm_recursive(INT node)
 {
-	int i;
+	INT i;
 
 	if (!as_nodes[node].used)
 		return;
@@ -1060,9 +1054,9 @@ void as_rm_recursive(int node)
 	as_nodes[node].parent = -1;
 }
 
-void as_rm(char *name)
+VD as_rm(C *name)
 {
-	int i;
+	INT i;
 
 	for (i = 0; i < AS_MAX_NODES; i++)
 	{
@@ -1083,9 +1077,9 @@ void as_rm(char *name)
 	print("rm: not found\n");
 }
 
-int as_path_parent_name(const char *path, int *parent, char *name)
+INT as_path_parent_name(CC *path, INT *parent, C *name)
 {
-	char parent_path[AS_NAME_MAX * 4];
+	C parent_path[AS_NAME_MAX * 4];
 
 	as_split_path(path, parent_path, name);
 
@@ -1103,10 +1097,10 @@ int as_path_parent_name(const char *path, int *parent, char *name)
 	return 0;
 }
 
-int as_copy_node_recursive(int src, int dst_parent, const char *newname)
+INT as_copy_node_recursive(INT src, INT dst_parent, CC *newname)
 {
-	int n;
-	int i;
+	INT n;
+	INT i;
 
 	if(as_find_child(dst_parent, newname) != -1)
 		return -1;
@@ -1135,11 +1129,11 @@ int as_copy_node_recursive(int src, int dst_parent, const char *newname)
 	return 0;
 }
 
-int as_cp(const char *src_path, const char *dst_path)
+INT as_cp(CC *src_path, CC *dst_path)
 {
-	int src;
-	int dst_parent;
-	char dst_name[AS_NAME_MAX];
+	INT src;
+	INT dst_parent;
+	C dst_name[AS_NAME_MAX];
 
 	src = as_resolve(src_path);
 
@@ -1173,11 +1167,11 @@ int as_cp(const char *src_path, const char *dst_path)
 	return 0;
 }
 
-int as_mv(const char *src_path, const char *dst_path)
+INT as_mv(CC *src_path, CC *dst_path)
 {
-	int src;
-	int dst_parent;
-	char dst_name[AS_NAME_MAX];
+	INT src;
+	INT dst_parent;
+	C dst_name[AS_NAME_MAX];
 
 	src = as_resolve(src_path);
 
@@ -1213,4 +1207,5 @@ int as_mv(const char *src_path, const char *dst_path)
 
 	return 0;
 }
+
 

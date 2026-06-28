@@ -1,15 +1,15 @@
 #include <stdint.h>
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+TD U C u8;
+TD U S u16;
+TD U INT u32;
+TD U INT u32;
+TD ULL u64;
 
-void printint(unsigned int n);
+VD printint(U INT n);
 extern u8 color;
-extern void print(const char *s);
+extern VD print(CC *s);
 
-static inline u64 rdtsc()
+SC inline u64 rdtsc()
 {
 	u32 lo, hi;
 	__asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
@@ -26,9 +26,9 @@ u32 rand5()
 	return ((u32)t % 90000) + 10000;
 }
 
-void entropy(void)
+VD entropy(VD)
 {
-	print("Kernel loaded Utils/Printer\n");
+	print("Kernel loaded Utils/printer\n");
 	u32 n = rand5();
 	print("Entropy value: ");
 	u8 oldcolor = color;

@@ -1,4 +1,4 @@
-// AnchorSave.c
+// FSSave.c
 // no header files
 
 typedef unsigned char  u8;
@@ -115,7 +115,7 @@ static int disk_write(u32 lba, u8 *buf) {
 	return 1;
 }
 
-/* ================= SAVE STREAM ================= */
+//save stream
 
 static u32 sw_lba;
 static u32 sw_pos;

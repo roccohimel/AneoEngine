@@ -1,0 +1,55 @@
+//programs menu
+TD U C u8;
+TD U S u16;
+TD U INT u32;
+
+extern U INT INPUT_MAX;
+extern u8 color;
+extern CC *BAR1;
+extern CC *BAR2;
+extern U INT cy;
+extern U INT cx;
+extern VD print(CC *s);
+extern VD perror(CC *s);
+extern VD clear(VD);
+extern VD readline(C *buf, INT max);
+extern INT strcmp(CC *a, CC *b);
+extern VD printer(VD);
+extern VD rtc_print_datetime(VD);
+extern VD draw_tb(VD);
+extern VD utilsList(VD);
+extern VD entropy(VD);
+
+INT utilsMenu(VD)
+{
+
+	C line[INPUT_MAX];
+	C *a;
+	C *b;
+
+	color = 0x1F;
+	utilsList();
+
+	for(;;)
+	{
+
+		draw_tb();
+		print("Utils> ");
+
+		readline(line, INPUT_MAX);
+
+		if(strcmp(line, "cls") == 0)
+			clear();
+		else if(strcmp(line, "exit") == 0)
+		{
+			print("Exiting...\n");
+			return 0;
+		}
+		else if(strcmp(line, "printer") == 0)
+			printer();
+		else if(strcmp(line, "Entropy") == 0)
+                        entropy();
+		else if(line[0])
+			perror(line);
+	}
+}

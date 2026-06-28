@@ -1,11 +1,11 @@
 //utilities lister
 
 #include <stdint.h>
-extern void print(const char *s);
+extern VD print(CC *s);
 
-void utilsList(void)
+VD utilsList(VD)
 {//print list of utilities
-	char *utilsMsg =
+	C *utilsMsg =
 		"Utilities:\n"
 		">Entropy\n"
 		">Printer\n";

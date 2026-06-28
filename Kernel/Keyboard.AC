@@ -1,9 +1,9 @@
 //keyboard driver
 #include <stdint.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
+TD U C u8;
+TD U S u16;
+TD U INT u32;
 
 #define KEY_F1  0x3B
 #define KEY_F2  0x3C
@@ -19,20 +19,20 @@ typedef unsigned int u32;
 #define KEY_F12 0x58
 
 extern u8 inb(u16 port);
-extern void print(const char *s);
-extern int helpMenu(void);
-extern void reset(void);
-extern int utilsMenu(void);
-extern void cpustat(void);
-extern void clear(void);
-extern unsigned int raw;
-extern void run_script(const char *path);
-extern void update_rtc_only(void);
-extern void draw_tb(void);
-extern int F4(void);
+extern VD print(CC *s);
+extern INT helpMenu(VD);
+extern VD reset(VD);
+extern INT utilsMenu(VD);
+extern VD cpustat(VD);
+extern VD clear(VD);
+extern U INT raw;
+extern VD run_script(CC *path);
+extern VD update_rtc_only(VD);
+extern VD draw_tb(VD);
+extern INT F4(VD);
 
-static const char keymap[128] =
-{//allowed chars
+SC CC keymap[128] =
+{//allowed Cs
 	0, 27, '1', '2', '3', '4', '5', '6',
 	'7', '8', '9', '0', '-', '=', '\b', '\t',
 	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',
@@ -43,8 +43,8 @@ static const char keymap[128] =
 	0, ' ', 0
 };
 
-static const char shiftmap[128] =
-{//allowed chars when shift is pressed
+SC CC shiftmap[128] =
+{//allowed Cs when shift is pressed
 	0, 27, '!', '@', '#', '$', '%', '^',
 	'&', '*', '(', ')', '_', '+', '\b', '\t',
 	'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
@@ -55,7 +55,7 @@ static const char shiftmap[128] =
 	0, ' ', 0
 };
 
-int shift = 0;
+INT shift = 0;
 
 #define KEY_UP    1
 #define KEY_DOWN  2
@@ -63,10 +63,10 @@ int shift = 0;
 #define KEY_RIGHT 4
 #define ESC       27
 
-int ctrl = 0;
-int ext = 0;
+INT ctrl = 0;
+INT ext = 0;
 
-void clearet(void)
+VD clearet(VD)
 {
 	clear();
 	draw_tb();
@@ -74,7 +74,7 @@ void clearet(void)
 	run_script("/RunCmds.c");
 }
 
-static void HandleFn(u8 sc)
+SC VD HandleFn(u8 sc)
 {
 	switch(sc)
 	{
@@ -83,11 +83,9 @@ static void HandleFn(u8 sc)
 			break;
 		case KEY_F2:
 			raw = 1;
-                        clearet();
 			break;
 		case KEY_F3:
 			raw = 0;
-                        clearet();
 			break;
 		case KEY_F4:
 			F4();
@@ -113,10 +111,10 @@ static void HandleFn(u8 sc)
 	}
 }
 
-int getkey(void)
+INT getkey(VD)
 {
 	u8 sc;
-	char c;
+	C c;
 
 	if(!(inb(0x64) & 1))
 		return 0;

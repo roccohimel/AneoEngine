@@ -1,0 +1,19 @@
+
+
+
+U add(INT adden1, INT adden2)
+{
+	INT sum = adden1 + adden2;
+	return sum;
+}
+
+U pntsum(U sum)
+{
+	printf("%d\n", sum);
+}
+
+U main(VD)
+{
+	INT sum_main = add(16, 96);
+	pntsum(sum_main);
+}		

@@ -1,186 +1,217 @@
 [org 0x7C00]
 [bits 16]
 
-KERNEL_OFFSET  equ 0x10000
-KERNEL_SEGMENT equ 0x1000
-KERNEL_SECTORS equ 128
+KERNEL_OFFSET  EQU 0x10000
+KERNEL_SEGMENT EQU 0x1000
+KERNEL_SECTORS EQU 256
 
-FLOPPY_KERNEL_LBA equ 105
+FLOPPY_KERNEL_LBA EQU 105
 
 start:
-	cli
-	cld
-	xor ax, ax
-	mov ds, ax
-	mov es, ax
-	mov ss, ax
-	mov sp, 0x7C00
-	sti
+	CLI
+	CLD
+	XOR AX, AX
+	MOV DS, AX
+	MOV ES, AX
+	MOV SS, AX
+	MOV SP, 0x7C00
+	STI
 
-	mov [BOOT_DRIVE], dl
-	mov [0x0500], dl
+	MOV [BOOT_DRIVE], DL
+	MOV [0x0500], DL
 
-	mov ax, 0x0003
-	int 0x10
+	MOV AX, 0x0003
+	INT 0x10
 
-	mov ax, 0x1112
-	xor bl, bl
-	int 0x10
+	MOV AX, 0x1112
+	XOR BL, BL
+	INT 0x10
 
-	mov si, msg_boot
-	call print16
-	mov si, msg_type
-        call print16
+	MOV SI, msg_boot
+	CALL print16
 
-	call enable_a20
-	call load_kernel
+	MOV SI, msg_type
+	CALL print16
 
-	mov si, msg_loaded
-	call print16
+	CALL enable_a20
+	CALL load_kernel
 
-	mov si, msg_prompt
-	call print16
+	MOV SI, msg_loaded
+	CALL print16
 
-	xor ax, ax
-	int 0x16
+	MOV SI, msg_prompt
+	CALL print16
 
-	cli
-	lgdt [gdt_descriptor]
+	XOR AX, AX
+	INT 0x16
 
-	mov eax, cr0
-	or eax, 1
-	mov cr0, eax
+	CLI
+	LGDT [GDT_DESCRIPTOR]
 
-	jmp dword CODE_SEG:init_pm
+	MOV EAX, CR0
+	OR EAX, 1
+	MOV CR0, EAX
+
+	JMP DWORD CODE_SEG:init_pm
 
 enable_a20:
-	in al, 0x92
-	or al, 00000010b
-	and al, 11111110b
-	out 0x92, al
-	ret
+	IN AL, 0x92
+	OR AL, 00000010B
+	AND AL, 11111110B
+	OUT 0x92, AL
+	RET
 
 print16:
-	lodsb
-	test al, al
-	jz .done
-	mov ah, 0x0E
-	mov bh, 0
-	mov bl, 0x1F
-	int 0x10
-	jmp print16
+	LODSB
+	TEST AL, AL
+	JZ .done
+
+	MOV AH, 0x0E
+	MOV BH, 0
+	MOV BL, 0x1F
+	INT 0x10
+	JMP print16
+
 .done:
-	ret
+	RET
 
 load_kernel:
-	xor ax, ax
-	mov dl, [BOOT_DRIVE]
-	int 0x13
+	XOR AX, AX
+	MOV DL, [BOOT_DRIVE]
+	INT 0x13
+	JC disk_error
 
-	push cs
-	pop ds
+	MOV WORD [DAP_COUNT], 1
+	MOV WORD [DAP_OFFSET], 0x0000
+	MOV WORD [DAP_SEGMENT], KERNEL_SEGMENT
 
-	mov word [dap_count], KERNEL_SECTORS
-	mov word [dap_offset], 0x0000
-	mov word [dap_segment], KERNEL_SEGMENT
-	mov dword [dap_lba_low], FLOPPY_KERNEL_LBA
-	mov dword [dap_lba_high], 0
+	MOV DWORD [DAP_LBA_LOW], FLOPPY_KERNEL_LBA
+	MOV DWORD [DAP_LBA_HIGH], 0
 
-	mov ah, 0x42
-	mov dl, [BOOT_DRIVE]
-	mov si, dap
-	int 0x13
-	jc disk_error
-
-	ret
+	MOV WORD [SECTORS_LEFT], KERNEL_SECTORS
 
 .loop:
-	push cx
+	CMP WORD [SECTORS_LEFT], 0
+	JE .done
 
-	mov ah, 0x42
-	mov dl, [BOOT_DRIVE]
-	mov si, dap
-	int 0x13
-	jc disk_error
+	; Some BIOSes modify the transferred-sector count,
+	; so restore it before every read.
+	MOV WORD [DAP_COUNT], 1
 
-	add word [dap_offset], 512
-	inc dword [dap_lba_low]
+	MOV AH, 0x42
+	MOV DL, [BOOT_DRIVE]
+	MOV SI, DAP
+	INT 0x13
+	JC disk_error
 
-	pop cx
-	loop .loop
+	; Advance the destination by one 512-byte sector.
+	ADD WORD [DAP_OFFSET], 512
+	JNC .no_segment_wrap
 
-	ret
+	; Offset wrapped after 64 KiB.
+	; Advance the segment by 0x1000 paragraphs.
+	MOV WORD [DAP_OFFSET], 0
+	ADD WORD [DAP_SEGMENT], 0x1000
+
+.no_segment_wrap:
+	ADD DWORD [DAP_LBA_LOW], 1
+	ADC DWORD [DAP_LBA_HIGH], 0
+
+	DEC WORD [SECTORS_LEFT]
+	JMP .loop
+
+.done:
+	RET
 
 disk_error:
-	mov si, msg_disk
-	call print16
-	jmp $
+	MOV SI, msg_disk
+	CALL print16
+	JMP $
 
-dap:
-	db 0x10
-	db 0x00
-dap_count:
-	dw 0
-dap_offset:
-	dw 0
-dap_segment:
-	dw 0
-dap_lba_low:
-	dd 0
-dap_lba_high:
-	dd 0
+DAP:
+	DB 0x10
+	DB 0x00
+
+DAP_COUNT:
+	DW 0
+
+DAP_OFFSET:
+	DW 0
+
+DAP_SEGMENT:
+	DW 0
+
+DAP_LBA_LOW:
+	DD 0
+
+DAP_LBA_HIGH:
+	DD 0
+
+SECTORS_LEFT:
+	DW 0
 
 [bits 32]
 
 init_pm:
-	cld
+	CLD
 
-	mov ax, DATA_SEG
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov ss, ax
+	MOV AX, DATA_SEG
+	MOV DS, AX
+	MOV ES, AX
+	MOV FS, AX
+	MOV GS, AX
+	MOV SS, AX
 
-	mov esp, 0x90000
+	MOV ESP, 0x90000
 
-	jmp CODE_SEG:KERNEL_OFFSET
+	JMP CODE_SEG:KERNEL_OFFSET
 
-gdt_start:
-	dq 0
+GDT_START:
+	DQ 0
 
-gdt_code:
-	dw 0xFFFF
-	dw 0x0000
-	db 0x00
-	db 10011010b
-	db 11001111b
-	db 0x00
+GDT_CODE:
+	DW 0xFFFF
+	DW 0x0000
+	DB 0x00
+	DB 10011010B
+	DB 11001111B
+	DB 0x00
 
-gdt_data:
-	dw 0xFFFF
-	dw 0x0000
-	db 0x00
-	db 10010010b
-	db 11001111b
-	db 0x00
+GDT_DATA:
+	DW 0xFFFF
+	DW 0x0000
+	DB 0x00
+	DB 10010010B
+	DB 11001111B
+	DB 0x00
 
-gdt_end:
+GDT_END:
 
-gdt_descriptor:
-	dw gdt_end - gdt_start - 1
-	dd gdt_start
+GDT_DESCRIPTOR:
+	DW GDT_END - GDT_START - 1
+	DD GDT_START
 
-CODE_SEG equ gdt_code - gdt_start
-DATA_SEG equ gdt_data - gdt_start
+CODE_SEG EQU GDT_CODE - GDT_START
+DATA_SEG EQU GDT_DATA - GDT_START
 
-BOOT_DRIVE db 0
+BOOT_DRIVE:
+	DB 0
 
-msg_boot   db 13,10,13,10,13,10,13,10,"AneoEngine Boot Loader",13,10,0
-msg_type   db "Reading kernel from hard disk/solid state media...",13,10,0
-msg_loaded db "Kernel found...",13,10,0
-msg_prompt db 13,10,"Press any key to continue...",13,10,0
-msg_disk   db "Kernel read error!",13,10,0
+msg_boot:
+	DB 13,10,13,10,13,10,13,10
+	DB "AneoEngine Boot Loader",13,10,0
 
-times 510 - ($ - $$) db 0
-dw 0xAA55
+msg_type:
+	DB "Reading kernel from hard disk/solid state media...",13,10,0
+
+msg_loaded:
+	DB "Kernel found...",13,10,0
+
+msg_prompt:
+	DB 13,10,"Press any key to continue...",13,10,0
+
+msg_disk:
+	DB "Kernel read error!",13,10,0
+
+TIMES 510 - ($ - $$) DB 0
+DW 0xAA55

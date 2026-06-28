@@ -13,7 +13,7 @@ extern void sleep(unsigned int ms);
 extern int getkey(void);
 extern void vmoff(void);
 extern void halt(void);
-extern void startupSeq(void);
+extern void startupBanner(void);
 extern int helpMenu(void);
 extern int utilsMenu(void);
 extern void addr(void);
@@ -44,7 +44,6 @@ extern void as_rm_recursive(int node);
 extern unsigned int saveit;
 extern int as_cp(const char *src_path, const char *dst_path);
 extern int as_mv(const char *src_path, const char *dst_path);
-extern void tune(const char *song);
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -87,11 +86,6 @@ u32 total_mem=
 );
 
 extern u32 heap_ptr;
-
-void putc(char c);
-void printx(uint32_t x);
-void print(const char *s);
-void printint(unsigned int n);
 
 void outb(u16 port, u8 val)
 {//write 8-bit value to IO port
@@ -289,6 +283,19 @@ void print(const char *s)
 
 }
 
+void ata_debug(void) {
+	u8 s = inb(0x1F7);
+
+	print("ATA status: ");
+
+	if (s == 0xFF)
+		print("no ATA bus / floating\n");
+	else if (s == 0x00)
+		print("no drive ready\n");
+	else
+		print("some ATA device exists\n");
+}
+
 void print2(u8 n)
 {//print an int with two digits
         putc('0' + (n / 10));
@@ -472,29 +479,11 @@ void poutbfail(u16 port, u8 val)
         putc('\n');
 }
 
-void ata_debug(void) {
-        print("ATA status: \n");
-        u16 port = 0x1F7;
-	u8 s = inb(port);
-        printx(port);
-	print(" = ");
-	printx(s);
-	putc('\n');
-	if (s == 0xFF)
-                print("        Unknown ATA bus\n");
-        else if (s == 0x00)
-                print("        No ATA drive ready\n");
-        else
-                print("        ATA drive ready\n");
-}
-
-
 int rtc_get_second(void)
 {//get the current second from the RTC
         outb(0x70, 0x00);
         return inb(0x71);
 }
-
 
 #define RTC_X  4
 #define RTC_Y  0
@@ -794,6 +783,25 @@ void trim_end(char *s)
 	}
 }
 
+void install(void)
+{
+	as_cd("/");
+
+	print("[*] Removing /RunCmds.c\n");
+	as_rm("RunCmds.c");
+
+	print("[*] Creating /RunCmds.c\n");
+	as_touch("RunCmds.c");
+
+	print("[*] Writing to /RunCmds.c\n");
+	as_write("RunCmds.c", "cd /Home\nls\nsaveity");
+
+	print("[*] Saving to disk...\n");
+	as_save_to_disk();
+
+	print("[!] Done! Please reboot the machine.\n");
+}
+
 void as_two_args(const char *s, char *a, char *b)
 {
 	int i = 0;
@@ -816,161 +824,18 @@ void as_two_args(const char *s, char *a, char *b)
 	b[j] = 0;
 }
 
-void rmsemiv(char *line)
-{
-        if (!line)
-                return;
-
-        int i = 0;
-        int j = 0;
-
-        while (line[i])
-        {
-                if (line[i] == ';')
-                {
-                        i += 3;
-                }
-                else
-                {
-                        line[j] = line[i];
-                        j++;
-                        i++;
-                }
-        }
-        line[j] = '\0';
-}
-
-
-void rmsemi(char *line)
-{
-        if (!line)
-                return;
-
-        int i = 0;
-        int j = 0;
-
-        while (line[i])
-        {
-                if (line[i] == '\"' && line[i + 1] == ')' && line[i + 2] == ';')
-                {
-                        i += 3;
-                }
-                else
-                {
-                        line[j] = line[i];
-                        j++;
-                        i++;
-                }
-        }
-        line[j] = '\0';
-}
-
-void rmsemia(char *line)
-{
-        if (!line)
-                return;
-
-        int i = 0;
-        int j = 0;
-
-        while (line[i])
-        {
-                if (line[i] == ')' && line[i + 1] == ';')
-                {
-                        i += 3;
-                }
-                else
-                {
-                        line[j] = line[i];
-                        j++;
-                        i++;
-                }
-        }
-        line[j] = '\0';
-}
-
-u8 hexval(char c)
-{
-	if(c >= '0' && c <= '9')
-		return c - '0';
-
-	if(c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-
-	if(c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
-
-	return 0;
-}
-
-u32 atox(const char *s)
-{
-	u32 value = 0;
-
-	while(*s)
-	{
-		char c = *s++;
-
-		if(c >= '0' && c <= '9')
-			value = (value << 4) | (c - '0');
-		else if(c >= 'a' && c <= 'f')
-			value = (value << 4) | (c - 'a' + 10);
-		else if(c >= 'A' && c <= 'F')
-			value = (value << 4) | (c - 'A' + 10);
-		else
-			break;
-	}
-
-	return value;
-}
-
-u32 parsex(const char *s)
-{
-	if(s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
-		return atox(s + 2);
-
-	return atoi(s);
-}
-u16 u16port = 0x0;
-u16 u16val = 0x0;
-u8 u8val = 0x0;
-
-
 void shell_exec(char *line)
 {
 	char arg1[INPUT_MAX];
 	char arg2[INPUT_MAX];
 
 	color = 0x1F;
-	if(strcmp(line, "fault;") == 0)
-	{
-		asm volatile("mov $0x1234, %ax");
-		asm volatile("mov %ax, %ds");
-	}
-	else if(strcmp(line, "cls;") == 0)
+	if(strcmp(line, "cls;") == 0)
 		clear();
 	else if(strcmp(line, "help;") == 0)
 		helpMenu();
-	else if(starts(line, "color(") && ends(line, ");")) {
-                rmsemia(line);
-                color = atoi(skip(line + 5));
-        }
-	else if(starts(line, "u16port = ") && ends(line, ";")) {
-                rmsemiv(line);
-                u16port = parsex(line + 10);
-        }
-	else if(starts(line, "u16val = ") && ends(line, ";")) {
-                rmsemiv(line);
-                u16val = parsex(line + 9);
-        }
-	else if(starts(line, "u8val = ") && ends(line, ";")) {
-                rmsemiv(line);
-                u8val = parsex(line + 8);
-        }
-	else if(strcmp(line, "outb;") == 0)
-                poutb(u16port, u8val);
-	else if(strcmp(line, "outw;") == 0)
-                poutw(u16port, u16val);
+	else if(starts(line, "color "))
+		color = atoi(skip(line + 5));
 	else if(strcmp(line, "vmoff;") == 0)
 		vmoff();
 	else if(strcmp(line, "halt;") == 0)
@@ -979,48 +844,28 @@ void shell_exec(char *line)
 		addr();
 	else if(strcmp(line, "utils;") == 0)
 		utilsMenu();
+	else if(strcmp(line, "cpustat;") == 0)
+		cpustat();
 	else if(strcmp(line, "ls;") == 0)
 		as_ls();
-	else if(starts(line, "ls(\"") && ends(line, "\");")) {
-		rmsemi(line);
-		as_ls_path(line + 4);
-	}
-	else if(starts(line, "mkdir(\"") && ends(line, "\");")) {
-		rmsemi(line);
-		as_mkdir(line + 7);
-	}
-	else if(starts(line, "touch(\"") && ends(line, "\");")) {
-		rmsemi(line);
-		as_touch(line + 7);
-	}
-	else if(starts(line, "cat(\"") && ends(line, "\");")) {
-		rmsemi(line);
-		as_cat(line + 5);
-	}
-	else if(starts(line, "edit(\"") && ends(line, "\");")) {
-		rmsemi(line);
-		as_edit(line + 6);
-	}
-	else if(starts(line, "run(\"") && ends(line, "\");")) {
-		rmsemi(line);
-		run_script(line + 5);
-	}
-	else if(starts(line, "comment(\"") && ends(line, "\");")) {
-                rmsemi(line);
-		comment(line + 9);
-	}
-	else if(starts(line, "tune(\"") && ends(line, "\");")) {
-                rmsemi(line);
-		tune(line + 6);
-	}
-	else if(starts(line, "beep(") && ends(line, ");")) {
-		rmsemia(line);
+	else if(starts(line, "ls "))
+		as_ls_path(line + 3);
+	else if(starts(line, "mkdir "))
+		as_mkdir(line + 6);
+	else if(starts(line, "touch "))
+		as_touch(line + 6);
+	else if(starts(line, "cat "))
+		as_cat(line + 4);
+	else if(starts(line, "edit "))
+		as_edit(line + 5);
+	else if(starts(line, "run "))
+		run_script(line + 4);
+	else if(starts(line, "comment "))
+                comment(line + 8);
+	else if(starts(line, "beep "))
                 beep(atoi(line + 5));
-	}
-	else if(starts(line, "sleep(") && ends(line, ");")) {
-                rmsemia(line);
-		sleep(atoi(line + 6));
-	}
+	else if(starts(line, "sleep "))
+                sleep(atoi(line + 6));
 	else if(strcmp(line, "nosound;") == 0)
                 nosound();
 	else if(strcmp(line, "save;") == 0)
@@ -1029,77 +874,92 @@ void shell_exec(char *line)
 		as_load_from_disk();
 	else if(strcmp(line, "atadbg;") == 0)
 		ata_debug();
-	else if(starts(line, "rm(\"") && ends(line, "\");")) {
-		rmsemi(line);
-		as_rm(line + 4);
-	}
+	else if(starts(line, "rm "))
+		as_rm(line + 3);
 	else if(strcmp(line, "saveity;") == 0)
 		saveit = 1;
 	else if(strcmp(line, "saveitn;") == 0)
                 saveit = 0;
-	else if(starts(line, "cp(\"") && ends(line, "\");"))
+	else if(strcmp(line, "install;") == 0)
+                install();
+	else if(starts(line, "cp "))
 	{
-		rmsemi(line);
-		as_two_args(line + 4, arg1, arg2);
+		as_two_args(line + 3, arg1, arg2);
 		as_cp(arg1, arg2);
 	}
 
-	else if(starts(line, "mv(\"") && ends(line, "\");"))
+	else if(starts(line, "mv "))
 	{
-		rmsemi(line);
-		as_two_args(line + 4, arg1, arg2);
+		as_two_args(line + 3, arg1, arg2);
 		as_mv(arg1, arg2);
 	}
-	else if(starts(line, "print(\"") && ends(line, "\");"))
+	else if(starts(line, "print "))
+        {
+                u8 oldcolor = color;
+                color = defcolor;
+
+                print(line + 6);
+
+                color = oldcolor;
+        }
+
+        else if(starts(line, "printg "))
+        {
+                u8 oldcolor = color;
+                color = 0x1A;
+
+                print(line + 7);
+
+                color = oldcolor;
+        }
+
+        else if(starts(line, "printr "))
+        {
+                u8 oldcolor = color;
+                color = 0x1C;
+
+                print(line + 7);
+
+                color = oldcolor;
+        }
+
+
+	else if(starts(line, "printn "))
 	{
-		u8 oldcolor = color;
-		char *text;
+	        u8 oldcolor = color;
+	        color = defcolor;
 
-		color = defcolor;
-		rmsemi(line);
-		text = line + 7;
-
-		while(*text && *text != '"')
-		{
-			if(text[0] == '\\' && text[1] == 'n')
-			{
-				putc('\n');
-				text += 2;
-			}
-			else if(text[0] == '\\' &&
-				text[1] == 'c' &&
-				text[2] == '[' &&
-				text[3] == 'd' &&
-				text[4] == 'c')
-			{
-				color = defcolor;
-				text += 5;
-			}
-			else if(text[0] == '\\' &&
-				text[1] == 'c' &&
-				text[2] == '[' &&
-				text[3] == '0' &&
-				text[4] == 'x')
-			{
-				color = (hexval(text[5]) << 4) |
-					hexval(text[6]);
-
-				text += 7;
-			}
-			else
-			{
-				putc(*text);
-				text++;
-			}
-		}
+		print(line + 7);
+		putc('\n');
 
 		color = oldcolor;
 	}
 
-	else if(starts(line, "cd(\"") && ends(line, "\");"))
+	else if(starts(line, "printng "))
+        {
+                u8 oldcolor = color;
+                color = 0x1A;
+
+                print(line + 8);
+                putc('\n');
+
+                color = oldcolor;
+        }
+
+	else if(starts(line, "printnr "))
+        {
+                u8 oldcolor = color;
+                color = 0x1C;
+
+                print(line + 8);
+                putc('\n');
+
+                color = oldcolor;
+        }
+
+	else if(starts(line, "cd "))
 	{
-		rmsemi(line);
-		if(as_cd(line + 4) != 0)
+		if(as_cd(line + 3) != 0)
 			pred("Directory not found\n");
 	}
 	else if (line[0])
@@ -1156,12 +1016,14 @@ int shell(void)
 	color = 0x1F;
 	clear();
 	draw_tb();
-	nosound();
+	sleep(500);
+        nosound();
 
 	draw_tb();
+	print("Loading files...\n");
 	update_rtc_only();
-	print("run(\"/RunCmds.AC\");\n");
-	shell_exec("run(\"RunCmds.AC\");");
+	as_load_from_disk();
+	run_script("/RunCmds.c");
 	shift = 0;
 	ctrl = 0;
 	ext = 0;
@@ -1192,9 +1054,10 @@ int shell(void)
 void kmain(void)
 {//main
 	clear();
-	startupSeq();
+	startupBanner();
+	idt_init();
 	/* ANCHORSAND SEED START */
-/*	as_cd("/");
+	as_cd("/");
 	as_mkdir("Docs");
 	as_cd("Docs");
 	as_touch("FAQ.TXT");
@@ -1204,19 +1067,12 @@ void kmain(void)
 	as_cd("..");
 	as_mkdir("Everist");
 	as_cd("Everist");
-	as_mkdir("Install");
-	as_cd("Install");
-	as_touch("Main.AC");
-	as_write("Main.AC", "cd(\"/\");\nprint(\"[*] Removing /RunCmds.AC\\n\");\nrm(\"RunCmds.AC\");\nprint(\"[*] Copying /Everist/Install/RunCmds.AC to /RunCmds.AC\\n\");\ncp(\"/Everist/Install/RunCmds.AC /RunCmds.AC\");\nsave;\nprint(\"[!] Done! Please reboot the machine.\\n\");\n");
-	as_touch("RunCmds.AC");
-	as_write("RunCmds.AC", "cd(\"/Home\");\nls;\nsaveity;");
-	as_cd("..");
 	as_mkdir("Music");
 	as_cd("Music");
-	as_touch("0_Note.TXT");
-	as_write("0_Note.TXT", "All of these files can be played!\nJust press F4 followed by the song or tune\nyou want to play.");
-	as_touch("1_Spark");
-	as_write("1_Spark", "print(\"\\nDo \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 G4h\");\nprint(\"s i\");\ntune(\"T120 F4h\");\nprint(\"t a \");\ntune(\"T120 E4q\");\nprint(\"spa\");\ntune(\"T120 C4w\");\nprint(\"rk?\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Do \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 E4h\");\nprint(\"t i\");\ntune(\"T120 G4h\");\nprint(\"s a \");\ntune(\"T120 A4q\");\nprint(\"spa\");\ntune(\"T120 C5w\");\nprint(\"rk!\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 Rq G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 Rq F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Make \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion.\\n\");\ntune(\"T120 G4q Rq\");\nprint(\"It \");\ntune(\"T120 A4h\");\nprint(\"is \");\ntune(\"T120 C5w Rq\");\nprint(\"a \");\ntune(\"T120 A4h\");\nprint(\"spa\");\ntune(\"T120 B4h\");\nprint(\"r\");\ntune(\"T120 C5h\");\nprint(\"k!\\n\\n\");\ntune(\"T120 C5w\");\n\n\n\n\n");
+	as_touch("0_0Note.TXT");
+	as_write("0_0Note.TXT", "All of these files can be played!\nJust press F4 followed by the song or tune\nyou want to play.");
+	as_touch("0_Jeopardy");
+	as_write("0_Jeopardy", "//Jeopardy Theme Song\n//Performed by Rocco Himel\nprint It's fi\nbeep 750\nsleep 1000\nprint nal\nbeep 1000\nsleep 1000\nprint  Jeo\nbeep 750\nsleep 1000\nprint par\nbeep 500\nsleep 500\nprint dy\nbeep 500\nsleep 500\nprint , and what\nbeep 750\nsleep 1000\nprint  do I\nbeep 1000\nsleep 1000\nprintn  do?\nbeep 750\nsleep 1000\nnosound\n//first pause\nsleep 1000\nprint The o\nbeep 750\nsleep 1000\nprint thers\nbeep 1000\nsleep 1000\nprint  are\nbeep 750\nsleep 1000\nprint  writing\nbeep 1000\nsleep 1000\nprint  but\nbeep 1250\nsleep 250\nprint .\nsleep 250\nprint .\nsleep 250\nprint .\nsleep 250\nprint .\nsleep 250\nprint .\n//go down part\nprint I\nbeep 1050\nsleep 500\nprint  don't\nbeep 1000\nsleep 500\nprint  have \nbeep 900\nsleep 500\nprint  a\nbeep 800\nsleep 500\nprintn  clue.\nbeep 700\nsleep 500\n//next part\nprint They\nbeep 750\nsleep 1000\nprint  say\nbeep 1000\nsleep 1000\nprintg  pride\nbeep 750\nsleep 1000\nprint  comes\nbeep 500\nsleep 500\nprint  be\nbeep 500\nsleep 500\nprint fore\nbeep 750\nsleep 1000\nprint  the\nbeep 1000\nsleep 1000\nprintr  fall\nprintn .\nbeep 750\nsleep 1000\nnosound\n//second pause\nsleep 1000\n//next part\nprint Why\nbeep 1000\nsleep 500\nnosound\nsleep 1000\nprint , oh why\nbeep 900\nsleep 500\nprint  did\nbeep 750\nsleep 500\nnosound\nsleep 500\nprintn  I\nbeep 700\nsleep 1000\nprintr bet\nbeep 600\nsleep 500\nnosound\nsleep 1000\nprintr  it\nbeep 550\nsleep 500\nnosound\nsleep 1000\nprintnr  all?\nbeep 500\nsleep 500\nnosound\n//do not delete this\nnosound");
 	as_cd("..");
 	as_cd("..");
 	as_mkdir("Help");
@@ -1244,9 +1100,10 @@ void kmain(void)
 	as_touch("Logo.TXT");
 	as_write("Logo.TXT", "---------------------        AneoEngine V0.2.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
-	as_touch("RunCmds.AC");
-	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment(\"cat /Misc/Logo.TXT\");\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\ncomment(\"ls /Home\");\nls;\ncomment(\"Run '/Everist/Install/Main.AC' to install to current disk.\");");
+	as_touch("RunCmds.c");
+	as_write("RunCmds.c", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment cat /Misc/Logo.TXT\ncat /Misc/Logo.TXT\ncd /Home\ncomment ls /Home\nls\ncomment Run \"install\" to install to current disk.");
 	/* ANCHORSAND SEED END */
+	shell();
 }
 
 

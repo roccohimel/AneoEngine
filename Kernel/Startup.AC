@@ -1,0 +1,174 @@
+//Main startup file that contains memory
+//addresses and starts the shell loop
+#include <stdINT.h>
+
+TD U C u8;
+TD U S u16;
+TD U INT u32;
+
+extern INT as_write(CC *path, CC *text);
+extern INT as_touch(CC *path);
+extern INT as_mkdir(CC *path);
+extern VD cursor_update(VD);
+extern VD putc(C c);
+extern VD print(CC *s);
+extern VD sleep(U INT ms);
+extern CC *VERSION;
+extern CC *BUILD;
+extern VD pit_init_1000hz(VD);
+extern VD printad(CC *s, uint32_t x);
+extern VD printadocu(CC *s, uint32_t x1, uint32_t x2);
+extern VD beep(u32 freq);
+extern VD nosound(VD);
+extern VD indprintad(CC *s, uint32_t x);
+extern VD indprintadocu(CC *s, uint32_t x1, uint32_t x2);
+extern u8 inb(u16 port);
+extern VD as_init();
+extern INT as_load_from_disk(VD);
+extern INT shell(VD);
+extern VD idt_init(VD);
+extern VD shell_exec(C *line);
+extern U INT cx;
+extern U INT cy;
+extern u8 color;
+extern INT as_cd(CC *path);
+
+//Addresses not involved in boot
+uint32_t IVT_START = 0x0;
+uint32_t IVT_END = 0x3FF;
+uint32_t FREE_LOW_MEM_START = 0x500;
+uint32_t FREE_LOW_MEM_END = 0x7BFF;
+uint32_t STACK = 0x90000;
+uint32_t VGA_MEM_START = 0xA0000;
+uint32_t VGA_MEM_END = 0xAFFFF;
+uint32_t VGA_TEXT_BUF_START = 0xB0000;
+uint32_t VGA_TEXT_BUF_END = 0xBFFFF;
+
+//addresses involved in boot
+uint32_t BIOS_DATA_START = 0x400;
+uint32_t BIOS_DATA_END = 0x4FF;
+uint32_t BOOTLOADER_START = 0x7C00;
+uint32_t BOOTLOADER_END = 0x7DFF;
+uint32_t GTD_START = 0x7CDA;
+uint32_t GTD_END = 0x7CF2;
+uint32_t GTD_CODE = 0x7CE2;
+uint32_t GTD_DATA = 0x7CEA;
+uint32_t KERNEL_ENTRY = 0x10000;
+uint32_t KERNEL_DATA_START = 0x10000;
+uint32_t KERNEL_DATA_END = 0x20000;
+
+
+#define S_W   80
+#define S_H   50
+#define VGA_TEXT ((u16*)0xB8000)
+
+u16 saved_vga[S_W * S_H];
+
+U INT soldcx;
+U INT soldcy;
+u8 soldcolor;
+
+VD save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor)
+{
+        INT i;
+
+        *oldcx = cx;
+        *oldcy = cy;
+        *oldcolor = color;
+
+        for(i = 0; i < S_W * S_H; i++)
+                saved_vga[i] = VGA_TEXT[i];
+}
+
+VD restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
+{
+        INT i;
+
+        for(i = 0; i < S_W * S_H; i++)
+                VGA_TEXT[i] = saved_vga[i];
+
+        cx = oldcx;
+        cy = oldcy;
+        color = oldcolor;
+        cursor_update();
+}
+
+
+VD startupSeq(VD)
+{//startup banner
+	print("AneoEngine ");
+	print(VERSION);
+        print("\n\n");
+	pit_init_1000hz();
+	putc('\n');
+	as_init();
+	putc('\n');
+	idt_init();
+	putc('\n');
+	print("*AnchorSand seed start*\n");
+	/* ANCHORSAND SEED START */
+	as_cd("/");
+	as_mkdir("Docs");
+	as_cd("Docs");
+	as_touch("FAQ.TXT");
+	as_write("FAQ.TXT", ">Why do you use your own license? Why not use the MIT License, Apache License,\n        or even the GNU GPL? Why would I use someone else's license when I\n        can build my own? After all, a project that is hand-crafted from\n        scratch should also have a license that is also hand-crafted from\n        scratch. I also think that yes, the GPL does already have what mine\n        does, but it feels better comming from my words, because they're mine.\n\n>Is it really built from scratch? You used GNU compilers, linkers, and\n        assemblers, that arent yours. Technically, you would be incorrect. The\n        operating system, including the boot loader and kernel, is built from\n        scratch. I used standard C and standard ASM. However, I never said I\n        made the build tools from scratch.\n\n>What operating system do you use daily?\n        Currently, I use Debian GNU/Linux 13.4 with the XFCE 4 desktop\n        enviornment. I run it both on my Intel Xeon E3-1230 v6 desktop, and my\n        AMD Ryzen 5 4650U laptop (Lenovo Thinkpad E14 Gen2)\n\n>Why do you use capital letters for your source file names?\n        Because thats what they start with, I give my kernel respect.");
+	as_touch("LICENSE");
+	as_write("LICENSE", "AneoEngine License V1.1\n\n28 May, 2026\nCopyright (C) 2026 Rocco Himel, All Rights Reserved.\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. The contents of the /docs directory are excluded\n   from this license. No permission is granted to\n   copy, modify, distribute, mirror, republish, or\n   otherwise redistribute any files contained within\n   the /docs directory without prior written\n   permission from the copyright holder.\n\n9. You shall NOT call or classify your copy of the \n   Software as official.\n\n10. Any redistributed version of the Software must\n    remain licensed under the AneoEngine License\n    version under which it was received, or a later\n    official version of the AneoEngine License.\n\n11. You shall not intentionally submit, promote,\n    request indexing of, or otherwise cause any\n    redistributed or modified copy of the Software\n    to be indexed by search engines. Only the\n    official AneoEngine project may be intentionally\n    indexed.\n\n12. You shall not redistribute the Software under\n    any license other than the AneoEngine License\n    V1.1.");
+	as_cd("..");
+	as_mkdir("Everist");
+	as_cd("Everist");
+	as_mkdir("Install");
+	as_cd("Install");
+	as_touch("Main.AC");
+	as_write("Main.AC", "cd(\"/\");\nprint(\"[*] Removing /RunCmds.AC\\n\");\nrm(\"RunCmds.AC\");\nprint(\"[*] Copying /Everist/Install/RunCmds.AC to /RunCmds.AC\\n\");\ncp(\"/Everist/Install/RunCmds.AC /RunCmds.AC\");\nsave;\nprint(\"[!] Done! Please reboot the machine.\\n\");\n");
+	as_touch("RunCmds.AC");
+	as_write("RunCmds.AC", "cd(\"/Home\");\nls;\nsaveity;");
+	as_cd("..");
+	as_mkdir("Music");
+	as_cd("Music");
+	as_touch("0_Note.TXT");
+	as_write("0_Note.TXT", "All of these files can be played!\nJust press F4 followed by the song or tune\nyou want to play.");
+	as_touch("1_Spark");
+	as_write("1_Spark", "print(\"\\nDo \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 G4h\");\nprint(\"s i\");\ntune(\"T120 F4h\");\nprint(\"t a \");\ntune(\"T120 E4q\");\nprint(\"spa\");\ntune(\"T120 C4w\");\nprint(\"rk?\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Do \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 E4h\");\nprint(\"t i\");\ntune(\"T120 G4h\");\nprint(\"s a \");\ntune(\"T120 A4q\");\nprint(\"spa\");\ntune(\"T120 C5w\");\nprint(\"rk!\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 Rq G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 Rq F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Make \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion.\\n\");\ntune(\"T120 G4q Rq\");\nprint(\"It \");\ntune(\"T120 A4h\");\nprint(\"is \");\ntune(\"T120 C5w Rq\");\nprint(\"a \");\ntune(\"T120 A4h\");\nprint(\"spa\");\ntune(\"T120 B4h\");\nprint(\"r\");\ntune(\"T120 C5h\");\nprint(\"k!\\n\\n\");\ntune(\"T120 C5w\");\n\n\n\n\n");
+	as_cd("..");
+	as_cd("..");
+	as_mkdir("Help");
+	as_cd("Help");
+	as_touch("AboutAneoEngine.TXT");
+	as_write("AboutAneoEngine.TXT", "Official Website: https://roccohimel.github.io/AneoEngine\n\nCreator: Rocco Himel\n\nThe first language I ever learned was BASH. I was very young when my mom gave\nme her 2015 MacBook Pro running MacOS Mojave. I was very curious when I\nopened the terminal and I wanted to learn how to use what I didn't know was,\na shell. I then taught my self how to use it.\n\nThe first PROGRAMMING language I ever learned was C++. I was also younger at\nthe time, when I became a small indie developer making random games in Unity.\nI of course, only made them to mess around and just to have fun.\n\nI then of course learned C, standalone C, and x86 Assembly. I taught my self\nwith the OS Dev Wiki and other online forums\n\nI skipped 7th grade math and Pre-Algebra. Right now, I currently study Algebra\n1 and Physical Science. In my free time, I study electronics, more x86\nAssembly, and more C. Soon, I will study Geometry 1 and Biology.");
+	as_touch("CommandHelp.TXT");
+	as_write("CommandHelp.TXT", "addr:........................List all memory addresses used by AneoEngine\ncat /Directory/File.TXT:.....Prints the contents of a file\ncd:..........................Changes your directory to \"/Home\"\ncd /Directory:...............Manually changes your directory\ncls:.........................Clears your screen\ncpustat:.....................Shows system stats\nhalt:........................Stops the system\nls:..........................Lists the contents of the current directory\nls /Directory:...............Lists the contents of the selected directory\nmkdir /Directory/Name:.......Create a directory\ntouch........................Create a file\nvmoff:.......................Turns off your VM\nwrite........................Write text to a file");
+	as_touch("Controls.TXT");
+	as_write("Controls.TXT", " F1 -- Open the help menu\n F2 -- Reset the system\n F3 -- Open the utilities menu\n F4 -- Open the CpuStat menu");
+	as_cd("..");
+	as_mkdir("Home");
+	as_cd("Home");
+	as_touch("CHANGELOG");
+	as_write("CHANGELOG", "AneoEngine V0.2.2 Change log\n- Added exception handling");
+	as_touch("README");
+	as_write("README", "                   The AneoEngine Operating System\n\nPlease read the LICENSE before software redistribution.\n\nYou can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.\nYou can also boot it via virtual machine as long as yours supports\nfloppy disc drives, which most of them do. I recommend QEMU since you\nare not installing anything, AneoEngine is a live image.\n\nAneoEngine is supported by any 32-bit CPU, any 64-bit CPU that supports\nLegacy BIOS boot will also run AneoEngine. ARM-64 and RISC-V are not\nsupported.\n\nAneoEngine requires ar least 512 megabytes of RAM.\n\nAneoEngine files are initialized via the official shell script which\nscans files from the \"Root\" folder in the AneoEngine source code,\nand makes AnchorSand commands of them and puts them into kmain. I know\nthis sounds inefficient, but it happens VERY fast. AnchorSand is a\ncustom filesystem that is used exclusively in AneoEngine and doesn't\nsupport FAT12 or FAT32, but is 100% open-source.");
+	as_touch("Welcome.TXT");
+	as_write("Welcome.TXT", "\nTo get started with AneoEngine, press F1.\n");
+	as_cd("..");
+	as_mkdir("Misc");
+	as_cd("Misc");
+	as_touch("Keymap.c");
+	as_write("Keymap.c", "static const char keymap[128] =\n{//allowed chars\n        0, 27, '1', '2', '3', '4', '5', '6',\n        '7', '8', '9', '0', '-', '=', '\\b', '\\t',\n        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',\n        'o', 'p', '[', ']', '\\n', 0, 'a', 's',\n        'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',\n        '\\'', '`', 0, '\\\\', 'z', 'x', 'c', 'v',\n        'b', 'n', 'm', ',', '.', '/', 0, '*',\n        0, ' ', 0\n};\n\nstatic const char shiftmap[128] =\n{//allowed chars when shift is pressed\n        0, 27, '!', '@', '#', '$', '%', '^',\n        '&', '*', '(', ')', '_', '+', '\\b', '\\t',\n        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',\n        'O', 'P', '{', '}', '\\n', 0, 'A', 'S',\n        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',\n        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V',\n        'B', 'N', 'M', '<', '>', '?', 0, '*',\n        0, ' ', 0\n};");
+	as_touch("Logo.TXT");
+	as_write("Logo.TXT", "---------------------        AneoEngine V0.2.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
+	as_cd("..");
+	as_touch("RunCmds.AC");
+	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment(\"cat /Misc/Logo.TXT\");\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\ncomment(\"ls /Home\");\nls;\ncomment(\"Run '/Everist/Install/Main.AC' to install to current disk.\");");
+	/* ANCHORSAND SEED END */
+	print("*AnchorSand seed end*\n");
+	putc('\n');
+	print("load;\n");
+	as_load_from_disk();
+	putc('\n');
+	print("Loading shell\n\n\n\n");
+	save_screen(&soldcx, &soldcy, &soldcolor);
+	sleep(1000);
+	beep(480);
+	sleep(300);
+	shell();
+}

@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 set -e
@@ -10,8 +9,8 @@ cp LICENSE Root/Docs
 #!/bin/sh
 
 ROOT="Root"
-KERNEL="Kernel/Kernel.c"
-TMP="/tmp/Kernel.c.as"
+KERNEL="Kernel/Startup.AC"
+TMP="/tmp/Startup.AC.as"
 SEED="/tmp/as_seed.txt"
 
 START="/* ANCHORSAND SEED START */"
@@ -86,7 +85,7 @@ build()
 			next
 		}
 
-		wipe && index($0, "shell();") {
+		wipe && index($0, "print(\"*AnchorSand seed end*\\n\");") {
 			while((getline line < seed) > 0)
 				print line
 			close(seed)
@@ -100,7 +99,7 @@ build()
 			next
 		}
 
-		index($0, "shell();") {
+		index($0, "print(\"*AnchorSand seed end*\\n\");") {
 			while((getline line < seed) > 0)
 				print line
 			close(seed)
@@ -119,6 +118,7 @@ build()
 	echo "[+] AnchorSand seed rebuilt cleanly"
 
 	CC="gcc -m32 -ffreestanding -fno-pie -fno-pic -fno-stack-protector -nostdlib"
+	AC="AneoC/AneoC"
 
 	echo "[ASM] Assembling CD-ROM bootloader..."
 	nasm -f bin Boot/Boot.ASM -o Boot/AEBOOT.BIN
@@ -127,53 +127,57 @@ build()
 	nasm -f bin Boot/FIBoot.ASM -o Boot/FIAEBOOT.BIN
 
 	echo "[ASM] Assembling kernel entry point..."
-	nasm -f elf32 Kernel/DiskThunk.ASM -o DiskThunk.o
+	nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
 
 	echo "[CC] Compiling kernel..."
 	$CC -c Kernel/Kernel.c -o Kernel.o
 
-	echo "[CC] Compiling AnchorSand..."
-	$CC -c Kernel/AnchorSand.c -o AnchorSand.o
+	echo "[AC] Compiling AnchorSand..."
+	$AC Kernel/AnchorSand.c -o AnchorSand.o
 
 	echo "[ASM] Assembling AnchorSand disk drivers..."
-	nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
+	nasm -f elf32 Kernel/DiskThunk.ASM -o DiskThunk.o
 
 	echo "[CC] Compiling AnchorSand disk save funtions..."
         $CC -c Kernel/FSSave.c -o FSSave.o
 
-	echo "[CC] Compiling PIT functions..."
-	$CC -c Kernel/PIT.c -o PIT.o
+	echo "[AC] Compiling PIT functions..."
+	$AC Kernel/PIT.AC -o PIT.o
 
-	echo "[CC] Compiling keyboard drivers..."
-	$CC -c Kernel/Keyboard.c -o Keyboard.o
+	echo "[AC] Compiling keyboard drivers..."
+	$AC Kernel/Keyboard.AC -o Keyboard.o
 
-	echo "[CC] Compiling haltage funtions..."
-	$CC -c Kernel/Haltage.c -o Haltage.o
+	echo "[AC] Compiling haltage funtions..."
+	$AC Kernel/Haltage.AC -o Haltage.o
 
-	echo "[CC] Compiling startup funtions..."
-	$CC -c Kernel/Startup.c -o Startup.o
+	echo "[AC] Compiling startup funtions..."
+	$AC Kernel/Startup.AC -o Startup.o
 
-	echo "[CC] Compiling IDT funtions..."
+	echo "[ASM/AC] Compiling IDT funtions..."
+	nasm -f elf32 Kernel/Fault.ASM -o Fault.o
 	nasm -f elf32 Kernel/ISR.ASM -o ISR.o
-	$CC -c Kernel/IDT.c -o IDT.o
+	$AC Kernel/IDT.AC -o IDT.o
 
-	echo "[CC] Compiling help menu..."
-	$CC -c Cmds/Help/Menu.c -o HelpMenu.o
+	echo "[AC] Compiling help menu..."
+	$AC Cmds/Help/Menu.AC -o HelpMenu.o
 
-	echo "[CC] Compiling 'addr' command..."
-	$CC -c Cmds/Addr.c -o Addr.o
+	echo "[AC] Compiling 'addr' command..."
+	$AC Cmds/Addr.AC -o Addr.o
 
-	echo "[CC] Compiling F4 run funtion..."
-	$CC -c Cmds/F4.c -o F4.o
+	echo "[AC] Compiling F4 run funtion..."
+	$AC Cmds/F4.AC -o F4.o
 
-	echo "[CC] Compiling utilities menu..."
-	$CC -c Cmds/Utils/Menu.c -o UtilsMenu.o
+	echo "[AC] Compiling tune function..."
+	$AC Cmds/Tune.AC -o Tune.o
 
-	echo "[CC] Compiling utilities lister..."
-	$CC -c Cmds/Utils/List.c -o UtilsList.o
+	echo "[AC] Compiling utilities menu..."
+	$AC Cmds/Utils/Menu.AC -o UtilsMenu.o
 
-	echo "[CC] Compiling 'Entropy' utility..."
-	$CC -c Utils/Entropy.c -o Entropy.o
+	echo "[AC] Compiling utilities lister..."
+	$AC Cmds/Utils/List.AC -o UtilsList.o
+
+	echo "[AC] Compiling 'Entropy' utility..."
+	$AC Utils/Entropy.AC -o Entropy.o
 
 	echo "[CC] Compiling 'Printer' utility..."
 	$CC -c Utils/Printer.c -o Printer.o
@@ -182,18 +186,20 @@ build()
 	ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary \
 		KEntry.o \
 		Kernel.o \
-		AnchorSand.o \
 		DiskThunk.o \
+		AnchorSand.o \
 		FSSave.o \
 		PIT.o \
 		Haltage.o \
 		Keyboard.o \
 		Startup.o \
+		Fault.o \
 		IDT.o \
 		ISR.o \
 		HelpMenu.o \
 		Addr.o \
 		F4.o \
+		Tune.o \
 		UtilsMenu.o \
 		Printer.o \
 		Entropy.o \
@@ -267,8 +273,8 @@ dd if=Boot/FIAEBOOT.BIN of=AneoEngine.ISO \
 echo "[*] Building final image..."
 build
 
-RC1="qemu-system-x86_64 -cdrom AneoEngine.ISO"
-RC2="qemu-system-x86_64 -drive file=AneoEngine.ISO,format=raw"
+RC1="qemu-system-x86_64 -cdrom AneoEngine.ISO -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0"
+RC2="qemu-system-x86_64 -drive file=AneoEngine.ISO,format=raw -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0"
 
 echo "========================"
 echo "QEMU run commands:"

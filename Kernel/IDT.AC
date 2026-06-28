@@ -1,51 +1,82 @@
 #include <stdint.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
+TD U C u8;
+TD U S u16;
+TD U INT u32;
 
-extern void idt_load(u32);
-extern void printad(const char *s, uint32_t x);
-extern void printadl(const char *s, uint32_t x);
+extern u8 inb(u16 port);
+extern VD restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor);
+extern INT soldcx;
+extern INT soldcy;
+extern u8 soldcolor;
+extern VD idt_load(u32);
+extern VD putc(C c);
+extern VD printad(CC *s, uint32_t x);
+extern VD printadl(CC *s, uint32_t x);
+extern VD isr0();
+extern VD isr1();
+extern VD isr2();
+extern VD isr3();
+extern VD isr4();
+extern VD isr5();
+extern VD isr6();
+extern VD isr7();
+extern VD isr8();
+extern VD isr9();
+extern VD isr10();
+extern VD isr11();
+extern VD isr12();
+extern VD isr13();
+extern VD isr14();
+extern VD isr15();
+extern VD isr16();
+extern VD isr17();
+extern VD isr18();
+extern VD isr19();
+extern VD isr20();
+extern VD isr21();
+extern VD isr22();
+extern VD isr23();
+extern VD isr24();
+extern VD isr25();
+extern VD isr26();
+extern VD isr27();
+extern VD isr28();
+extern VD isr29();
+extern VD isr30();
+extern VD isr31();
+extern VD triple_fault();
+extern VD beep(u32 freq);
+extern VD nosound(VD);
+extern VD sleep(U INT ms);
 
-extern void isr0();
-extern void isr1();
-extern void isr2();
-extern void isr3();
-extern void isr4();
-extern void isr5();
-extern void isr6();
-extern void isr7();
-extern void isr8();
-extern void isr9();
-extern void isr10();
-extern void isr11();
-extern void isr12();
-extern void isr13();
-extern void isr14();
-extern void isr15();
-extern void isr16();
-extern void isr17();
-extern void isr18();
-extern void isr19();
-extern void isr20();
-extern void isr21();
-extern void isr22();
-extern void isr23();
-extern void isr24();
-extern void isr25();
-extern void isr26();
-extern void isr27();
-extern void isr28();
-extern void isr29();
-extern void isr30();
-extern void isr31();
+extern VD clear();
+extern VD print(C *);
+extern u8 color;
+extern u8 defcolor;
+extern u8 cy;
+extern u8 cx;
 
-extern void clear();
-extern void print(char *);
-extern unsigned char color;
 
-struct IDTEntry
+VD waitkey(VD)
+{//wait till key is pressed; continue
+        u8 sc;
+
+        while (inb(0x64) & 1)
+                inb(0x60);
+
+        for (;;) {
+                while (!(inb(0x64) & 1));
+
+                sc = inb(0x60);
+
+                if (!(sc & 0x80))
+                        break;
+        }
+}
+
+
+ST IDTEntry
 {
 	u16 base_low;
 	u16 sel;
@@ -54,13 +85,13 @@ struct IDTEntry
 	u16 base_high;
 } __attribute__((packed));
 
-struct IDTPtr
+ST IDTPtr
 {
 	u16 limit;
 	u32 base;
 } __attribute__((packed));
 
-struct Registers
+ST Registers
 {
 	u32 gs;
 	u32 fs;
@@ -76,7 +107,7 @@ struct Registers
 	u32 ecx;
 	u32 eax;
 
-	u32 int_no;
+	u32 INT_no;
 	u32 err_code;
 
 	u32 eip;
@@ -84,14 +115,14 @@ struct Registers
 	u32 eflags;
 };
 
-struct IDTEntry idt[256];
-struct IDTPtr idtp;
+ST IDTEntry idt[256];
+ST IDTPtr idtp;
 
-char *exceptions[] =
+C *exceptions[] =
 {
 	"DivideByZero",
 	"Debug",
-	"NonMaskableInterrupt",
+	"NonMaskableinterrupt",
 	"Breakpoint",
 	"Overflow",
 	"BoundRangeExceeded",
@@ -123,7 +154,7 @@ char *exceptions[] =
 	"Reserved"
 };
 
-char *exception_info[] =
+C *exception_info[] =
 {
 	"Division by zero.",
 	"Debug exception.",
@@ -131,7 +162,7 @@ char *exception_info[] =
 	"Breakpoint hit.",
 	"Overflow detected.",
 	"BOUND range exceeded.",
-	"Invalid CPU instruction.",
+	"Invalid CPU inSTion.",
 	"Device not available.",
 	"Double fault.",
 	"Coprocessor segment overrun.",
@@ -159,9 +190,9 @@ char *exception_info[] =
 	"Reserved exception."
 };
 
-void print_hex_digit(u8 n)
+VD print_hex_digit(u8 n)
 {
-	char c[2];
+	C c[2];
 
 	if(n < 10)
 		c[0] = '0' + n;
@@ -173,7 +204,7 @@ void print_hex_digit(u8 n)
 	print(c);
 }
 
-void print_hex32(u32 n)
+VD print_hex32(u32 n)
 {
 	print_hex_digit((n >> 28) & 0xF);
 	print_hex_digit((n >> 24) & 0xF);
@@ -185,11 +216,11 @@ void print_hex32(u32 n)
 	print_hex_digit(n & 0xF);
 }
 
-void print_dec(u32 n)
+VD print_dec(u32 n)
 {
-	char buf[16];
-	char c[2];
-	int i;
+	C buf[16];
+	C c[2];
+	INT i;
 
 	if(n == 0)
 	{
@@ -217,7 +248,7 @@ void print_dec(u32 n)
 	}
 }
 
-void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
+VD idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
 {
 	idt[num].base_low = base & 0xFFFF;
 	idt[num].base_high = (base >> 16) & 0xFFFF;
@@ -226,23 +257,23 @@ void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
 	idt[num].flags = flags;
 }
 
-void print_exception_name(u32 int_no)
+VD print_exception_name(u32 INT_no)
 {
-	if(int_no < 32)
-		print(exceptions[int_no]);
+	if(INT_no < 32)
+		print(exceptions[INT_no]);
 	else
 		print("Unknown");
 }
 
-void print_exception_info(u32 int_no)
+VD print_exception_info(u32 INT_no)
 {
-	if(int_no < 32)
-		print(exception_info[int_no]);
+	if(INT_no < 32)
+		print(exception_info[INT_no]);
 	else
 		print("Unknown CPU exception.");
 }
 
-void print_caller_line(u32 addr, char *name)
+VD print_caller_line(u32 addr, C *name)
 {
 	print_hex32(addr);
 	print(":");
@@ -250,34 +281,40 @@ void print_caller_line(u32 addr, char *name)
 	print("\n");
 }
 
-void exception_handler(struct Registers *r)
+VD exception_handler(ST Registers *r)
 {
+	cy = 80;
 	color = 0x0F;
-	clear();
+	defcolor = color;
 
-	print("Fault: ");
+	print(" Fault: ");
 
-	if(r->int_no < 32)
-		print(exceptions[r->int_no]);
+	if(r->INT_no < 32)
+		print(exceptions[r->INT_no]);
 	else
 		print("Unknown");
 
 	printadl(" Error Code", r->err_code);
 	print("\n");
 
-	printadl("Faulting Instruction", r->eip);
-        printadl("&exception_handler", (u32)&exception_handler);
-        printadl("&idt", (u32)&idt);
-        printadl("&idtp", (u32)&idtp);
-        printadl("Fault Addr", r->eip);
-        printadl("IDT Base", idtp.base);
-        printadl("IDT Limit", idtp.limit);
+	beep(480);
+        sleep(1000);
+        nosound();
+        sleep(1000);
+        beep(480);
+        sleep(1000);
+        nosound();
+        sleep(1000);
+        beep(480);
+        sleep(1000);
+        nosound();
+        sleep(1000);
 
-	print("\n\n");
+	print("\n");
 	print("          AneoEngine ERROR\n");
 	print("Kernel halted due to CPU exception\n\n");
 
-	print("Exception Report:\n");
+	print("\n\nException Report:\n");
 
 	printadl("EIP", r->eip);
 	printadl("EBP", r->ebp);
@@ -315,21 +352,74 @@ void exception_handler(struct Registers *r)
         print("\n");
 
 	printadl("EFLAGS", r->eflags);
+	print("\n\n");
+	print("Press any key to continue.\n\n");
 
-	for(;;)
-		__asm__ __volatile__("cli; hlt");
+	u8 oldcy = cy;
+        cy = 0;
+	cx = 0;
+        print("IDT Info                          \n");
+        for(INT ia = 0; ia < 34; ia++) putc(196);
+        print("\n");
+        putc(179);
+        printadl("Faulting Instruction", r->eip);
+        putc(179);
+        print("\n");
+        putc(179);
+        printadl("&exception_handler  ", (u32)&exception_handler);
+        putc(179);
+        print("\n");
+        putc(179);
+        printadl("&idt                ", (u32)&idt);
+        putc(179);
+        print("\n");
+        putc(179);
+        printadl("&idtp               ", (u32)&idtp);
+        putc(179);
+        print("\n");
+        putc(179);
+        printadl("Fault Addr          ", r->eip);
+        putc(179);
+        print("\n");
+        putc(179);
+        printadl("IDT Base            ", idtp.base);
+        putc(179);
+        print("\n");
+        putc(179);
+        printadl("IDT Limit           ", idtp.limit);
+        putc(179);
+        print("\n");
+        putc(179);
+        putc(192);
+        for(INT i = 0; i < 31; i++) putc(196);
+        putc(217);
+
+        cy = oldcy;
+        cx = 0;
+
+	nosound();
+
+	waitkey();
+
+	triple_fault();
+	//for(;;)
+	//	__asm__ __volatile__("cli; hlt");
 }
 
-void idt_init()
+VD idt_init()
 {
-	int i;
+	print("Init IDT\n");
+	INT i;
 
-	idtp.limit = sizeof(struct IDTEntry) * 256 - 1;
+	idtp.limit = sizeof(ST IDTEntry) * 256 - 1;
 	idtp.base = (u32)&idt;
 
+	print("        Create IDT...");
 	for(i = 0; i < 256; i++)
 		idt_set_gate(i, 0, 0, 0);
+	print("(DONE)\n");
 
+	print("        idt_set_gate isr0 - isr9...");
 	idt_set_gate(0, (u32)isr0, 0x08, 0x8E);
 	idt_set_gate(1, (u32)isr1, 0x08, 0x8E);
 	idt_set_gate(2, (u32)isr2, 0x08, 0x8E);
@@ -341,6 +431,9 @@ void idt_init()
 	idt_set_gate(8, (u32)isr8, 0x08, 0x8E);
 	idt_set_gate(9, (u32)isr9, 0x08, 0x8E);
 	idt_set_gate(10, (u32)isr10, 0x08, 0x8E);
+	print("(DONE)\n");
+	
+	print("        idt_set_gate isr10 - isr19...");
 	idt_set_gate(11, (u32)isr11, 0x08, 0x8E);
 	idt_set_gate(12, (u32)isr12, 0x08, 0x8E);
 	idt_set_gate(13, (u32)isr13, 0x08, 0x8E);
@@ -350,6 +443,10 @@ void idt_init()
 	idt_set_gate(17, (u32)isr17, 0x08, 0x8E);
 	idt_set_gate(18, (u32)isr18, 0x08, 0x8E);
 	idt_set_gate(19, (u32)isr19, 0x08, 0x8E);
+	print("(DONE)\n");
+	
+
+	print("        idt_set_gate isr20 - isr31...");
 	idt_set_gate(20, (u32)isr20, 0x08, 0x8E);
 	idt_set_gate(21, (u32)isr21, 0x08, 0x8E);
 	idt_set_gate(22, (u32)isr22, 0x08, 0x8E);
@@ -362,6 +459,9 @@ void idt_init()
 	idt_set_gate(29, (u32)isr29, 0x08, 0x8E);
 	idt_set_gate(30, (u32)isr30, 0x08, 0x8E);
 	idt_set_gate(31, (u32)isr31, 0x08, 0x8E);
+	print("(DONE)\n");
 
+	print("Load IDTR\n");
 	idt_load((u32)&idtp);
+	
 }

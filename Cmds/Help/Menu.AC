@@ -1,36 +1,36 @@
 //Help menu
 #include <stdint.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
+TD U C u8;
+TD U S u16;
+TD U INT u32;
 
-extern unsigned int INPUT_MAX;
+extern U INT INPUT_MAX;
 extern u8 color;
-extern unsigned int cy;
-extern unsigned int cx;
-extern void print(const char *s);
-extern void perror(const char *s);
-extern void clear(void);
-extern void readline(char *buf, int max);
-extern int strcmp(const char *a, const char *b);
-extern void info(void);
-extern void draw_tb(void);
-extern void comment(const char *s);
-extern void as_cat(const char *name);
-extern void addr(void);
+extern U INT cy;
+extern U INT cx;
+extern VD print(CC *s);
+extern VD perror(CC *s);
+extern VD clear(VD);
+extern VD readline(C *buf, INT max);
+extern INT strcmp(CC *a, CC *b);
+extern VD info(VD);
+extern VD draw_tb(VD);
+extern VD comment(CC *s);
+extern VD as_cat(CC *name);
+extern VD addr(VD);
 
-const char *CONTROLS = "/Help/Controls.TXT";
-const char *ABT = "/Help/AboutAneoEngine.TXT";
-const char *CMDS = "/Help/CommandHelp.TXT";
-const char *KM = "/Misc/Keymap.c";
-const char *FAQ = "/Docs/FAQ.TXT";
-int helpMenu(void)
+CC *CONTROLS = "/Help/Controls.TXT";
+CC *ABT = "/Help/AboutAneoEngine.TXT";
+CC *CMDS = "/Help/CommandHelp.TXT";
+CC *KM = "/Misc/Keymap.c";
+CC *FAQ = "/Docs/FAQ.TXT";
+INT helpMenu(VD)
 {
 
-	char line[INPUT_MAX];
-	char *a;
-	char *b;
+	C line[INPUT_MAX];
+	C *a;
+	C *b;
 
 	color = 0x1F;
 	u8 oldcolor = color;

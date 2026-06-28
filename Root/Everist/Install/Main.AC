@@ -1,0 +1,8 @@
+cd("/");
+print("[*] Removing /RunCmds.AC\n");
+rm("RunCmds.AC");
+print("[*] Copying /Everist/Install/RunCmds.AC to /RunCmds.AC\n");
+cp("/Everist/Install/RunCmds.AC /RunCmds.AC");
+save;
+print("[!] Done! Please reboot the machine.\n");
+

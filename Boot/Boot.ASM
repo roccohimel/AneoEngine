@@ -1,193 +1,220 @@
 [org 0x7C00]
 [bits 16]
 
-KERNEL_OFFSET  equ 0x10000
-KERNEL_SEGMENT equ 0x1000
-KERNEL_SECTORS equ 128
+KERNEL_OFFSET  EQU 0x10000
+KERNEL_SEGMENT EQU 0x1000
+KERNEL_SECTORS EQU 256
 
 start:
-	cli
-	cld
-	xor ax, ax
-	mov ds, ax
-	mov es, ax
-	mov ss, ax
-	mov sp, 0x7C00
-	sti
+	CLI
+	CLD
+	XOR AX, AX
+	MOV DS, AX
+	MOV ES, AX
+	MOV SS, AX
+	MOV SP, 0x7C00
+	STI
 
-	mov [BOOT_DRIVE], dl
-	mov [0x0500], dl
+	MOV [BOOT_DRIVE], DL
+	MOV [0x0500], DL
 
-	mov ax, 0x0003
-	int 0x10
+	MOV AX, 0x0003
+	INT 0x10
 
-	mov ax, 0x1112
-	xor bl, bl
-	int 0x10
+	MOV AX, 0x1112
+	XOR BL, BL
+	INT 0x10
 
-	mov si, msg_boot
-	call print16
-	mov si, msg_type
-	call print16
+	MOV SI, msg_boot
+	CALL print16
+	MOV SI, msg_type
+	CALL print16
 
-	call enable_a20
-	call load_kernel
+	CALL enable_a20
+	CALL load_kernel
 
-	mov si, msg_loaded
-	call print16
+	MOV SI, msg_loaded
+	CALL print16
 
-	mov si, msg_prompt
-	call print16
+	MOV SI, msg_prompt
+	CALL print16
 
-	xor ax, ax
-	int 0x16
+	XOR AX, AX
+	INT 0x16
 
-	cli
-	lgdt [gdt_descriptor]
+	CLI
+	LGDT [GDT_DESCRIPTOR]
 
-	mov eax, cr0
-	or eax, 1
-	mov cr0, eax
+	MOV EAX, CR0
+	OR EAX, 1
+	MOV CR0, EAX
 
-	jmp CODE_SEG:init_pm
+	JMP CODE_SEG:init_pm
 
 enable_a20:
-	in al, 0x92
-	or al, 00000010b
-	and al, 11111110b
-	out 0x92, al
-	ret
+	IN AL, 0x92
+	OR AL, 00000010B
+	AND AL, 11111110B
+	OUT 0x92, AL
+	RET
 
 print16:
-	lodsb
-	test al, al
-	jz .done
-	mov ah, 0x0E
-	mov bh, 0
-	mov bl, 0x1F
-	int 0x10
-	jmp print16
+	LODSB
+	TEST AL, AL
+	JZ .done
+
+	MOV AH, 0x0E
+	MOV BH, 0
+	MOV BL, 0x1F
+	INT 0x10
+	JMP print16
+
 .done:
-	ret
+	RET
 
 load_kernel:
-	mov ah, 0x08
-	mov dl, [BOOT_DRIVE]
-	int 0x13
-	jc disk_error
+	MOV AH, 0x08
+	MOV DL, [BOOT_DRIVE]
+	INT 0x13
+	JC disk_error
 
-	and cl, 00111111b
-	mov [spt], cl
-	inc dh
-	mov [heads], dh
+	AND CL, 00111111B
+	MOV [SPT], CL
 
-	mov ax, KERNEL_SEGMENT
-	mov es, ax
-	xor bx, bx
+	INC DH
+	MOV [HEADS], DH
 
-	mov byte [sector], 2
-	mov byte [head], 0
-	mov byte [track], 0
-	mov cx, KERNEL_SECTORS
+	MOV AX, KERNEL_SEGMENT
+	MOV ES, AX
+	XOR BX, BX
+
+	MOV BYTE [SECTOR], 2
+	MOV BYTE [HEAD], 0
+	MOV BYTE [TRACK], 0
+
+	MOV CX, KERNEL_SECTORS
 
 .loop:
-	push cx
+	PUSH CX
 
-	mov ah, 0x02
-	mov al, 1
-	mov ch, [track]
-	mov cl, [sector]
-	mov dh, [head]
-	mov dl, [BOOT_DRIVE]
-	int 0x13
-	jc disk_error
+	MOV AH, 0x02
+	MOV AL, 1
+	MOV CH, [TRACK]
+	MOV CL, [SECTOR]
+	MOV DH, [HEAD]
+	MOV DL, [BOOT_DRIVE]
+	INT 0x13
+	JC disk_error_pop
 
-	add bx, 512
+	ADD BX, 512
+	JNC .no_segment_wrap
 
-	inc byte [sector]
-	mov al, [spt]
-	inc al
-	cmp [sector], al
-	jne .next
+	; BX wrapped after loading 64 KiB.
+	; Move ES forward by another 64 KiB.
+	MOV AX, ES
+	ADD AX, 0x1000
+	MOV ES, AX
 
-	mov byte [sector], 1
-	inc byte [head]
+.no_segment_wrap:
+	INC BYTE [SECTOR]
 
-	mov al, [heads]
-	cmp [head], al
-	jne .next
+	MOV AL, [SPT]
+	INC AL
+	CMP [SECTOR], AL
+	JNE .next
 
-	mov byte [head], 0
-	inc byte [track]
+	MOV BYTE [SECTOR], 1
+	INC BYTE [HEAD]
+
+	MOV AL, [HEADS]
+	CMP [HEAD], AL
+	JNE .next
+
+	MOV BYTE [HEAD], 0
+	INC BYTE [TRACK]
 
 .next:
-	pop cx
-	loop .loop
-	ret
+	POP CX
+	LOOP .loop
+	RET
+
+disk_error_pop:
+	POP CX
 
 disk_error:
-	mov si, msg_disk
-	call print16
-	jmp $
+	MOV SI, msg_disk
+	CALL print16
+	JMP $
 
 [bits 32]
 
 init_pm:
-	cld
+	CLD
 
-	mov ax, DATA_SEG
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	mov ss, ax
+	MOV AX, DATA_SEG
+	MOV DS, AX
+	MOV ES, AX
+	MOV FS, AX
+	MOV GS, AX
+	MOV SS, AX
 
-	mov esp, 0x90000
+	MOV ESP, 0x90000
 
-	jmp CODE_SEG:KERNEL_OFFSET
+	JMP CODE_SEG:KERNEL_OFFSET
 
-gdt_start:
-	dq 0
+GDT_START:
+	DQ 0
 
-gdt_code:
-	dw 0xFFFF
-	dw 0x0000
-	db 0x00
-	db 10011010b
-	db 11001111b
-	db 0x00
+GDT_CODE:
+	DW 0xFFFF
+	DW 0x0000
+	DB 0x00
+	DB 10011010B
+	DB 11001111B
+	DB 0x00
 
-gdt_data:
-	dw 0xFFFF
-	dw 0x0000
-	db 0x00
-	db 10010010b
-	db 11001111b
-	db 0x00
+GDT_DATA:
+	DW 0xFFFF
+	DW 0x0000
+	DB 0x00
+	DB 10010010B
+	DB 11001111B
+	DB 0x00
 
-gdt_end:
+GDT_END:
 
-gdt_descriptor:
-	dw gdt_end - gdt_start - 1
-	dd gdt_start
+GDT_DESCRIPTOR:
+	DW GDT_END - GDT_START - 1
+	DD GDT_START
 
-CODE_SEG equ gdt_code - gdt_start
-DATA_SEG equ gdt_data - gdt_start
+CODE_SEG EQU GDT_CODE - GDT_START
+DATA_SEG EQU GDT_DATA - GDT_START
 
-BOOT_DRIVE db 0
+BOOT_DRIVE DB 0
 
-sector db 0
-head   db 0
-track  db 0
+SECTOR DB 0
+HEAD   DB 0
+TRACK  DB 0
 
-spt   db 18
-heads db 2
+SPT   DB 18
+HEADS DB 2
 
-msg_boot   db 13,10,13,10,13,10,13,10,"AneoEngine Boot Loader",13,10,0
-msg_type   db "Reading kernel from CD-ROM...",13,10,0
-msg_loaded db "Kernel found...",13,10,0
-msg_prompt db 13,10,"Press any key to continue...",13,10,0
-msg_disk   db "Kernel read error!",13,10,0
+msg_boot:
+	DB 13,10,13,10,13,10,13,10
+	DB "AneoEngine Boot Loader",13,10,0
 
-times 510 - ($ - $$) db 0
-dw 0xAA55
+msg_type:
+	DB "Reading 256 kernel sectors from CD-ROM...",13,10,0
+
+msg_loaded:
+	DB "Kernel found...",13,10,0
+
+msg_prompt:
+	DB 13,10
+	DB "Press any key to continue...",13,10,0
+
+msg_disk:
+	DB "Kernel read error!",13,10,0
+
+TIMES 510 - ($ - $$) DB 0
+DW 0xAA55

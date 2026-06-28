@@ -1,18 +1,20 @@
 //Command that prints memory addresses
 #include <stdint.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
+//required typedefs
+TD U C u8;
+TD U S u16;
+TD U INT u32;
 
-extern void putc(char c);
-extern void print(const char *s);
-extern void printad(const char *s, uint32_t x);
-extern void printadocu(const char *s, uint32_t x1, uint32_t x2);
-extern void indprintad(const char *s, uint32_t x);
-extern void indprintadocu(const char *s, uint32_t x1, uint32_t x2);
+//required externs
+extern VD putc(C c);
+extern VD print(const C *s);
+extern VD printad(const C *s, uint32_t x);
+extern VD printadocu(const C *s, uint32_t x1, uint32_t x2);
+extern VD indprintad(const C *s, uint32_t x);
+extern VD indprintadocu(const C *s, uint32_t x1, uint32_t x2);
 
-
+//regular addresses
 extern uint32_t IVT_START;
 extern uint32_t IVT_END;
 extern uint32_t FREE_LOW_MEM_START;
@@ -23,6 +25,7 @@ extern uint32_t VGA_MEM_END;
 extern uint32_t VGA_TEXT_BUF_START;
 extern uint32_t VGA_TEXT_BUF_END;
 
+//boot addresses
 extern uint32_t BIOS_DATA_START;
 extern uint32_t BIOS_DATA_END;
 extern uint32_t BOOTLOADER_START;
@@ -35,7 +38,7 @@ extern uint32_t KERNEL_ENTRY;
 extern uint32_t KERNEL_DATA_START;
 extern uint32_t KERNEL_DATA_END;
 
-void addr(void)
+VD addr(VD)
 {//print them
 	print("Data addresses listed\n");
         putc('\n');
