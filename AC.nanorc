@@ -1,0 +1,42 @@
+## Syntax highlighting for AneoC (.AC) files.
+
+syntax AC "\.AC$"
+header "-\*-.*\<C(\+\+)?((;|[[:blank:]]).*)?-\*-"
+magic "^(C|C\+\+) (source|program)"
+comment "//"
+
+color cyan "\<[A-Z_][0-9A-Z_]*\>"
+# Labels.
+color magenta "^[[:blank:]]*[A-Z_a-z][0-9A-Z_a-z]*:[[:blank:]]*$"
+color normal ":[[:blank:]]*$"
+
+# Types and related keywords.
+color lightblue "\<(auto|bool|C|CC|char|double|DB|enum|extern|float|inline|INT|int|L|restrict|short|S|signed|sizeof|static|SC|struct|ST|typedef|TD|union|void|U|VD|ULL|FILE)\>"
+color lightblue "\<([[:lower:]][[:lower:]_]*|(u_?)?int(8|16|32|64))_t\>"
+color lightblue "\<(_(Alignas|Alignof|Atomic|Bool|Complex|Generic|Imaginary|Noreturn|Static_assert|Thread_local))\>"
+color lightblue "\<(class|explicit|friend|mutable|namespace|override|private|protected|public|register|template|this|typename|using|virtual|volatile)\>"
+
+# Flow control.
+color blue "\<(if|else|for|while|do|switch|case|default)\>"
+color blue "\<(try|throw|catch|operator|new|delete)\>"
+color blue "\<(break|continue|goto|return)\>"
+
+# Single-quoted stuff (characters, backslash escapes, hex and octal byte codes).
+color orange "'([^'\]|\\(["'\abfnrtv]|x[[:xdigit:]]{1,2}|[0-3]?[0-7]{1,2}))'"
+
+# GCC builtins.
+color blue "__attribute__[[:blank:]]*\(\([^)]*\)\)|__(aligned|asm|builtin|hidden|inline|packed|restrict|section|typeof|weak)__"
+
+# Strings and names of included files.
+color orange ""([^"]|\\")*"|#[[:blank:]]*include[[:blank:]]*<[^>]+>"
+
+# Preprocessor directives.
+color blue start="^[[:blank:]]*#[[:blank:]]*(if(n?def)?|elif|warning|error|pragma)\>" end="(\`|[^\])$"
+color blue "^[[:blank:]]*#[[:blank:]]*((define|else|endif|include(_next)?|line|undef)\>|$)"
+
+# Comments.
+color lightgreen "//.*"
+color lightgreen start="/\*" end="\*/"
+
+# Reminders.
+color lightgreen "\<(FIXME|TODO|XXX)\>"
