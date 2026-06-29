@@ -117,10 +117,10 @@ VD startupSeq(VD)
 	as_cd("..");
 	as_mkdir("Everist");
 	as_cd("Everist");
-	as_mkdir("Install");
-	as_cd("Install");
+	as_mkdir("MInstall");
+	as_cd("MInstall");
 	as_touch("Main.AC");
-	as_write("Main.AC", "cd(\"/\");\nprint(\"[*] Removing /RunCmds.AC\\n\");\nrm(\"RunCmds.AC\");\nprint(\"[*] Copying /Everist/Install/RunCmds.AC to /RunCmds.AC\\n\");\ncp(\"/Everist/Install/RunCmds.AC /RunCmds.AC\");\nsave;\nprint(\"[!] Done! Please reboot the machine.\\n\");\n");
+	as_write("Main.AC", "cd(\"/\");\nprint(\"[*] Removing /RunCmds.AC\\n\");\nrm(\"RunCmds.AC\");\nprint(\"[*] Copying /Everist/MInstall/RunCmds.AC to /RunCmds.AC\\n\");\ncp(\"/Everist/MInstall/RunCmds.AC /RunCmds.AC\");\nsave;\nprint(\"[!] Done!\\n\");\n");
 	as_touch("RunCmds.AC");
 	as_write("RunCmds.AC", "cd(\"/Home\");\nls;\nsaveity;");
 	as_cd("..");
@@ -158,7 +158,7 @@ VD startupSeq(VD)
 	as_write("Logo.TXT", "---------------------        AneoEngine V0.2.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
 	as_touch("RunCmds.AC");
-	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment(\"cat /Misc/Logo.TXT\");\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\ncomment(\"ls /Home\");\nls;\ncomment(\"Run '/Everist/Install/Main.AC' to install to current disk.\");");
+	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment(\"cat /Misc/Logo.TXT\");\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\ncomment(\"ls /Home\");\nls;\ncomment(\"Run 'cpdrive;' to install AneoEngine.\");");
 	/* ANCHORSAND SEED END */
 	print("*AnchorSand seed end*\n");
 	putc('\n');

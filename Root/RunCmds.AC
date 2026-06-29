@@ -5,4 +5,4 @@ cat("/Misc/Logo.TXT");
 cd("/Home");
 comment("ls /Home");
 ls;
-comment("Run '/Everist/Install/Main.AC' to install to current disk.");
+comment("Run 'cpdrive;' to install AneoEngine.");

@@ -45,6 +45,7 @@ extern unsigned int saveit;
 extern int as_cp(const char *src_path, const char *dst_path);
 extern int as_mv(const char *src_path, const char *dst_path);
 extern void tune(const char *song);
+extern void triple_fault();
 
 #define VGA ((u16*)0xB8000) //VGA buffer address
 #define W 80 //screen width
@@ -931,6 +932,932 @@ u32 parsex(const char *s)
 
 	return atoi(s);
 }
+
+#define CP_MAX_DRIVES 4
+#define CP_NONE 0
+#define CP_ATA 1
+#define CP_ATAPI 2
+
+typedef unsigned char CP_U8;
+typedef unsigned short CP_U16;
+typedef unsigned int CP_U32;
+typedef unsigned long long CP_U64;
+
+typedef struct {
+	CP_U16 io;
+	CP_U16 ctrl;
+	CP_U8 slave;
+	CP_U8 type;
+	CP_U8 lba48;
+	CP_U64 sectors;
+	CP_U32 block_size;
+	char model[41];
+} CPDrive;
+
+static CPDrive cp_drives[CP_MAX_DRIVES];
+static CP_U16 cp_buffer[1024];
+
+static inline CP_U8 cp_inb(CP_U16 port)
+{
+	CP_U8 value;
+
+	asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
+	return value;
+}
+
+static inline CP_U16 cp_inw(CP_U16 port)
+{
+	CP_U16 value;
+
+	asm volatile("inw %1, %0" : "=a"(value) : "Nd"(port));
+	return value;
+}
+
+static inline void cp_outb(CP_U16 port, CP_U8 value)
+{
+	asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
+}
+
+static inline void cp_outw(CP_U16 port, CP_U16 value)
+{
+	asm volatile("outw %0, %1" : : "a"(value), "Nd"(port));
+}
+
+static void cp_delay(CPDrive *drive)
+{
+	cp_inb(drive->ctrl);
+	cp_inb(drive->ctrl);
+	cp_inb(drive->ctrl);
+	cp_inb(drive->ctrl);
+}
+
+static int cp_wait_not_busy(CPDrive *drive)
+{
+	CP_U32 timeout = 10000000;
+
+	while(timeout--)
+		if(!(cp_inb(drive->io + 7) & 0x80))
+			return 1;
+
+	return 0;
+}
+
+static int cp_wait_drq(CPDrive *drive)
+{
+	CP_U32 timeout = 10000000;
+	CP_U8 status;
+
+	while(timeout--) {
+		status = cp_inb(drive->io + 7);
+
+		if(status & 0x21)
+			return 0;
+
+		if(!(status & 0x80) && (status & 0x08))
+			return 1;
+	}
+
+	return 0;
+}
+
+static int cp_wait_done(CPDrive *drive)
+{
+	CP_U8 status;
+
+	if(!cp_wait_not_busy(drive))
+		return 0;
+
+	status = cp_inb(drive->io + 7);
+
+	if(status & 0x21)
+		return 0;
+
+	return 1;
+}
+
+static void cp_set_name(CPDrive *drive, const char *name)
+{
+	CP_U32 i = 0;
+
+	while(name[i] && i < 40) {
+		drive->model[i] = name[i];
+		i++;
+	}
+
+	drive->model[i] = 0;
+}
+
+static void cp_model_from_identify(CPDrive *drive, CP_U16 *identify)
+{
+	CP_U32 i;
+	CP_U32 end;
+
+	for(i = 0; i < 20; i++) {
+		drive->model[i * 2] = (char)(identify[27 + i] >> 8);
+		drive->model[i * 2 + 1] =
+			(char)(identify[27 + i] & 0xFF);
+	}
+
+	drive->model[40] = 0;
+	end = 40;
+
+	while(end &&
+	      (drive->model[end - 1] == ' ' ||
+	       drive->model[end - 1] == 0))
+		end--;
+
+	drive->model[end] = 0;
+}
+
+static int cp_atapi_packet_read(CPDrive *drive,
+				CP_U8 *packet,
+				CP_U32 bytes,
+				CP_U8 *buffer)
+{
+	CP_U32 i;
+	CP_U32 done = 0;
+	CP_U32 count;
+	CP_U32 words;
+	CP_U16 value;
+
+	if(!cp_wait_not_busy(drive))
+		return 0;
+
+	cp_outb(drive->io + 6,
+		0xA0 | (drive->slave << 4));
+
+	cp_delay(drive);
+
+	cp_outb(drive->io + 1, 0);
+	cp_outb(drive->io + 2, 0);
+	cp_outb(drive->io + 3, 0);
+	cp_outb(drive->io + 4,
+		(CP_U8)(bytes & 0xFF));
+	cp_outb(drive->io + 5,
+		(CP_U8)((bytes >> 8) & 0xFF));
+	cp_outb(drive->io + 7, 0xA0);
+
+	if(!cp_wait_drq(drive))
+		return 0;
+
+	for(i = 0; i < 6; i++) {
+		cp_outw(drive->io,
+			(CP_U16)packet[i * 2] |
+			((CP_U16)packet[i * 2 + 1] << 8));
+	}
+
+	while(done < bytes) {
+		if(!cp_wait_drq(drive))
+			return 0;
+
+		count = (CP_U32)cp_inb(drive->io + 4);
+		count |= (CP_U32)cp_inb(drive->io + 5) << 8;
+
+		if(!count)
+			return 0;
+
+		words = (count + 1) >> 1;
+
+		for(i = 0; i < words; i++) {
+			value = cp_inw(drive->io);
+
+			if(done + i * 2 < bytes) {
+				buffer[done + i * 2] =
+					(CP_U8)(value & 0xFF);
+			}
+
+			if(done + i * 2 + 1 < bytes) {
+				buffer[done + i * 2 + 1] =
+					(CP_U8)(value >> 8);
+			}
+		}
+
+		done += count;
+	}
+
+	return cp_wait_done(drive);
+}
+
+static int cp_atapi_capacity(CPDrive *drive)
+{
+	CP_U8 packet[12];
+	CP_U8 data[8];
+	CP_U32 i;
+	CP_U32 last_lba;
+	CP_U32 block_size;
+
+	for(i = 0; i < 12; i++)
+		packet[i] = 0;
+
+	packet[0] = 0x25;
+
+	if(!cp_atapi_packet_read(drive,
+				 packet,
+				 8,
+				 data))
+		return 0;
+
+	last_lba =
+		((CP_U32)data[0] << 24) |
+		((CP_U32)data[1] << 16) |
+		((CP_U32)data[2] << 8) |
+		(CP_U32)data[3];
+
+	block_size =
+		((CP_U32)data[4] << 24) |
+		((CP_U32)data[5] << 16) |
+		((CP_U32)data[6] << 8) |
+		(CP_U32)data[7];
+
+	drive->sectors = (CP_U64)last_lba + 1;
+	drive->block_size = block_size;
+
+	return 1;
+}
+
+static int cp_identify(CPDrive *drive)
+{
+	CP_U16 identify[256];
+	CP_U32 i;
+	CP_U8 mid;
+	CP_U8 high;
+	CP_U8 status;
+
+	drive->type = CP_NONE;
+	drive->lba48 = 0;
+	drive->sectors = 0;
+	drive->block_size = 0;
+	drive->model[0] = 0;
+
+	cp_outb(drive->io + 6,
+		0xA0 | (drive->slave << 4));
+
+	cp_delay(drive);
+
+	cp_outb(drive->io + 2, 0);
+	cp_outb(drive->io + 3, 0);
+	cp_outb(drive->io + 4, 0);
+	cp_outb(drive->io + 5, 0);
+	cp_outb(drive->io + 7, 0xEC);
+
+	cp_delay(drive);
+
+	status = cp_inb(drive->io + 7);
+
+	if(!status)
+		return 0;
+
+	if(!cp_wait_not_busy(drive))
+		return 0;
+
+	mid = cp_inb(drive->io + 4);
+	high = cp_inb(drive->io + 5);
+
+	if((mid == 0x14 && high == 0xEB) ||
+	   (mid == 0x69 && high == 0x96)) {
+		drive->type = CP_ATAPI;
+
+		cp_outb(drive->io + 7, 0xA1);
+
+		if(!cp_wait_drq(drive))
+			return 0;
+	} else {
+		drive->type = CP_ATA;
+
+		if(!cp_wait_drq(drive))
+			return 0;
+	}
+
+	for(i = 0; i < 256; i++)
+		identify[i] = cp_inw(drive->io);
+
+	cp_model_from_identify(drive, identify);
+
+	if(drive->type == CP_ATA) {
+		drive->block_size = 512;
+
+		if((identify[83] & (1 << 10)) &&
+		   (identify[100] ||
+		    identify[101] ||
+		    identify[102] ||
+		    identify[103])) {
+			drive->lba48 = 1;
+
+			drive->sectors =
+				(CP_U64)identify[100] |
+				((CP_U64)identify[101] << 16) |
+				((CP_U64)identify[102] << 32) |
+				((CP_U64)identify[103] << 48);
+		} else {
+			drive->sectors =
+				(CP_U64)identify[60] |
+				((CP_U64)identify[61] << 16);
+		}
+
+		if(!drive->model[0])
+			cp_set_name(drive, "ATA Disk");
+
+		return drive->sectors != 0;
+	}
+
+	if(!drive->model[0])
+		cp_set_name(drive, "ATAPI CD-ROM");
+
+	return cp_atapi_capacity(drive);
+}
+
+static int cp_scan_drives(void)
+{
+	CP_U32 i;
+	CP_U16 ios[4] = {
+		0x1F0,
+		0x1F0,
+		0x170,
+		0x170
+	};
+	CP_U16 ctrls[4] = {
+		0x3F6,
+		0x3F6,
+		0x376,
+		0x376
+	};
+	CP_U8 slaves[4] = {
+		0,
+		1,
+		0,
+		1
+	};
+	int count = 0;
+
+	for(i = 0; i < CP_MAX_DRIVES; i++) {
+		cp_drives[i].io = ios[i];
+		cp_drives[i].ctrl = ctrls[i];
+		cp_drives[i].slave = slaves[i];
+
+		if(cp_identify(&cp_drives[i]))
+			count++;
+	}
+
+	return count;
+}
+
+static int cp_find_source(void)
+{
+	CP_U8 bios_drive =
+		*((volatile CP_U8 *)0x0500);
+
+	CP_U32 wanted;
+	CP_U32 found;
+	CP_U32 i;
+	int first_ata = -1;
+	int first_atapi = -1;
+
+	for(i = 0; i < CP_MAX_DRIVES; i++) {
+		if(cp_drives[i].type == CP_ATA &&
+		   first_ata < 0)
+			first_ata = (int)i;
+
+		if(cp_drives[i].type == CP_ATAPI &&
+		   first_atapi < 0)
+			first_atapi = (int)i;
+	}
+
+	if(bios_drive < 0x80)
+		return first_atapi;
+
+	if(bios_drive >= 0xE0) {
+		wanted = bios_drive - 0xE0;
+		found = 0;
+
+		for(i = 0; i < CP_MAX_DRIVES; i++) {
+			if(cp_drives[i].type != CP_ATAPI)
+				continue;
+
+			if(found == wanted)
+				return (int)i;
+
+			found++;
+		}
+
+		return first_atapi;
+	}
+
+	wanted = bios_drive - 0x80;
+	found = 0;
+
+	for(i = 0; i < CP_MAX_DRIVES; i++) {
+		if(cp_drives[i].type != CP_ATA)
+			continue;
+
+		if(found == wanted)
+			return (int)i;
+
+		found++;
+	}
+
+	return first_ata;
+}
+
+static int cp_ata_read(CPDrive *drive,
+		       CP_U64 lba,
+		       CP_U16 *buffer)
+{
+	CP_U32 i;
+
+	if(!cp_wait_not_busy(drive))
+		return 0;
+
+	if(drive->lba48) {
+		cp_outb(drive->io + 6,
+			0x40 | (drive->slave << 4));
+
+		cp_delay(drive);
+
+		cp_outb(drive->io + 2, 0);
+		cp_outb(drive->io + 3,
+			(CP_U8)(lba >> 24));
+		cp_outb(drive->io + 4,
+			(CP_U8)(lba >> 32));
+		cp_outb(drive->io + 5,
+			(CP_U8)(lba >> 40));
+
+		cp_outb(drive->io + 2, 1);
+		cp_outb(drive->io + 3,
+			(CP_U8)lba);
+		cp_outb(drive->io + 4,
+			(CP_U8)(lba >> 8));
+		cp_outb(drive->io + 5,
+			(CP_U8)(lba >> 16));
+
+		cp_outb(drive->io + 7, 0x24);
+	} else {
+		if(lba > 0x0FFFFFFFULL)
+			return 0;
+
+		cp_outb(drive->io + 6,
+			0xE0 |
+			(drive->slave << 4) |
+			((CP_U8)(lba >> 24) & 0x0F));
+
+		cp_delay(drive);
+
+		cp_outb(drive->io + 2, 1);
+		cp_outb(drive->io + 3,
+			(CP_U8)lba);
+		cp_outb(drive->io + 4,
+			(CP_U8)(lba >> 8));
+		cp_outb(drive->io + 5,
+			(CP_U8)(lba >> 16));
+
+		cp_outb(drive->io + 7, 0x20);
+	}
+
+	if(!cp_wait_drq(drive))
+		return 0;
+
+	for(i = 0; i < 256; i++)
+		buffer[i] = cp_inw(drive->io);
+
+	return cp_wait_done(drive);
+}
+
+static int cp_ata_write(CPDrive *drive,
+			CP_U64 lba,
+			CP_U16 *buffer)
+{
+	CP_U32 i;
+
+	if(!cp_wait_not_busy(drive))
+		return 0;
+
+	if(drive->lba48) {
+		cp_outb(drive->io + 6,
+			0x40 | (drive->slave << 4));
+
+		cp_delay(drive);
+
+		cp_outb(drive->io + 2, 0);
+		cp_outb(drive->io + 3,
+			(CP_U8)(lba >> 24));
+		cp_outb(drive->io + 4,
+			(CP_U8)(lba >> 32));
+		cp_outb(drive->io + 5,
+			(CP_U8)(lba >> 40));
+
+		cp_outb(drive->io + 2, 1);
+		cp_outb(drive->io + 3,
+			(CP_U8)lba);
+		cp_outb(drive->io + 4,
+			(CP_U8)(lba >> 8));
+		cp_outb(drive->io + 5,
+			(CP_U8)(lba >> 16));
+
+		cp_outb(drive->io + 7, 0x34);
+	} else {
+		if(lba > 0x0FFFFFFFULL)
+			return 0;
+
+		cp_outb(drive->io + 6,
+			0xE0 |
+			(drive->slave << 4) |
+			((CP_U8)(lba >> 24) & 0x0F));
+
+		cp_delay(drive);
+
+		cp_outb(drive->io + 2, 1);
+		cp_outb(drive->io + 3,
+			(CP_U8)lba);
+		cp_outb(drive->io + 4,
+			(CP_U8)(lba >> 8));
+		cp_outb(drive->io + 5,
+			(CP_U8)(lba >> 16));
+
+		cp_outb(drive->io + 7, 0x30);
+	}
+
+	if(!cp_wait_drq(drive))
+		return 0;
+
+	for(i = 0; i < 256; i++)
+		cp_outw(drive->io, buffer[i]);
+
+	return cp_wait_done(drive);
+}
+
+static int cp_ata_flush(CPDrive *drive)
+{
+	if(!cp_wait_not_busy(drive))
+		return 0;
+
+	cp_outb(drive->io + 6,
+		0xE0 | (drive->slave << 4));
+
+	cp_outb(drive->io + 7,
+		drive->lba48 ? 0xEA : 0xE7);
+
+	return cp_wait_done(drive);
+}
+
+static int cp_atapi_read(CPDrive *drive,
+			 CP_U32 lba,
+			 CP_U16 *buffer)
+{
+	CP_U8 packet[12];
+	CP_U32 i;
+
+	for(i = 0; i < 12; i++)
+		packet[i] = 0;
+
+	packet[0] = 0xA8;
+	packet[2] = (CP_U8)(lba >> 24);
+	packet[3] = (CP_U8)(lba >> 16);
+	packet[4] = (CP_U8)(lba >> 8);
+	packet[5] = (CP_U8)lba;
+	packet[9] = 1;
+
+	return cp_atapi_packet_read(drive,
+				     packet,
+				     2048,
+				     (CP_U8 *)buffer);
+}
+
+static void cp_print_u32(CP_U32 value)
+{
+	char buffer[11];
+	CP_U32 count = 0;
+
+	if(!value) {
+		putc('0');
+		return;
+	}
+
+	while(value) {
+		buffer[count++] =
+			'0' + value % 10;
+		value /= 10;
+	}
+
+	while(count)
+		putc(buffer[--count]);
+}
+
+static CP_U32 cp_mib(CPDrive *drive)
+{
+	if(drive->block_size == 2048)
+		return (CP_U32)(drive->sectors >> 9);
+
+	return (CP_U32)(drive->sectors >> 11);
+}
+
+static void cp_print_location(CPDrive *drive)
+{
+	if(drive->io == 0x1F0)
+		print("Primary ");
+	else
+		print("Secondary ");
+
+	if(drive->slave)
+		print("Slave");
+	else
+		print("Master");
+}
+
+static CP_U32 cp_read_line(char *buffer,
+			   CP_U32 max)
+{
+	CP_U32 length = 0;
+	int key;
+
+	while(1) {
+		key = getkey();
+
+		if(key == '\r' || key == '\n') {
+			putc('\n');
+			buffer[length] = 0;
+			return length;
+		}
+
+		if((key == '\b' || key == 127) &&
+		   length) {
+			length--;
+
+			putc('\b');
+			putc(' ');
+			putc('\b');
+
+			continue;
+		}
+
+		if(key >= 32 &&
+		   key <= 126 &&
+		   length + 1 < max) {
+			buffer[length++] = (char)key;
+			putc((char)key);
+		}
+	}
+}
+
+static CP_U32 cp_parse_number(char *buffer)
+{
+	CP_U32 value = 0;
+	CP_U32 i = 0;
+
+	while(buffer[i] >= '0' &&
+	      buffer[i] <= '9') {
+		value =
+			value * 10 +
+			(CP_U32)(buffer[i] - '0');
+
+		i++;
+	}
+
+	if(buffer[i])
+		return 0;
+
+	return value;
+}
+
+static int cp_is_yes(char *buffer)
+{
+	return
+		(buffer[0] == 'Y' ||
+		 buffer[0] == 'y') &&
+		(buffer[1] == 'E' ||
+		 buffer[1] == 'e') &&
+		(buffer[2] == 'S' ||
+		 buffer[2] == 's') &&
+		buffer[3] == 0;
+}
+
+static void cp_progress(CP_U32 mib)
+{
+	print("Copied ");
+	cp_print_u32(mib);
+	print(" MiB\n");
+}
+
+static int cp_copy_ata(CPDrive *source,
+		       CPDrive *target)
+{
+	CP_U64 lba;
+
+	for(lba = 0;
+	    lba < source->sectors;
+	    lba++) {
+		if(!cp_ata_read(source,
+				lba,
+				cp_buffer)) {
+			print("\nRead failed at sector ");
+			cp_print_u32((CP_U32)lba);
+			putc('\n');
+
+			return 0;
+		}
+
+		if(!cp_ata_write(target,
+				 lba,
+				 cp_buffer)) {
+			print("\nWrite failed at sector ");
+			cp_print_u32((CP_U32)lba);
+			putc('\n');
+
+			return 0;
+		}
+
+		if(!(lba & 0x7FFF))
+			cp_progress(
+				(CP_U32)(lba >> 11));
+	}
+
+	return cp_ata_flush(target);
+}
+
+static int cp_copy_atapi(CPDrive *source,
+			 CPDrive *target)
+{
+	CP_U64 lba;
+	CP_U64 target_lba;
+	CP_U32 part;
+
+	for(lba = 0;
+	    lba < source->sectors;
+	    lba++) {
+		if(!cp_atapi_read(source,
+				  (CP_U32)lba,
+				  cp_buffer)) {
+			print("\nRead failed at CD sector ");
+			cp_print_u32((CP_U32)lba);
+			putc('\n');
+
+			return 0;
+		}
+
+		target_lba = lba << 2;
+
+		for(part = 0; part < 4; part++) {
+			if(!cp_ata_write(
+				   target,
+				   target_lba + part,
+				   cp_buffer + part * 256)) {
+				print(
+					"\nWrite failed at disk sector ");
+
+				cp_print_u32(
+					(CP_U32)(
+						target_lba +
+						part));
+
+				putc('\n');
+
+				return 0;
+			}
+		}
+
+		if(!(lba & 0x1FFF))
+			cp_progress(
+				(CP_U32)(lba >> 9));
+	}
+
+	return cp_ata_flush(target);
+}
+
+void cpdrive(void)
+{
+	int source_index;
+	int targets[CP_MAX_DRIVES];
+	int target_count = 0;
+	int target_index;
+	CP_U32 i;
+	CP_U32 choice;
+	CP_U64 required_sectors;
+	char input[16];
+	CPDrive *source;
+	CPDrive *target;
+
+	print("\nScanning drives...\n");
+
+	if(!cp_scan_drives()) {
+		print("No IDE devices found.\n");
+		return;
+	}
+
+	source_index = cp_find_source();
+
+	if(source_index < 0) {
+		print(
+			"Could not map the BIOS boot drive "
+			"to an IDE device.\n");
+
+		return;
+	}
+
+	source = &cp_drives[source_index];
+
+	if(source->type == CP_ATAPI &&
+	   source->block_size != 2048) {
+		print(
+			"The boot CD does not use "
+			"2048-byte logical sectors.\n");
+
+		return;
+	}
+
+	print("\nSource: Current disk - ");
+	print(source->model);
+	print(" ");
+	cp_print_u32(cp_mib(source));
+	print(" MiB (");
+	cp_print_location(source);
+	print(")\n\n");
+
+	for(i = 0; i < CP_MAX_DRIVES; i++) {
+		if((int)i == source_index ||
+		   cp_drives[i].type != CP_ATA)
+			continue;
+
+		targets[target_count] = (int)i;
+
+		print("Device ");
+		cp_print_u32(
+			(CP_U32)target_count + 1);
+		print(": ");
+		print(cp_drives[i].model);
+		print(" ");
+		cp_print_u32(
+			cp_mib(&cp_drives[i]));
+		print(" MiB (");
+		cp_print_location(&cp_drives[i]);
+		print(")\n");
+
+		target_count++;
+	}
+
+	if(!target_count) {
+		print(
+			"No writable destination "
+			"disks found.\n");
+
+		return;
+	}
+
+	print("\n>");
+	cp_read_line(input, sizeof(input));
+
+	choice = cp_parse_number(input);
+
+	if(!choice ||
+	   choice > (CP_U32)target_count) {
+		print("Invalid device.\n");
+		return;
+	}
+
+	target_index = targets[choice - 1];
+	target = &cp_drives[target_index];
+
+	if(source->type == CP_ATAPI)
+		required_sectors =
+			source->sectors << 2;
+	else
+		required_sectors =
+			source->sectors;
+
+	if(target->sectors < required_sectors) {
+		print("Destination is too small.\n");
+		return;
+	}
+
+	print("\nTHIS ERASES DEVICE ");
+	cp_print_u32(choice);
+	print(" COMPLETELY.\n");
+	print("Type YES to continue: ");
+
+	cp_read_line(input, sizeof(input));
+
+	if(!cp_is_yes(input)) {
+		print("Cancelled.\n");
+		return;
+	}
+
+	print("\nInstalling AneoEngine to Device ");
+	cp_print_u32(choice);
+	print("\n");
+
+	if(source->type == CP_ATAPI) {
+		if(!cp_copy_atapi(source, target)) {
+			print("Copy failed.\n");
+			return;
+		}
+	} else {
+		if(!cp_copy_ata(source, target)) {
+			print("Copy failed.\n");
+			return;
+		}
+	}
+
+	cp_progress(cp_mib(source));
+	print("\nAneoEngine media copy complete.\n");
+}
+
 u16 u16port = 0x0;
 u16 u16val = 0x0;
 u8 u8val = 0x0;
@@ -949,6 +1876,12 @@ void shell_exec(char *line)
 	}
 	else if(strcmp(line, "cls;") == 0)
 		clear();
+	else if(strcmp(line, "reboot;") == 0)
+		triple_fault();
+	else if(strcmp(line, "cpdrive;") == 0) {
+                clear();
+		cpdrive();
+	}
 	else if(strcmp(line, "help;") == 0)
 		helpMenu();
 	else if(starts(line, "color(") && ends(line, ");")) {
