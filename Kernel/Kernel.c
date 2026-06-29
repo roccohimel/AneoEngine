@@ -1161,7 +1161,7 @@ int shell(void)
 	draw_tb();
 	update_rtc_only();
 	print("run(\"/RunCmds.AC\");\n");
-	shell_exec("run(\"RunCmds.AC\");");
+	run_script("/RunCmds.AC");
 	shift = 0;
 	ctrl = 0;
 	ext = 0;

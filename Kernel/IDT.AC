@@ -50,7 +50,7 @@ extern VD beep(u32 freq);
 extern VD nosound(VD);
 extern VD sleep(U INT ms);
 
-extern VD clear();
+extern VD clear(VD);
 extern VD print(C *);
 extern u8 color;
 extern u8 defcolor;
@@ -401,6 +401,9 @@ VD exception_handler(ST Registers *r)
 
 	waitkey();
 
+	clear();
+	print("Rebooting");
+	sleep(1000);
 	triple_fault();
 	//for(;;)
 	//	__asm__ __volatile__("cli; hlt");
