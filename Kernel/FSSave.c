@@ -32,7 +32,11 @@ extern int as_cwd;
 #define AS_MAGIC            0x41534653
 
 static u8 secbuf[512];
-static u8 *bounce = (u8 *)0x7000;
+/* DiskThunk.ASM writes BIOS sectors to this real-mode buffer.
+   Do NOT put it at 0x7000: Kernel.c uses 0x7000 for FONT8X8,
+   and disk load/save would corrupt glyphs like / and ; after install. */
+#define AS_DISK_BOUNCE_ADDR 0x6000
+static u8 *bounce = (u8 *)AS_DISK_BOUNCE_ADDR;
 
 static void zero(u8 *p, u32 n) {
 	u32 i;

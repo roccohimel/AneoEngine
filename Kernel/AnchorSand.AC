@@ -8,17 +8,26 @@ extern VD print(CC *s);
 extern VD printint(INT n);
 extern u8 color;
 extern INT getkey(VD);
+extern VD kb_drain_mouse(VD);
 extern U INT cx;
 extern U INT cy;
 extern INT shift;
 extern VD cursor_update(VD);
+extern VD cursor_hide(VD);
 extern VD clear(VD);
+extern VD screen_get_cell(INT i, C *c, u8 *col);
+extern VD screen_set_cell(INT i, C c, u8 col);
+extern VD screen_put_at(INT x, INT y, C c, u8 col);
+extern INT con_x;
+extern INT con_y;
+extern INT con_w;
+extern INT con_h;
 extern INT as_save_to_disk(VD);
 U INT saveit = 0;
 
 #define AS_MAX_NODES	64
 #define AS_NAME_MAX	32
-#define AS_DATA_MAX	4096
+#define AS_DATA_MAX	8192
 #define AS_FILE		1
 #define AS_DIR		2
 
@@ -550,18 +559,39 @@ VD as_pwd()
 	as_pwd_rec(as_cwd);
 }
 
-#define EDIT_KEY_UP    1
-#define EDIT_KEY_DOWN  2
-#define EDIT_KEY_LEFT  3
-#define EDIT_KEY_RIGHT 4
+#define EDIT_KEY_UP    0x101
+#define EDIT_KEY_DOWN  0x102
+#define EDIT_KEY_LEFT  0x103
+#define EDIT_KEY_RIGHT 0x104
 
 #define EDIT_TOP 3
 #define EDIT_W	 80
-#define EDIT_H   50
+#define EDIT_H   60
 
-#define VGA_TEXT ((u16*)0xB8000)
+C edit_saved_chars[EDIT_W * EDIT_H];
+u8 edit_saved_attrs[EDIT_W * EDIT_H];
+C edit_draw_chars[EDIT_W * EDIT_H];
+u8 edit_draw_attrs[EDIT_W * EDIT_H];
+C edit_shadow_chars[EDIT_W * EDIT_H];
+u8 edit_shadow_attrs[EDIT_W * EDIT_H];
+INT edit_shadow_valid = 0;
+INT edit_shadow_owner = -9999;
 
-u16 edit_saved_vga[EDIT_W * EDIT_H];
+INT as_edit_w(VD)
+{
+	if(con_w > 0 && con_w <= EDIT_W)
+		return con_w;
+
+	return EDIT_W;
+}
+
+INT as_edit_h(VD)
+{
+	if(con_h > EDIT_TOP && con_h <= EDIT_H)
+		return con_h;
+
+	return EDIT_H;
+}
 
 INT as_edit_line_of_pos(INT n, INT pos)
 {
@@ -581,50 +611,165 @@ INT as_edit_line_of_pos(INT n, INT pos)
 
 VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor)
 {
-	INT i;
+	INT x;
+	INT y;
+	INT w;
+	INT h;
+	INT si;
+	INT di;
 
 	*oldcx = cx;
 	*oldcy = cy;
 	*oldcolor = color;
+	w = as_edit_w();
+	h = as_edit_h();
 
-	for(i = 0; i < EDIT_W * EDIT_H; i++)
-		edit_saved_vga[i] = VGA_TEXT[i];
+	for(y = 0; y < h; y++)
+	{
+		for(x = 0; x < w; x++)
+		{
+			si = (con_y + y) * EDIT_W + con_x + x;
+			di = y * EDIT_W + x;
+			screen_get_cell(si, &edit_saved_chars[di], &edit_saved_attrs[di]);
+		}
+	}
 }
 
 VD as_edit_restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
 {
-	INT i;
+	INT x;
+	INT y;
+	INT w;
+	INT h;
+	INT di;
 
-	for(i = 0; i < EDIT_W * EDIT_H; i++)
-		VGA_TEXT[i] = edit_saved_vga[i];
+	w = as_edit_w();
+	h = as_edit_h();
+	for(y = 0; y < h; y++)
+	{
+		for(x = 0; x < w; x++)
+		{
+			di = y * EDIT_W + x;
+			screen_put_at(con_x + x, con_y + y, edit_saved_chars[di], edit_saved_attrs[di]);
+		}
+	}
 
 	cx = oldcx;
 	cy = oldcy;
 	color = oldcolor;
+	edit_shadow_valid = 0;
+	edit_shadow_owner = -9999;
 	cursor_update();
 }
 
 VD as_edit_put_at(INT x, INT y, C c, u8 col)
 {
-	if(x < 0 || x >= EDIT_W)
+	if(x < 0 || x >= as_edit_w())
 		return;
 
-	if(y < 0 || y >= EDIT_H)
+	if(y < 0 || y >= as_edit_h())
 		return;
 
-	VGA_TEXT[y * EDIT_W + x] = (col << 8) | c;
+	screen_put_at(con_x + x, con_y + y, c, col);
+}
+
+VD as_edit_set_draw_owner(INT owner)
+{
+	if(edit_shadow_owner != owner)
+	{
+		edit_shadow_owner = owner;
+		edit_shadow_valid = 0;
+	}
+}
+
+VD as_edit_invalidate_draw(VD)
+{
+	edit_shadow_valid = 0;
+}
+
+VD as_edit_stage_clear(u8 col)
+{
+	INT x;
+	INT y;
+	INT di;
+	INT w;
+	INT h;
+
+	w = as_edit_w();
+	h = as_edit_h();
+
+	for(y = 0; y < h; y++)
+	{
+		for(x = 0; x < w; x++)
+		{
+			di = y * EDIT_W + x;
+			edit_draw_chars[di] = ' ';
+			edit_draw_attrs[di] = col;
+		}
+	}
+}
+
+VD as_edit_stage_put(INT x, INT y, C c, u8 col)
+{
+	INT di;
+
+	if(x < 0 || x >= as_edit_w())
+		return;
+
+	if(y < 0 || y >= as_edit_h())
+		return;
+
+	di = y * EDIT_W + x;
+	edit_draw_chars[di] = c;
+	edit_draw_attrs[di] = col;
+}
+
+VD as_edit_stage_text(INT x, INT y, CC *s, u8 col)
+{
+	INT i;
+
+	i = 0;
+	while(s[i] && x + i < as_edit_w())
+	{
+		as_edit_stage_put(x + i, y, s[i], col);
+		i++;
+	}
+}
+
+VD as_edit_flush_draw(VD)
+{
+	INT x;
+	INT y;
+	INT di;
+	INT w;
+	INT h;
+
+	w = as_edit_w();
+	h = as_edit_h();
+	cursor_hide();
+
+	for(y = 0; y < h; y++)
+	{
+		for(x = 0; x < w; x++)
+		{
+			di = y * EDIT_W + x;
+			if(!edit_shadow_valid ||
+			   edit_shadow_chars[di] != edit_draw_chars[di] ||
+			   edit_shadow_attrs[di] != edit_draw_attrs[di])
+			{
+				as_edit_put_at(x, y, edit_draw_chars[di], edit_draw_attrs[di]);
+				edit_shadow_chars[di] = edit_draw_chars[di];
+				edit_shadow_attrs[di] = edit_draw_attrs[di];
+			}
+		}
+	}
+
+	edit_shadow_valid = 1;
 }
 
 VD as_edit_clear_editor_area(VD)
 {
-	INT x;
-	INT y;
-
-	for(y = EDIT_TOP; y < EDIT_H; y++)
-	{
-		for(x = 0; x < EDIT_W; x++)
-			as_edit_put_at(x, y, ' ', color);
-	}
+	as_edit_stage_clear(color);
 }
 
 INT as_edit_line_start(INT n, INT pos)
@@ -718,7 +863,7 @@ VD as_edit_cursor(INT n, INT pos, INT scroll)
 		{
 			x++;
 
-			if(x >= EDIT_W)
+			if(x >= as_edit_w())
 			{
 				x = 0;
 				line++;
@@ -732,22 +877,16 @@ VD as_edit_cursor(INT n, INT pos, INT scroll)
 	if(cy < EDIT_TOP)
 		cy = EDIT_TOP;
 
-	if(cy >= EDIT_H)
-		cy = EDIT_H - 1;
+	if(cy >= as_edit_h())
+		cy = as_edit_h() - 1;
 
 	cursor_update();
 }
 
 VD as_edit_draw_header(CC *path)
 {
-	clear();
-
-	cx = 0;
-	cy = 1;
-
-	print("EDITOR: ");
-	print(path);
-	print("\n\n");
+	as_edit_stage_text(0, 0, "EDITOR: ", color);
+	as_edit_stage_text(8, 0, path, color);
 }
 
 VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
@@ -756,15 +895,20 @@ VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
 	INT x;
 	INT y;
 	INT line;
+	INT visible_lines;
 
+	as_edit_stage_clear(color);
 	as_edit_draw_header(path);
-	as_edit_clear_editor_area();
 
 	x = 0;
 	line = 0;
+	visible_lines = as_edit_h() - EDIT_TOP;
 
 	for(i = 0; i < as_nodes[n].size; i++)
 	{
+		if(line >= scroll + visible_lines)
+			break;
+
 		y = EDIT_TOP + (line - scroll);
 
 		if(as_nodes[n].data[i] == '\n')
@@ -774,21 +918,19 @@ VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
 			continue;
 		}
 
-		if(y >= EDIT_TOP && y < EDIT_H)
-			as_edit_put_at(x, y, as_nodes[n].data[i], color);
+		if(y >= EDIT_TOP && y < as_edit_h())
+			as_edit_stage_put(x, y, as_nodes[n].data[i], color);
 
 		x++;
 
-		if(x >= EDIT_W)
+		if(x >= as_edit_w())
 		{
 			x = 0;
 			line++;
 		}
-
-		if(y >= EDIT_H && line > scroll + EDIT_H)
-			break;
 	}
 
+	as_edit_flush_draw();
 	as_edit_cursor(n, pos, scroll);
 }
 
@@ -853,7 +995,7 @@ VD as_edit_fix_scroll(INT n, INT pos, INT *scroll)
 	INT visible_lines;
 
 	cursor_line = as_edit_line_of_pos(n, pos);
-	visible_lines = EDIT_H - EDIT_TOP;
+	visible_lines = as_edit_h() - EDIT_TOP;
 
 	if(cursor_line < *scroll)
 		*scroll = cursor_line;
@@ -932,11 +1074,14 @@ VD as_edit(CC *path)
 	pos = as_nodes[n].size;
 	scroll = 0;
 
+	as_edit_set_draw_owner(-1);
+	as_edit_invalidate_draw();
 	as_edit_fix_scroll(n, pos, &scroll);
 	as_edit_redraw(n, path, pos, scroll);
 
 	for(;;)
 	{
+		kb_drain_mouse();
 		c = getkey();
 
 		if(!c)
@@ -1011,6 +1156,184 @@ VD as_edit(CC *path)
 		as_edit_fix_scroll(n, pos, &scroll);
 		as_edit_redraw(n, path, pos, scroll);
 	}
+}
+
+//Per-window editor state machine. Unlike as_edit() above,
+//these do not block: the kernel window manager feeds keys
+//in one at a time, so other windows keep running.
+
+#define AS_EDIT_WINS 6
+#define AS_EDIT_PATH_MAX 128
+
+INT as_ew_open_flag[AS_EDIT_WINS];
+INT as_ew_node[AS_EDIT_WINS];
+INT as_ew_pos[AS_EDIT_WINS];
+INT as_ew_scroll[AS_EDIT_WINS];
+INT as_ew_oldsize[AS_EDIT_WINS];
+C as_ew_old[AS_EDIT_WINS][AS_DATA_MAX];
+C as_ew_path[AS_EDIT_WINS][AS_EDIT_PATH_MAX];
+
+INT as_edit_win_open(INT id)
+{
+	return id >= 0 && id < AS_EDIT_WINS && as_ew_open_flag[id];
+}
+
+INT as_edit_open_win(INT id, CC *path)
+{//open the editor inside window id, drawing into the
+//currently loaded console. Returns 0 on success.
+	C parent_path[AS_NAME_MAX * 4];
+	C name[AS_NAME_MAX];
+	INT parent;
+	INT n;
+	INT i;
+
+	if(id < 0 || id >= AS_EDIT_WINS)
+		return -1;
+
+	as_split_path(path, parent_path, name);
+	parent = as_resolve(parent_path);
+
+	if(parent == -1)
+	{
+		pred("Directory not found\n");
+		return -1;
+	}
+
+	if(as_nodes[parent].type != AS_DIR)
+	{
+		pred("Not a directory\n");
+		return -1;
+	}
+
+	n = as_find_child(parent, name);
+
+	if(n == -1)
+	{
+		if(as_touch_at(parent, name) != 0)
+		{
+			pred("Could not create file\n");
+			return -1;
+		}
+
+		n = as_find_child(parent, name);
+	}
+
+	if(as_nodes[n].type != AS_FILE)
+	{
+		pred("Not a readable file\n");
+		return -1;
+	}
+
+	as_ew_node[id] = n;
+	as_ew_oldsize[id] = as_nodes[n].size;
+
+	for(i = 0; i <= as_ew_oldsize[id] && i < AS_DATA_MAX; i++)
+		as_ew_old[id][i] = as_nodes[n].data[i];
+
+	i = 0;
+	while(path[i] && i < AS_EDIT_PATH_MAX - 1)
+	{
+		as_ew_path[id][i] = path[i];
+		i++;
+	}
+	as_ew_path[id][i] = 0;
+
+	as_ew_pos[id] = as_nodes[n].size;
+	as_ew_scroll[id] = 0;
+	as_ew_open_flag[id] = 1;
+
+	as_edit_set_draw_owner(id);
+	as_edit_invalidate_draw();
+	as_edit_fix_scroll(as_ew_node[id], as_ew_pos[id], &as_ew_scroll[id]);
+	as_edit_redraw(as_ew_node[id], as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
+	return 0;
+}
+
+VD as_edit_win_refresh(INT id)
+{//redraw the editor, e.g. after the window was resized
+	if(!as_edit_win_open(id))
+		return;
+
+	as_edit_set_draw_owner(id);
+	as_edit_invalidate_draw();
+	as_edit_fix_scroll(as_ew_node[id], as_ew_pos[id], &as_ew_scroll[id]);
+	as_edit_redraw(as_ew_node[id], as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
+}
+
+VD as_edit_win_close(INT id)
+{//drop editor state without touching the file
+	if(id >= 0 && id < AS_EDIT_WINS)
+		as_ew_open_flag[id] = 0;
+}
+
+INT as_edit_win_mem(INT id)
+{//bytes of editor state held open for this window
+	if(!as_edit_win_open(id))
+		return 0;
+
+	return AS_DATA_MAX + AS_EDIT_PATH_MAX + 5 * (INT)sizeof(INT);
+}
+
+CC *as_edit_win_path(INT id)
+{//path of the file being edited in this window
+	if(!as_edit_win_open(id))
+		return "";
+
+	return as_ew_path[id];
+}
+
+INT as_edit_key_win(INT id, INT c)
+{//handle one key for the window editor.
+//Returns 1 when the editor closed, 0 otherwise.
+	INT n;
+
+	if(!as_edit_win_open(id))
+		return 1;
+
+	n = as_ew_node[id];
+
+	if(c == 19)
+	{
+		as_ew_open_flag[id] = 0;
+
+		if(saveit == 1)
+			as_save_to_disk();
+
+		return 1;
+	}
+
+	if(c == 16 && shift)
+	{
+		as_edit_restore_file(n, as_ew_old[id], as_ew_oldsize[id]);
+		as_ew_open_flag[id] = 0;
+		return 1;
+	}
+
+	if(c == EDIT_KEY_LEFT)
+	{
+		if(as_ew_pos[id] > 0)
+			as_ew_pos[id]--;
+	}
+	else if(c == EDIT_KEY_RIGHT)
+	{
+		if(as_ew_pos[id] < as_nodes[n].size)
+			as_ew_pos[id]++;
+	}
+	else if(c == EDIT_KEY_UP)
+		as_ew_pos[id] = as_edit_prev_line(n, as_ew_pos[id]);
+	else if(c == EDIT_KEY_DOWN)
+		as_ew_pos[id] = as_edit_next_line(n, as_ew_pos[id]);
+	else if(c == '\b')
+		as_edit_backspace(n, &as_ew_pos[id]);
+	else if(c == '\n' || (c >= 32 && c < 127))
+		as_edit_insert(n, &as_ew_pos[id], c);
+	else
+		return 0;
+
+	as_edit_set_draw_owner(id);
+	as_edit_fix_scroll(n, as_ew_pos[id], &as_ew_scroll[id]);
+	as_edit_redraw(n, as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
+	return 0;
 }
 INT as_get_file_data(CC *path, C **data, INT *size)
 {

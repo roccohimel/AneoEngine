@@ -1,0 +1,9 @@
+print("\n\nTHIS WILL PRINT AN INFINITE FALL OF RANDOMNESS!!!");
+print("\n\nPRESS <Shift> + <Ctrl> + <Q> TO QUIT WINDOW.\n");
+print("\nRunning in 3...");
+sleep(1000);
+print("2...");
+sleep(1000);
+print("1...");
+sleep(1000);
+r/Everist/Scripts/EntropyTest/Fall.AC

@@ -4,7 +4,7 @@ global bios_disk_op
 
 THUNK_BASE equ 0x8000
 DAP_ADDR   equ 0x0600
-BUF_ADDR   equ 0x7000
+BUF_ADDR   equ 0x6000 ; keep this away from FONT8X8 at 0x7000
 
 PM16_LOW   equ THUNK_BASE + (pm16_entry - thunk_start)
 REAL_LOW   equ THUNK_BASE + (real_entry - thunk_start)

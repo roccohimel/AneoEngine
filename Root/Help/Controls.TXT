@@ -1,4 +1,11 @@
- F1 -- Open the help menu
- F2 -- Reset the system
- F3 -- Open the utilities menu
- F4 -- Open the CpuStat menu
+F1              Open/activate the one help window
+TAB             Switch windows
+Shift+Ctrl+C    New card window
+Shift+Ctrl+N    New side window
+Shift+Ctrl+Q    Close active window
+Ctrl+F          Fullscreen active window
+Ctrl+C          Card/uncard active window
+Ctrl+L          Clear active window
+Arrow keys      Move the window cursor
+Shift+Arrows    Highlight a range
+Enter           Run the highlighted line/range, or run the shell line

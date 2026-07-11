@@ -32,6 +32,8 @@ extern U INT cx;
 extern U INT cy;
 extern u8 color;
 extern INT as_cd(CC *path);
+extern VD screen_get_cell(INT i, C *c, u8 *col);
+extern VD screen_set_cell(INT i, C c, u8 col);
 
 //Addresses not involved in boot
 uint32_t IVT_START = 0x0;
@@ -59,10 +61,10 @@ uint32_t KERNEL_DATA_END = 0x20000;
 
 
 #define S_W   80
-#define S_H   50
-#define VGA_TEXT ((u16*)0xB8000)
+#define S_H   60
 
-u16 saved_vga[S_W * S_H];
+C saved_chars[S_W * S_H];
+u8 saved_attrs[S_W * S_H];
 
 U INT soldcx;
 U INT soldcy;
@@ -77,7 +79,7 @@ VD save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor)
         *oldcolor = color;
 
         for(i = 0; i < S_W * S_H; i++)
-                saved_vga[i] = VGA_TEXT[i];
+                screen_get_cell(i, &saved_chars[i], &saved_attrs[i]);
 }
 
 VD restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
@@ -85,7 +87,7 @@ VD restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
         INT i;
 
         for(i = 0; i < S_W * S_H; i++)
-                VGA_TEXT[i] = saved_vga[i];
+                screen_set_cell(i, saved_chars[i], saved_attrs[i]);
 
         cx = oldcx;
         cy = oldcy;
@@ -117,6 +119,11 @@ VD startupSeq(VD)
 	as_cd("..");
 	as_mkdir("Everist");
 	as_cd("Everist");
+	as_mkdir("Index");
+	as_cd("Index");
+	as_touch("Main.AC");
+	as_write("Main.AC", "//Index penalization\n\nprint(\"\\n\\c[dc* Useful files *\\n\");\nprint(\"Extras:\\n\");\nprint(\"\\c[0x1C/Docs/LICENSE\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Keymap.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Logo.TXT\\c[dc\\n\");\nprint(\"Everything:\\n\");\nprint(\"\\c[0x1C/RunCmds.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Home/CHANGELOG\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Index/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/MInstall/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Music/0_Note.TXT\\c[dc\\n\");\nprint(\"Help:\\n\");\nprint(\"\\c[0x1C/Help/AboutAneoEngine.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/CommandHelp.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/Controls.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Docs/FAQ.TXT\\c[dc\\n\");\ncd(\"/Home\");");
+	as_cd("..");
 	as_mkdir("MInstall");
 	as_cd("MInstall");
 	as_touch("Main.AC");
@@ -126,10 +133,29 @@ VD startupSeq(VD)
 	as_cd("..");
 	as_mkdir("Music");
 	as_cd("Music");
+	as_mkdir("Parts");
+	as_cd("Parts");
+	as_touch("2_Spoken_1.AC");
+	as_write("2_Spoken_1.AC", "print(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken\\n\");\ntune(\"T72 G5h\");\nprint(\"A \");\ntune(\"T72 C5q\");\nprint(\"man \");\ntune(\"T72 D5q\");\nprint(\"lies \");\ntune(\"T72 E5q\");\nprint(\"down \");\ntune(\"T72 G5h\");\nprint(\"to \");\ntune(\"T72 A5q\");\nprint(\"sleep,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 E5q\");\nprint(\"room \");\ntune(\"T72 G5q\");\nprint(\"falls \");\ntune(\"T72 A5q\");\nprint(\"still \");\ntune(\"T72 G5h\");\nprint(\"and \");\ntune(\"T72 E5q\");\nprint(\"deep.\\n\");\ntune(\"T72 C5h\");\nprint(\"His \");\ntune(\"T72 C5q\");\nprint(\"eyes \");\ntune(\"T72 D5q\");\nprint(\"close \");\ntune(\"T72 E5q\");\nprint(\"soft,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 A5q\");\nprint(\"dark \");\ntune(\"T72 G5q\");\nprint(\"draws \");\ntune(\"T72 E5q\");\nprint(\"near,\\n\");\ntune(\"T72 C5h\");\nprint(\"Then \");\ntune(\"T72 E5q\");\nprint(\"in \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 A5q\");\nprint(\"dream,\\n\");\ntune(\"T72 B5h\");\nprint(\"A \");\ntune(\"T72 A5q\");\nprint(\"voice \");\ntune(\"T72 G5q\");\nprint(\"speaks \");\ntune(\"T72 E5q\");\nprint(\"clear.\\n\");\ntune(\"T72 C5h\");\nprint(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken, \");\ntune(\"T72 G5h\");\nprint(\"spo\");\ntune(\"T72 A5h\");\nprint(\"ken,\\n\");\ntune(\"T72 G5h\");\nprint(\"Wake \");\ntune(\"T72 E5q\");\nprint(\"and \");\ntune(\"T72 G5q\");\nprint(\"hear.\\n\");\ntune(\"T72 C5h\");\nprint(\"A \");\ntune(\"T72 C5q\");\nprint(\"speak\");\ntune(\"T72 D5q\");\nprint(\"er \");\ntune(\"T72 E5q\");\nprint(\"stands \");\ntune(\"T72 G5h\");\nprint(\"In \");\ntune(\"T72 A5q\");\nprint(\"white \");\ntune(\"T72 B5q\");\nprint(\"dream \");\ntune(\"T72 A5q\");\nprint(\"flame,\\n\");\ntune(\"T72 G5h\");\nprint(\"It \");\ntune(\"T72 E5q\");\nprint(\"calls \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 A5q\");\nprint(\"man \");\ntune(\"T72 B5h\");\nprint(\"By \");\ntune(\"T72 A5q\");\nprint(\"his \");\ntune(\"T72 G5q\");\nprint(\"true \");\ntune(\"T72 E5q\");\nprint(\"name.\\n\");\ntune(\"T72 C5h\");\nprint(\"It \");\ntune(\"T72 C5q\");\nprint(\"says, \");\ntune(\"T72 E5q\");\nprint(\"build \");\ntune(\"T72 G5h\");\nprint(\"A \");\ntune(\"T72 A5q\");\nprint(\"struc\");\ntune(\"T72 B5q\");\nprint(\"ture \");\ntune(\"T72 A5q\");\nprint(\"bright,\\n\");\ntune(\"T72 G5h\");\nprint(\"Give \");\ntune(\"T72 E5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"a \");\ntune(\"T72 A5q\");\nprint(\"life,\\n\");\ntune(\"T72 B5h\");\nprint(\"Give \");\ntune(\"T72 A5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"your \");\ntune(\"T72 E5q\");\nprint(\"might.\\n\");\ntune(\"T72 C5h\");\nprint(\"Make \");\ntune(\"T72 C5q\");\nprint(\"it \");\ntune(\"T72 E5q\");\nprint(\"go,\\n\");\ntune(\"T72 G5h\");\nprint(\"Make \");\ntune(\"T72 A5q\");\nprint(\"it \");\ntune(\"T72 B5q\");\nprint(\"run,\\n\");\ntune(\"T72 A5h\");\nprint(\"Write \");\ntune(\"T72 G5q\");\nprint(\"its \");\ntune(\"T72 E5q\");\nprint(\"heart \");\ntune(\"T72 D5q\");\nprint(\"line \");\ntune(\"T72 C5q\");\nprint(\"by \");\ntune(\"T72 D5q\");\nprint(\"line.\\n\");\ntune(\"T72 E5h\");\nprint(\"Give \");\ntune(\"T72 E5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"charm,\\n\");\ntune(\"T72 A5h\");\nprint(\"Give \");\ntune(\"T72 B5q\");\nprint(\"it \");\ntune(\"T72 A5q\");\nprint(\"song,\\n\");\ntune(\"T72 G5h\");\nprint(\"Let \");\ntune(\"T72 E5q\");\nprint(\"it's \");\ntune(\"T72 G5q\");\nprint(\"face \");\ntune(\"T72 A5q\");\nprint(\"shine \");\ntune(\"T72 B5q\");\nprint(\"all \");\ntune(\"T72 A5q\");\nprint(\"night \");\ntune(\"T72 G5q\");\nprint(\"long.\\n\");\ntune(\"T72 E5h\");\nprint(\"He \");\ntune(\"T72 C5q\");\nprint(\"wakes \");\ntune(\"T72 D5q\");\nprint(\"up \");\ntune(\"T72 E5q\");\nprint(\"slow,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 A5q\");\nprint(\"com\");\ntune(\"T72 B5q\");\nprint(\"mand \");\ntune(\"T72 A5q\");\nprint(\"stays,\\n\");\ntune(\"T72 G5h\");\nprint(\"He \");\ntune(\"T72 E5q\");\nprint(\"starts \");\ntune(\"T72 G5q\");\nprint(\"to \");\ntune(\"T72 A5q\");\nprint(\"work \");\ntune(\"T72 B5h\");\nprint(\"Through \");\ntune(\"T72 A5q\");\nprint(\"night \");\ntune(\"T72 G5q\");\nprint(\"and \");\ntune(\"T72 E5q\");\nprint(\"days.\\n\");\ntune(\"T72 C5h\");\nprint(\"Bit \");\ntune(\"T72 C5q\");\nprint(\"by \");\ntune(\"T72 D5q\");\nprint(\"bit,\\n\");\ntune(\"T72 E5h\");\nprint(\"The \");\ntune(\"T72 G5q\");\nprint(\"struc\");\ntune(\"T72 A5q\");\nprint(\"ture \");\ntune(\"T72 B5q\");\nprint(\"grows,\\n\");\ntune(\"T72 A5h\");\nprint(\"From \");\ntune(\"T72 G5q\");\nprint(\"dream \");\ntune(\"T72 E5q\");\nprint(\"to \");\ntune(\"T72 D5q\");\nprint(\"disk,\\n\");\ntune(\"T72 C5h\");\nprint(\"The \");\ntune(\"T72 E5q\");\nprint(\"sys\");\ntune(\"T72 G5q\");\nprint(\"tem \");\ntune(\"T72 A5q\");\nprint(\"knows.\\n\");\ntune(\"T72 B5h\");");
+	as_touch("2_Spoken_2.AC");
+	as_write("2_Spoken_2.AC", "print(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken, \");\ntune(\"T72 G5h\");\nprint(\"spo\");\ntune(\"T72 A5h\");\nprint(\"ken,\\n\");\ntune(\"T72 C5w\");\nprint(\"The \");\ntune(\"T72 C5q\");\nprint(\"voice \");\ntune(\"T72 E5q\");\nprint(\"was \");\ntune(\"T72 G5q\");\nprint(\"right.\\n\");\ntune(\"T72 A5h\");\nprint(\"The \");\ntune(\"T72 G5q\");\nprint(\"struc\");\ntune(\"T72 A5q\");\nprint(\"ture \");\ntune(\"T72 B5q\");\nprint(\"wakes \");\ntune(\"T72 A5q\");\nprint(\"in \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 E5q\");\nprint(\"night.\\n\");\ntune(\"T72 C5w\");\nnosound;");
+	as_cd("..");
 	as_touch("0_Note.TXT");
 	as_write("0_Note.TXT", "All of these files can be played!\nJust press F4 followed by the song or tune\nyou want to play.");
 	as_touch("1_Spark");
 	as_write("1_Spark", "print(\"\\nDo \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 G4h\");\nprint(\"s i\");\ntune(\"T120 F4h\");\nprint(\"t a \");\ntune(\"T120 E4q\");\nprint(\"spa\");\ntune(\"T120 C4w\");\nprint(\"rk?\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Do \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 E4h\");\nprint(\"t i\");\ntune(\"T120 G4h\");\nprint(\"s a \");\ntune(\"T120 A4q\");\nprint(\"spa\");\ntune(\"T120 C5w\");\nprint(\"rk!\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 Rq G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 Rq F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Make \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion.\\n\");\ntune(\"T120 G4q Rq\");\nprint(\"It \");\ntune(\"T120 A4h\");\nprint(\"is \");\ntune(\"T120 C5w Rq\");\nprint(\"a \");\ntune(\"T120 A4h\");\nprint(\"spa\");\ntune(\"T120 B4h\");\nprint(\"r\");\ntune(\"T120 C5h\");\nprint(\"k!\\n\\n\");\ntune(\"T120 C5w\");\n\n\n\n\n");
+	as_touch("2_Spoken");
+	as_write("2_Spoken", "run(\"Parts/2_Spoken_1.AC\");\nrun(\"Parts/2_Spoken_2.AC\");");
+	as_cd("..");
+	as_mkdir("Scripts");
+	as_cd("Scripts");
+	as_mkdir("EntropyTest");
+	as_cd("EntropyTest");
+	as_touch("Fall.AC");
+	as_write("Fall.AC", "n;\nr/Everist/Scripts/EntropyTest/Fall.AC");
+	as_touch("Main.AC");
+	as_write("Main.AC", "print(\"\\n\\nTHIS WILL PRINT AN INFINITE FALL OF RANDOMNESS!!!\");\nprint(\"\\n\\nPRESS <Shift> + <Ctrl> + <Q> TO QUIT WINDOW.\\n\");\nprint(\"\\nRunning in 3...\");\nsleep(1000);\nprint(\"2...\");\nsleep(1000);\nprint(\"1...\");\nsleep(1000);\nr/Everist/Scripts/EntropyTest/Fall.AC");
+	as_cd("..");
 	as_cd("..");
 	as_cd("..");
 	as_mkdir("Help");
@@ -137,9 +163,9 @@ VD startupSeq(VD)
 	as_touch("AboutAneoEngine.TXT");
 	as_write("AboutAneoEngine.TXT", "Official Website: https://roccohimel.github.io/AneoEngine\n\nCreator: Rocco Himel\n\nThe first language I ever learned was BASH. I was very young when my mom gave\nme her 2015 MacBook Pro running MacOS Mojave. I was very curious when I\nopened the terminal and I wanted to learn how to use what I didn't know was,\na shell. I then taught my self how to use it.\n\nThe first PROGRAMMING language I ever learned was C++. I was also younger at\nthe time, when I became a small indie developer making random games in Unity.\nI of course, only made them to mess around and just to have fun.\n\nI then of course learned C, standalone C, and x86 Assembly. I taught my self\nwith the OS Dev Wiki and other online forums\n\nI skipped 7th grade math and Pre-Algebra. Right now, I currently study Algebra\n1 and Physical Science. In my free time, I study electronics, more x86\nAssembly, and more C. Soon, I will study Geometry 1 and Biology.");
 	as_touch("CommandHelp.TXT");
-	as_write("CommandHelp.TXT", "addr:........................List all memory addresses used by AneoEngine\ncat /Directory/File.TXT:.....Prints the contents of a file\ncd:..........................Changes your directory to \"/Home\"\ncd /Directory:...............Manually changes your directory\ncls:.........................Clears your screen\ncpustat:.....................Shows system stats\nhalt:........................Stops the system\nls:..........................Lists the contents of the current directory\nls /Directory:...............Lists the contents of the selected directory\nmkdir /Directory/Name:.......Create a directory\ntouch........................Create a file\nvmoff:.......................Turns off your VM\nwrite........................Write text to a file");
+	as_write("CommandHelp.TXT", "help;                         Open/activate the one help window\ncls;                          Clear the active window\nreboot;                       Triple-fault reboot\nfault;                        Trigger test fault\naddr;                         List memory addresses\nmemstat;                      Show memory used by window tasks\nls;                           List current directory\nls(\"/Directory\");             List a directory\ncd(\"/Directory\");             Change directory\nmkdir(\"/Directory/Name\");     Create a directory\ntouch(\"/Directory/File\");     Create a file\ncat(\"/Directory/File\");       Print a file\nedit(\"/Directory/File\");      Edit a file in the active window\nrun(\"/Directory/File\");       Run a script in the active window\ntune(\"T120 C4q D4q\");         Play notes without blocking the window\nbeep(440);                    Start tone with PC speaker / HDA beep fallback\nnosound;                      Stop tone\nsleep(1000);                  Non-blocking sleep for window scripts\nrm(\"/Path\");                  Remove a file or directory\ncp(\"/Src /Dst\");              Copy a file\nmv(\"/Src /Dst\");              Move/rename a file\nsave;                         Save AnchorSand to disk\nload;                         Load AnchorSand from disk\ncpdrive;                      Copy the whole current disk to another drive");
 	as_touch("Controls.TXT");
-	as_write("Controls.TXT", " F1 -- Open the help menu\n F2 -- Reset the system\n F3 -- Open the utilities menu\n F4 -- Open the CpuStat menu");
+	as_write("Controls.TXT", "F1              Open/activate the one help window\nTAB             Switch windows\nShift+Ctrl+C    New card window\nShift+Ctrl+N    New side window\nShift+Ctrl+Q    Close active window\nCtrl+F          Fullscreen active window\nCtrl+C          Card/uncard active window\nCtrl+L          Clear active window\nArrow keys      Move the window cursor\nShift+Arrows    Highlight a range\nEnter           Run the highlighted line/range, or run the shell line");
 	as_cd("..");
 	as_mkdir("Home");
 	as_cd("Home");
@@ -152,13 +178,13 @@ VD startupSeq(VD)
 	as_cd("..");
 	as_mkdir("Misc");
 	as_cd("Misc");
-	as_touch("Keymap.c");
-	as_write("Keymap.c", "static const char keymap[128] =\n{//allowed chars\n        0, 27, '1', '2', '3', '4', '5', '6',\n        '7', '8', '9', '0', '-', '=', '\\b', '\\t',\n        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',\n        'o', 'p', '[', ']', '\\n', 0, 'a', 's',\n        'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',\n        '\\'', '`', 0, '\\\\', 'z', 'x', 'c', 'v',\n        'b', 'n', 'm', ',', '.', '/', 0, '*',\n        0, ' ', 0\n};\n\nstatic const char shiftmap[128] =\n{//allowed chars when shift is pressed\n        0, 27, '!', '@', '#', '$', '%', '^',\n        '&', '*', '(', ')', '_', '+', '\\b', '\\t',\n        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',\n        'O', 'P', '{', '}', '\\n', 0, 'A', 'S',\n        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',\n        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V',\n        'B', 'N', 'M', '<', '>', '?', 0, '*',\n        0, ' ', 0\n};");
+	as_touch("Keymap.AC");
+	as_write("Keymap.AC", "static const char keymap[128] =\n{//allowed chars\n        0, 27, '1', '2', '3', '4', '5', '6',\n        '7', '8', '9', '0', '-', '=', '\\b', '\\t',\n        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',\n        'o', 'p', '[', ']', '\\n', 0, 'a', 's',\n        'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',\n        '\\'', '`', 0, '\\\\', 'z', 'x', 'c', 'v',\n        'b', 'n', 'm', ',', '.', '/', 0, '*',\n        0, ' ', 0\n};\n\nstatic const char shiftmap[128] =\n{//allowed chars when shift is pressed\n        0, 27, '!', '@', '#', '$', '%', '^',\n        '&', '*', '(', ')', '_', '+', '\\b', '\\t',\n        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',\n        'O', 'P', '{', '}', '\\n', 0, 'A', 'S',\n        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',\n        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V',\n        'B', 'N', 'M', '<', '>', '?', 0, '*',\n        0, ' ', 0\n};");
 	as_touch("Logo.TXT");
-	as_write("Logo.TXT", "---------------------        AneoEngine V0.2.2\n---------------------        x86 Operating System\n---------------------\n---------------------        Creator: Rocco Himel\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
+	as_write("Logo.TXT", "---------------------\n---------------------\n---------------------\n---------------------\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
 	as_touch("RunCmds.AC");
-	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncomment(\"cat /Misc/Logo.TXT\");\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\ncomment(\"ls /Home\");\nls;\ncomment(\"Run 'cpdrive;' to install AneoEngine.\");");
+	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\n\nls;\ncomment(\"Run 'cpdrive;' to install AneoEngine.\");");
 	/* ANCHORSAND SEED END */
 	print("*AnchorSand seed end*\n");
 	putc('\n');

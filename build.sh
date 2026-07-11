@@ -164,23 +164,11 @@ build()
 	echo "[AC] Compiling 'addr' command..."
 	$AC Cmds/Addr.AC -o Addr.o
 
-	echo "[AC] Compiling F4 run funtion..."
-	$AC Cmds/F4.AC -o F4.o
-
 	echo "[AC] Compiling tune function..."
 	$AC Cmds/Tune.AC -o Tune.o
 
-	echo "[AC] Compiling utilities menu..."
-	$AC Cmds/Utils/Menu.AC -o UtilsMenu.o
-
-	echo "[AC] Compiling utilities lister..."
-	$AC Cmds/Utils/List.AC -o UtilsList.o
-
-	echo "[AC] Compiling 'Entropy' utility..."
-	$AC Utils/Entropy.AC -o Entropy.o
-
-	echo "[CC] Compiling 'Printer' utility..."
-	$CC -c Utils/Printer.c -o Printer.o
+	echo "[AC] Compiling entropy function..."
+	$AC Cmds/Entropy.AC -o Entropy.o
 
 	echo "[LD] Creating kernel binary..."
 	ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary \
@@ -198,12 +186,8 @@ build()
 		ISR.o \
 		HelpMenu.o \
 		Addr.o \
-		F4.o \
 		Tune.o \
-		UtilsMenu.o \
-		Printer.o \
 		Entropy.o \
-		UtilsList.o \
 		-o Boot/KERNEL.BIN
 
 	echo "[*] Removing existing disk images..."

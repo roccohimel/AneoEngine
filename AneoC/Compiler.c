@@ -345,9 +345,7 @@ static char *preprocess_source(const char *text)
 	return out.s;
 }
 
-*/
-
-//declaration types
+/*eclaration types*/
 typedef enum
 {
 	TY_VOID,

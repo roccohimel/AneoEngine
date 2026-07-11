@@ -1,0 +1,19 @@
+//Index penalization
+
+print("\n\c[dc* Useful files *\n");
+print("Extras:\n");
+print("\c[0x1C/Docs/LICENSE\c[dc\n");
+print("\c[0x1C/Misc/Keymap.AC\c[dc\n");
+print("\c[0x1C/Misc/Logo.TXT\c[dc\n");
+print("Everything:\n");
+print("\c[0x1C/RunCmds.AC\c[dc\n");
+print("\c[0x1C/Home/CHANGELOG\c[dc\n");
+print("\c[0x1C/Everist/Index/Main.AC\c[dc\n");
+print("\c[0x1C/Everist/MInstall/Main.AC\c[dc\n");
+print("\c[0x1C/Everist/Music/0_Note.TXT\c[dc\n");
+print("Help:\n");
+print("\c[0x1C/Help/AboutAneoEngine.TXT\c[dc\n");
+print("\c[0x1C/Help/CommandHelp.TXT\c[dc\n");
+print("\c[0x1C/Help/Controls.TXT\c[dc\n");
+print("\c[0x1C/Docs/FAQ.TXT\c[dc\n");
+cd("/Home");
