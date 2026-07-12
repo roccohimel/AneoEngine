@@ -99,6 +99,7 @@ unsigned int cy = 0;
 unsigned int INPUT_MAX = 128;
 unsigned int raw = 0;
 unsigned int screen_saved = 0;
+unsigned int tunevis = 1;
 
 char screen_chars[W * H];
 u8 screen_attrs[W * H];
@@ -243,6 +244,8 @@ u8 defcolor = 0x1F;
 
 volatile u64 idle_ticks=0;
 volatile u64 total_ticks=1;
+u64 wm_flash_last=0;
+int wm_flash_phase=0;
 
 u32 mem_used=0;
 
@@ -292,7 +295,6 @@ void wm_capture_window(WMWindow *win);
 void wm_store_cell(int x, int y, char c, u8 col);
 void wm_draw_content(int id);
 void wm_draw_content_region(int id, int rx0, int ry0, int rx1, int ry1);
-void wm_draw_one_region(int id, int rx0, int ry0, int rx1, int ry1);
 void wm_redraw_region(int rx0, int ry0, int rx1, int ry1);
 void wm_redraw_window_move(int id, int obx, int oby);
 void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, int oldy0, int oldx1, int oldy1, int newwin, int newtype, int newrow, int newx0, int newy0, int newx1, int newy1);
@@ -343,11 +345,14 @@ int wm_task_try_file(int id, const char *line);
 void wm_extract_quoted_arg(const char *line, char *out);
 void wm_tasks_step(void);
 void ticks_poll(void);
+void wm_flash_poll(void);
+u8 wm_flash_attr(u8 col);
 void memstat(void);
 void memstat_overlay_refresh(int force);
 int memstat_overlay_cell(int x, int y);
 void memstat_overlay_compose(int sx, int sy, char *outc, u8 *outcol);
 u32 memstat_window_bytes(int id);
+void memstat_window_state(int id, const char **name, u8 *col);
 void wm_tune_start(int id, const char *song);
 int wm_tune_step(int id);
 int wm_tune_freq(char note, int accidental, int octave);
@@ -1723,100 +1728,23 @@ void wm_draw_content_region(int id, int rx0, int ry0, int rx1, int ry1)
 	wm_redrawing = 0;
 }
 
-void wm_draw_one_region(int id, int rx0, int ry0, int rx1, int ry1)
-{
-	WMWindow *win;
-	int x;
-	int y;
-	int i;
-	int max;
-	u8 col;
-
-	if(id < 0 || id >= WM_WINDOWS)
-		return;
-	if(!wm_windows[id].alive)
-		return;
-
-	win = &wm_windows[id];
-	col = (id == wm_active) ? 0x1F : 0x17;
-	wm_redrawing = 1;
-
-	for(x = 0; x < win->bw; x++)
-	{
-		int sx = win->bx + x;
-		if(sx >= rx0 && sx <= rx1)
-		{
-			if(win->by >= ry0 && win->by <= ry1)
-				screen_put_at(sx, win->by, (char)196, col);
-			if(win->by + win->bh - 1 >= ry0 && win->by + win->bh - 1 <= ry1)
-				screen_put_at(sx, win->by + win->bh - 1, (char)196, col);
-		}
-	}
-
-	for(y = 0; y < win->bh; y++)
-	{
-		int sy = win->by + y;
-		if(sy >= ry0 && sy <= ry1)
-		{
-			if(win->bx >= rx0 && win->bx <= rx1)
-				screen_put_at(win->bx, sy, (char)179, col);
-			if(win->bx + win->bw - 1 >= rx0 && win->bx + win->bw - 1 <= rx1)
-				screen_put_at(win->bx + win->bw - 1, sy, (char)179, col);
-		}
-	}
-
-	if(win->by >= ry0 && win->by <= ry1)
-	{
-		if(win->bx >= rx0 && win->bx <= rx1)
-			screen_put_at(win->bx, win->by, (char)218, col);
-		if(win->bx + win->bw - 1 >= rx0 && win->bx + win->bw - 1 <= rx1)
-			screen_put_at(win->bx + win->bw - 1, win->by, (char)191, col);
-	}
-
-	if(win->by + win->bh - 1 >= ry0 && win->by + win->bh - 1 <= ry1)
-	{
-		if(win->bx >= rx0 && win->bx <= rx1)
-			screen_put_at(win->bx, win->by + win->bh - 1, (char)192, col);
-		if(win->bx + win->bw - 1 >= rx0 && win->bx + win->bw - 1 <= rx1)
-			screen_put_at(win->bx + win->bw - 1, win->by + win->bh - 1, (char)217, col);
-	}
-
-	max = win->bw - 8;
-	if(max > WM_TITLE_MAX - 1)
-		max = WM_TITLE_MAX - 1;
-	if(max < 0)
-		max = 0;
-
-	if(win->by >= ry0 && win->by <= ry1)
-	{
-		for(i = 1; i < win->bw - 1; i++)
-		{
-			if(win->bx + i >= rx0 && win->bx + i <= rx1)
-				screen_put_at(win->bx + i, win->by, ' ', col);
-		}
-		i = 0;
-		while(win->title[i] && i < max)
-		{
-			if(win->bx + 2 + i >= rx0 && win->bx + 2 + i <= rx1)
-				screen_put_at(win->bx + 2 + i, win->by, win->title[i], col);
-			i++;
-		}
-		if(win->bx + win->bw - WM_CLOSE_MARGIN >= rx0 && win->bx + win->bw - WM_CLOSE_MARGIN <= rx1)
-			screen_put_at(win->bx + win->bw - WM_CLOSE_MARGIN, win->by, 'X', col);
-	}
-
-	wm_redrawing = 0;
-}
-
-
 void wm_compose_window_cell(int id, int sx, int sy, char *outc, u8 *outcol)
 {
 	WMWindow *win;
+	const char *status;
+	u32 memory_bytes;
+	u32 memory_temp;
+	char memory_text[11];
 	int rx;
 	int ry;
 	int max;
 	int ti;
+	int status_len;
+	int memory_digits;
+	int memory_start;
+	int memory_index;
 	u8 col;
+	u8 status_col;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -1860,10 +1788,68 @@ void wm_compose_window_cell(int id, int sx, int sy, char *outc, u8 *outcol)
 			{
 				ti = rx - 2;
 				if(win->title[ti])
+				{
 					*outc = win->title[ti];
+					*outcol = wm_flash_attr(col);
+				}
 			}
 			if(rx == win->bw - WM_CLOSE_MARGIN)
+			{
 				*outc = 'X';
+				*outcol = col;
+			}
+		}
+		else if(ry == win->bh - 1 && rx >= 2 && rx < win->bw - 1)
+		{
+			memstat_window_state(id, &status, &status_col);
+			status_len = 0;
+			while(status[status_len])
+				status_len++;
+
+			if(rx == 2)
+			{
+				*outc = '[';
+				*outcol = wm_flash_attr(status_col);
+			}
+			else if(rx >= 3 && rx < 3 + status_len)
+			{
+				*outc = status[rx - 3];
+				*outcol = wm_flash_attr(status_col);
+			}
+			else if(rx == 3 + status_len)
+			{
+				*outc = ']';
+				*outcol = wm_flash_attr(status_col);
+			}
+			else
+			{
+				memory_bytes = memstat_window_bytes(id);
+				memory_temp = memory_bytes;
+				memory_digits = 1;
+				while(memory_temp >= 10U && memory_digits < 10)
+				{
+					memory_temp /= 10U;
+					memory_digits++;
+				}
+
+				memory_temp = memory_bytes;
+				for(memory_index = memory_digits - 1; memory_index >= 0; memory_index--)
+				{
+					memory_text[memory_index] = '0' + (memory_temp % 10U);
+					memory_temp /= 10U;
+				}
+
+				memory_start = win->bw - memory_digits - 2;
+				if(memory_start > 4 + status_len)
+				{
+					memory_index = rx - memory_start;
+					if(memory_index >= 0 && memory_index < memory_digits)
+					{
+						*outc = memory_text[memory_index];
+						*outcol = wm_flash_attr(col);
+					}
+				}
+			}
 		}
 		return;
 	}
@@ -1881,6 +1867,7 @@ void wm_compose_window_cell(int id, int sx, int sy, char *outc, u8 *outcol)
 		*outcol = wm_cell_selected(id, cx0, cy0) ? 0x70 : wm_buf_attrs[id][bi];
 	}
 }
+
 
 void wm_compose_menu_cell(int sx, int sy, char *outc, u8 *outcol)
 {
@@ -5828,42 +5815,38 @@ void memstat_window_state(int id, const char **name, u8 *col)
 	}
 }
 
-void memstat_overlay_put_window_detail(int row, int *x, int id)
+
+const char *memstat_task_text(int id)
 {
-	WMWindow *win;
+	WMWindow *win = &wm_windows[id];
+	const char *s;
+	if(as_edit_win_open(id)) s = as_edit_win_path(id);
+	else if(win->tune_running && win->tune_song[0]) s = win->tune_song;
+	else if(win->task_cmd[0]) s = win->task_cmd;
+	else s = win->title;
+	return (s && s[0]) ? s : "Shell";
+}
 
-	if(id < 0 || id >= WM_WINDOWS)
-		return;
+u32 memstat_total_ram_bytes(void)
+{
+	static u32 cached = 0;
+	u32 n;
 
-	win = &wm_windows[id];
+	if(cached)
+		return cached;
+	if(!wm_flash_last)
+		return total_mem;
 
-	if(as_edit_win_open(id))
-	{
-		memstat_overlay_puts(row, x, "[EDITOR] ", 0x1E);
-		memstat_overlay_puts(row, x, as_edit_win_path(id), 0x1F);
-	}
-	else if(win->tune_running)
-	{
-		memstat_overlay_puts(row, x, "[TUNE  ] ", 0x1D);
-		memstat_overlay_puts(row, x, win->tune_song, 0x1F);
-	}
-	else if(win->task_wake)
-	{
-		memstat_overlay_puts(row, x, "[SLEEP ] ", 0x1D);
-		memstat_overlay_puts(row, x, win->title, 0x1F);
-	}
-	else if(win->task_running)
-	{
-		memstat_overlay_puts(row, x, "[SCRIPT] ", 0x1A);
-		memstat_overlay_puts(row, x, win->title, 0x1F);
-	}
-	else if(win->task_pending)
-	{
-		memstat_overlay_puts(row, x, "[QUEUED] ", 0x1A);
-		memstat_overlay_puts(row, x, win->task_cmd, 0x1F);
-	}
+	n = (u32)cmos_read(0x34) | ((u32)cmos_read(0x35) << 8);
+	if(n && n != 0xFFFFU)
+		cached = n > 65279U ? 0xFFFFFFFFU : 16U * 1024U * 1024U + n * 65536U;
 	else
-		memstat_overlay_puts(row, x, "[IDLE  ] shell prompt", 0x1F);
+	{
+		n = (u32)cmos_read(0x30) | ((u32)cmos_read(0x31) << 8);
+		if(n && n != 0xFFFFU)
+			cached = (1024U + n) * 1024U;
+	}
+	return cached ? cached : total_mem;
 }
 
 void memstat_overlay_build(void)
@@ -5871,75 +5854,122 @@ void memstat_overlay_build(void)
 	int id;
 	int x;
 	int row;
-	int count;
-	int used;
+	int i;
+	int n;
+	int task_width = 1;
+	int memory_width = 1;
+	int used_column;
+	int line_width;
 	u32 bytes;
+	u32 used = 0;
 	u32 total;
-	WMWindow *win;
+	const char *task;
+	const char *state;
+	u8 state_col;
 
 	memstat_overlay_clear_buf();
 
+	for(id = 0; id < WM_WINDOWS; id++)
+	{
+		if(!wm_windows[id].alive)
+			continue;
+		task = memstat_task_text(id);
+		for(n = 0; task[n]; n++);
+		if(n > task_width) task_width = n;
+		bytes = memstat_window_bytes(id);
+		used += bytes;
+		for(n = 1; bytes >= 10U; n++) bytes /= 10U;
+		if(n > memory_width) memory_width = n;
+	}
+	if(mem_used)
+	{
+		used += mem_used;
+		bytes = mem_used;
+		for(n = 1; bytes >= 10U; n++) bytes /= 10U;
+		if(n > memory_width) memory_width = n;
+	}
+
+	if(task_width > MEMSTAT_OVERLAY_W - 27 - memory_width)
+		task_width = MEMSTAT_OVERLAY_W - 27 - memory_width;
+	if(task_width < 1) task_width = 1;
+	used_column = 19 + task_width;
+	line_width = used_column + 7 + memory_width;
+	if(line_width > MEMSTAT_OVERLAY_W) line_width = MEMSTAT_OVERLAY_W;
+
 	row = 0;
 	x = 0;
-	memstat_overlay_puts(row, &x, "MemStat -- window tasks", 0x1F);
+	memstat_overlay_puts(row, &x, "WID_STAT____TASK__", 0x1F);
+	for(i = 0; i < task_width; i++) memstat_overlay_putc(row, &x, '_', 0x1F);
+	memstat_overlay_puts(row, &x, "_USEDMEM", 0x1F);
+	for(i = 0; i < memory_width; i++) memstat_overlay_putc(row, &x, '_', 0x1F);
+	row++;
 
-	row = 2;
-	total = 0;
-	count = 0;
-
-	for(id = 0; id < WM_WINDOWS && row + 1 < MEMSTAT_OVERLAY_H; id++)
+	for(id = 0; id < WM_WINDOWS && row < MEMSTAT_OVERLAY_H; id++)
 	{
-		win = &wm_windows[id];
-		if(!win->alive)
+		if(!wm_windows[id].alive)
 			continue;
-
-		bytes = memstat_window_bytes(id);
-
 		x = 0;
-		memstat_overlay_puts(row, &x, "Window ", 0x1F);
 		memstat_overlay_put_uint(row, &x, (unsigned int)id, 0x1F);
-		memstat_overlay_puts(row, &x, ": ", 0x1F);
-		memstat_overlay_put_window_detail(row, &x, id);
-		row++;
-
-		x = 0;
-		memstat_overlay_puts(row, &x, "  memory: ", 0x1F);
-		memstat_overlay_put_uint(row, &x, bytes / 1024U, 0x1F);
-		memstat_overlay_puts(row, &x, " kB (", 0x1F);
-		memstat_overlay_put_uint(row, &x, bytes, 0x1F);
-		memstat_overlay_puts(row, &x, " bytes)", 0x1F);
-		row++;
-
-		total += bytes;
-		count++;
+		while(x < 4) memstat_overlay_putc(row, &x, ' ', 0x1F);
+		memstat_window_state(id, &state, &state_col);
+		memstat_overlay_putc(row, &x, '[', state_col);
+		for(i = 0; state[i] && i < 9; i++)
+			memstat_overlay_putc(row, &x, state[i], state_col);
+		while(i++ < 9)
+			memstat_overlay_putc(row, &x, ' ', state_col);
+		memstat_overlay_putc(row, &x, ']', state_col);
+		memstat_overlay_puts(row, &x, "  ", 0x1F);
+		task = memstat_task_text(id);
+		for(i = 0; task[i] && i < task_width; i++) memstat_overlay_putc(row, &x, task[i], 0x1F);
+		while(x < used_column) memstat_overlay_putc(row, &x, ' ', 0x1F);
+		memstat_overlay_put_uint(row++, &x, memstat_window_bytes(id), 0x1F);
 	}
 
-	if(row < MEMSTAT_OVERLAY_H)
-		row++;
+	if(mem_used && row < MEMSTAT_OVERLAY_H)
+	{
+		x = 0;
+		memstat_overlay_putc(row, &x, 'N', 0x1F);
+		while(x < 4) memstat_overlay_putc(row, &x, ' ', 0x1F);
+		memstat_overlay_putc(row, &x, 'N', 0x1F);
+		while(x < 17) memstat_overlay_putc(row, &x, ' ', 0x1F);
+		memstat_overlay_puts(row, &x, "Core", 0x1F);
+		while(x < used_column) memstat_overlay_putc(row, &x, ' ', 0x1F);
+		memstat_overlay_put_uint(row++, &x, mem_used, 0x1F);
+	}
 
 	if(row < MEMSTAT_OVERLAY_H)
 	{
 		x = 0;
-		memstat_overlay_put_uint(row, &x, (unsigned int)count, 0x1F);
-		memstat_overlay_puts(row, &x, " window(s), ", 0x1F);
-		memstat_overlay_put_uint(row, &x, total / 1024U, 0x1F);
-		memstat_overlay_puts(row, &x, " kB total (", 0x1F);
-		memstat_overlay_put_uint(row, &x, total, 0x1F);
-		memstat_overlay_puts(row, &x, " bytes)", 0x1F);
+		for(i = 0; i < line_width; i++) memstat_overlay_putc(row, &x, '_', 0x1F);
 		row++;
 	}
 
-	used = row;
-	if(used < 1)
-		used = 1;
-	if(used > MEMSTAT_OVERLAY_H)
-		used = MEMSTAT_OVERLAY_H;
+	total = memstat_total_ram_bytes();
+	if(total < used) total = used;
+	if(row < MEMSTAT_OVERLAY_H)
+	{
+		x = 0;
+		memstat_overlay_puts(row, &x, "Total memory: ", 0x1F);
+		memstat_overlay_put_uint(row, &x, total / 1024U, 0x1F);
+		memstat_overlay_puts(row++, &x, " KB", 0x1F);
+	}
+	if(row < MEMSTAT_OVERLAY_H)
+	{
+		x = 0;
+		memstat_overlay_puts(row, &x, "Used memory: ", 0x1F);
+		memstat_overlay_put_uint(row++, &x, used, 0x1F);
+	}
+	if(row < MEMSTAT_OVERLAY_H)
+	{
+		x = 0;
+		memstat_overlay_puts(row, &x, "Free memory : ", 0x1F);
+		memstat_overlay_put_uint(row++, &x, total - used, 0x1F);
+	}
 
-	memstat_overlay_rows = used;
+	memstat_overlay_rows = row;
+	if(memstat_overlay_rows < 1) memstat_overlay_rows = 1;
 	memstat_overlay_y = H - memstat_overlay_rows;
-	if(memstat_overlay_y < 1)
-		memstat_overlay_y = 1;
-
+	if(memstat_overlay_y < 1) memstat_overlay_y = 1;
 	memstat_overlay_ready = 1;
 }
 
@@ -5980,7 +6010,6 @@ void memstat_overlay_refresh(int force)
 
 	old_y = memstat_overlay_y;
 	old_rows = memstat_overlay_rows;
-
 	last_sec = sec;
 	memstat_overlay_build();
 
@@ -6002,95 +6031,30 @@ void memstat_overlay_refresh(int force)
 	if(y1 >= H)
 		y1 = H - 1;
 	if(y0 <= y1)
-		wm_redraw_region(MEMSTAT_OVERLAY_X, y0, MEMSTAT_OVERLAY_X + MEMSTAT_OVERLAY_W - 1, y1);
+		wm_redraw_region(0, y0, W - 1, y1);
 }
 
 void memstat(void)
-{//MemStat: report every running window task and how much
-//memory it is holding, in kB and bytes
-	int id;
-	int count;
-	u32 bytes;
-	u32 total;
-	WMWindow *win;
+{
+	int x;
+	int y;
+	int end;
 	u8 oldcolor;
 
 	oldcolor = color;
-	color = 0x1F;
-	print("MemStat -- window tasks\n\n");
-
-	total = 0;
-	count = 0;
-
-	for(id = 0; id < WM_WINDOWS; id++)
+	memstat_overlay_build();
+	for(y = 0; y < memstat_overlay_rows; y++)
 	{
-		win = &wm_windows[id];
-
-		if(!win->alive)
-			continue;
-
-		bytes = memstat_window_bytes(id);
-
-		color = 0x1F;
-		print("Window ");
-		printint((unsigned int)id);
-		print(": ");
-
-		if(as_edit_win_open(id))
+		end = MEMSTAT_OVERLAY_W;
+		while(end > 0 && memstat_overlay_chars[y][end - 1] == ' ')
+			end--;
+		for(x = 0; x < end; x++)
 		{
-			color = 0x1E;
-			print("[EDITOR] ");
-			color = 0x1F;
-			print(as_edit_win_path(id));
+			color = memstat_overlay_attrs[y][x];
+			putc(memstat_overlay_chars[y][x]);
 		}
-		else if(win->tune_running)
-		{
-			color = 0x1D;
-			print("[TUNE  ] ");
-			color = 0x1F;
-			print(win->tune_song);
-		}
-		else if(win->task_wake)
-		{
-			color = 0x1D;
-			print("[SLEEP ] ");
-			color = 0x1F;
-			print(win->title);
-		}
-		else if(win->task_running)
-		{
-			color = 0x1A;
-			print("[SCRIPT] ");
-			color = 0x1F;
-			print(win->title);
-		}
-		else if(win->task_pending)
-		{
-			color = 0x1A;
-			print("[QUEUED] ");
-			color = 0x1F;
-			print(win->task_cmd);
-		}
-		else
-			print("[IDLE  ] shell prompt");
-
-		print("\n  memory: ");
-		printint(bytes / 1024U);
-		print(" kB (");
-		printint(bytes);
-		print(" bytes)\n");
-
-		total += bytes;
-		count++;
+		putc('\n');
 	}
-
-	print("\n");
-	printint((unsigned int)count);
-	print(" window(s), ");
-	printint(total / 1024U);
-	print(" kB total (");
-	printint(total);
-	print(" bytes)\n");
 	color = oldcolor;
 }
 
@@ -6268,7 +6232,7 @@ int wm_task_try_file(int id, const char *line)
 	   starts(line, "touch(") || starts(line, "rm(") || starts(line, "cp(") ||
 	   starts(line, "mv(") || starts(line, "comment(") || starts(line, "color(") ||
 	   starts(line, "beep(") || strcmp(line, "save;") == 0 || strcmp(line, "load;") == 0 ||
-	   strcmp(line, "ls;") == 0 || strcmp(line, "cls;") == 0)
+	   strcmp(line, "ls;") == 0 || strcmp(line, "cls;") == 0 || strcmp(line, "n;") == 0)
 		return 0;
 
 	old_active = wm_active;
@@ -6486,6 +6450,54 @@ void ticks_poll(void)
 		total_ticks++;
 
 	tick_last = now;
+}
+
+u8 wm_flash_attr(u8 col)
+{
+	(void)col;
+	return wm_flash_phase ? 0x1F : 0xF1;
+}
+
+void wm_flash_poll(void)
+{
+	WMWindow *win;
+	u64 now;
+	int id;
+	int redraw_top;
+	int redraw_bottom;
+
+	if(!wm_on)
+		return;
+
+	now = total_ticks;
+	redraw_top = 0;
+	redraw_bottom = 0;
+
+	if(now - wm_flash_last >= 500)
+	{
+		wm_flash_last = now;
+		wm_flash_phase = !wm_flash_phase;
+		redraw_top = 1;
+		redraw_bottom = 1;
+	}
+
+
+	if(!redraw_top && !redraw_bottom)
+		return;
+
+	for(id = 0; id < WM_WINDOWS; id++)
+	{
+		win = &wm_windows[id];
+		if(!win->alive)
+			continue;
+
+		if(redraw_top)
+			wm_redraw_region(win->bx, win->by,
+				win->bx + win->bw - 1, win->by);
+		if(redraw_bottom)
+			wm_redraw_region(win->bx, win->by + win->bh - 1,
+				win->bx + win->bw - 1, win->by + win->bh - 1);
+	}
 }
 
 void wm_tasks_step(void)
@@ -6729,7 +6741,7 @@ void wm_start_shell_window(int id)
 	wm_active = id;
 	con_load(&wm_windows[id]);
 	color = 0x1F;
-	wm_set_title(id, "Shell");
+	wm_set_title(id, "Terminal");
 	clear();
 	wm_prompt();
 	con_save(&wm_windows[id]);
@@ -6815,6 +6827,8 @@ void wm(void)
 	con_load(&wm_windows[0]);
 	wm_redraw_all();
 	cursor_update();
+	wm_flash_phase = 0;
+	wm_flash_last = total_ticks;
 	last_sec = -1;
 
 	for(;;)
@@ -6828,6 +6842,7 @@ void wm(void)
 		}
 
 		ticks_poll();
+		wm_flash_poll();
 		wm_mouse_poll();
 		wm_tasks_step();
 		c = getkey();
@@ -6849,6 +6864,3 @@ void kmain(void)
 	clear();
 	startupSeq();
 }
-
-
-
