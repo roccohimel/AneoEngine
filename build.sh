@@ -262,8 +262,8 @@ RC2="qemu-system-x86_64 -drive file=AneoEngine.ISO,format=raw -audiodev pa,id=sn
 
 echo "========================"
 echo "QEMU run commands:"
-echo "$RC1 - use this if you want to boot with a standard drive"
-echo "$RC2 - use this if you want to boot with a CD-ROM"
+echo "$RC1 - use this if you want to boot with a CD-ROM."
+echo "$RC2 - use this if you want to boot with a standard drive."
 echo " Both commands work with ...-i386 aswell."
 echo " "
 
