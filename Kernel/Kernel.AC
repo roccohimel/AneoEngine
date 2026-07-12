@@ -3321,18 +3321,26 @@ VD putc(C c)
 	cursor_update();
 }
 
+VD printx_digit(u32 digit)
+{
+	if(digit < 10)
+		putc('0' + digit);
+	else
+		putc('A' + (digit - 10));
+}
+
 VD printx(u32 x)
 {//print a hexadecimal value
-        C hex[] = "0123456789ABCDEF";
-
-        putc('0');
+	putc('0');
 	putc('x');
-
-        for (INT i = 28; i >= 0; i -= 4)
-        {
-                u8 digit = (x >> i) &  0xF;
-                putc(hex[digit]);
-        }
+	printx_digit((x >> 28) & 0xF);
+	printx_digit((x >> 24) & 0xF);
+	printx_digit((x >> 20) & 0xF);
+	printx_digit((x >> 16) & 0xF);
+	printx_digit((x >> 12) & 0xF);
+	printx_digit((x >> 8) & 0xF);
+	printx_digit((x >> 4) & 0xF);
+	printx_digit(x & 0xF);
 }
 
 
