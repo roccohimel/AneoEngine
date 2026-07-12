@@ -3,7 +3,7 @@
 
 KERNEL_OFFSET  EQU 0x10000
 KERNEL_SEGMENT EQU 0x1000
-KERNEL_SECTORS EQU 384
+KERNEL_SECTORS EQU 512
 
 start:
 	CLI
@@ -223,7 +223,7 @@ msg_boot:
 	DB "AneoEngine Boot Loader",13,10,0
 
 msg_type:
-	DB "Reading 256 kernel sectors from CD-ROM...",13,10,0
+	DB "Reading 512 kernel sectors from CD-ROM...",13,10,0
 
 msg_loaded:
 	DB "Kernel found...",13,10,0

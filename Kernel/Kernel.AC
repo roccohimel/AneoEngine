@@ -2,82 +2,71 @@
 //funtions
 #include <stdint.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+TD U C u8;
+TD U S u16;
+TD U INT u32;
+TD ULL u64;
 
 //import all AneoEngine funtions
-extern void entropy(void);
-extern void pit_init_1000hz(void);
-extern u16 pit_read_counter(void);
-extern void sleep(unsigned int ms);
-extern int getkey(void);
-extern void vmoff(void);
-extern void halt(void);
-extern void startupSeq(void);
-extern int helpMenu(void);
-extern void addr(void);
-extern void nosound(void);
-extern int hda_init(void);
-extern int hda_ready(void);
-extern void as_init();
-extern int as_mkdir(const char *name);
-extern int as_touch(const char *name);
-extern int as_write(const char *name, const char *text);
-extern void as_cat(const char *name);
-extern void as_ls();
-extern int as_cd(const char *name);
-extern int as_cwd;
-extern int shift;
-extern void as_pwd();
-extern void as_ls_path(const char *path);
-extern void idt_init();
-extern void as_edit(const char *path);
-extern int as_edit_open_win(int id, const char *path);
-extern int as_edit_key_win(int id, int c);
-extern int as_edit_win_open(int id);
-extern void as_edit_win_refresh(int id);
-extern void as_edit_win_close(int id);
-extern int as_edit_win_mem(int id);
-extern const char *as_edit_win_path(int id);
-extern int ctrl;
-extern int ext;
-extern int as_get_file_data(const char *path, char **data, int *size);
-extern void pred(const char *s);
-extern void beep(u32 freq);
-extern void as_edit_save_screen(unsigned int *oldcx, unsigned int *oldcy, u8 *oldcolor);
-extern void as_edit_restore_screen(unsigned int oldcx, unsigned int oldcy, u8 oldcolor);
-extern int as_save_to_disk(void);
-extern int as_load_from_disk(void);
-extern void as_rm(char *name);
-extern void as_rm_recursive(int node);
-extern unsigned int saveit;
-extern int as_cp(const char *src_path, const char *dst_path);
-extern int as_mv(const char *src_path, const char *dst_path);
-extern void tune(const char *song);
-extern void triple_fault();
-extern void wm_open_help_window(void);
+extern VD entropy(VD);
+extern VD pit_init_1000hz(VD);
+extern u16 pit_read_counter(VD);
+extern VD sleep(U INT ms);
+extern INT getkey(VD);
+extern VD vmoff(VD);
+extern VD halt(VD);
+extern VD startupSeq(VD);
+extern INT helpMenu(VD);
+extern VD addr(VD);
+extern VD nosound(VD);
+extern INT hda_init(VD);
+extern INT hda_ready(VD);
+extern VD as_init();
+extern INT as_mkdir(CC *name);
+extern INT as_touch(CC *name);
+extern INT as_write(CC *name, CC *text);
+extern VD as_cat(CC *name);
+extern VD as_ls();
+extern INT as_cd(CC *name);
+extern INT as_cwd;
+extern INT shift;
+extern VD as_pwd();
+extern VD as_ls_path(CC *path);
+extern VD idt_init();
+extern VD as_edit(CC *path);
+extern INT as_edit_open_win(INT id, CC *path);
+extern INT as_edit_key_win(INT id, INT c);
+extern INT as_edit_win_open(INT id);
+extern VD as_edit_win_refresh(INT id);
+extern VD as_edit_win_close(INT id);
+extern INT as_edit_win_mem(INT id);
+extern CC *as_edit_win_path(INT id);
+extern INT ctrl;
+extern INT ext;
+extern INT as_get_file_data(CC *path, C **data, INT *size);
+extern VD pred(CC *s);
+extern VD beep(u32 freq);
+extern VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor);
+extern VD as_edit_restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor);
+extern INT as_save_to_disk(VD);
+extern INT as_load_from_disk(VD);
+extern VD as_rm(C *name);
+extern VD as_rm_recursive(INT node);
+extern U INT saveit;
+extern INT as_cp(CC *src_path, CC *dst_path);
+extern INT as_mv(CC *src_path, CC *dst_path);
+extern VD tune(CC *song);
+extern VD triple_fault();
+extern VD wm_open_help_window(VD);
 
-#define GFX ((volatile u8*)0xA0000) //VGA 640x480 graphics buffer
-#define FONT8X8 ((u8*)0x7000) //8x8 font copied by the bootloader
-#define VGA_COPY40(dst, src) \
-	do { \
-		volatile u32 *_d40 = (volatile u32*)(dst); \
-		volatile u32 *_s40 = (volatile u32*)(src); \
-		_d40[0] = _s40[0]; \
-		_d40[1] = _s40[1]; \
-		_d40[2] = _s40[2]; \
-		_d40[3] = _s40[3]; \
-		_d40[4] = _s40[4]; \
-		_d40[5] = _s40[5]; \
-		_d40[6] = _s40[6]; \
-		_d40[7] = _s40[7]; \
-		_d40[8] = _s40[8]; \
-		_d40[9] = _s40[9]; \
-	} while(0)
-#define W 80 //screen width
-#define H 60 //screen hight
+#define GFX ((u8*)0xA0000)
+//VGA 640x480 graphics buffer
+#define FONT8X8 ((u8*)0x7000)
+//8x8 font copied by the bootloader
+#define W 80
+//screen width
+#define H 60
+//screen hight
 #define CMOS_ADDR 0x70
 #define CMOS_DATA 0x71
 #define RTC_SECONDS 0x00
@@ -86,27 +75,26 @@ extern void wm_open_help_window(void);
 #define RTC_DAY     0x07
 #define RTC_MONTH   0x08
 #define RTC_YEAR    0x09
-#define GVN(var) #var
 
-const char *BAR1 = "====";
-const char *BAR2 = "===========================================================";
+CC *BAR1 = "====";
+CC *BAR2 = "===========================================================";
 
 //build information
-const char *VERSION = "V0.2.2";
+CC *VERSION = "V0.2.2";
 
-unsigned int cx = 0;
-unsigned int cy = 0;
-unsigned int INPUT_MAX = 128;
-unsigned int raw = 0;
-unsigned int screen_saved = 0;
-unsigned int tunevis = 1;
+U INT cx = 0;
+U INT cy = 0;
+U INT INPUT_MAX = 128;
+U INT raw = 0;
+U INT screen_saved = 0;
+U INT tunevis = 1;
 
-char screen_chars[W * H];
+C screen_Cs[W * H];
 u8 screen_attrs[W * H];
-unsigned int vga_start = 0;
-int cursor_drawn = 0;
-unsigned int cursor_x = 0;
-unsigned int cursor_y = 0;
+U INT vga_start = 0;
+INT cursor_drawn = 0;
+U INT cursor_x = 0;
+U INT cursor_y = 0;
 
 #define CON_FULL 0
 #define CON_WINDOW 1
@@ -115,6 +103,8 @@ unsigned int cursor_y = 0;
 #define WM_TITLE_MAX 64
 #define WM_CONTENT_W 78
 #define WM_CONTENT_H 57
+#define WM_BUFFER_SIZE 4446
+#define WM_ALL_BUFFERS_SIZE 26676
 #define WM_BG_ATTR 0xF0
 #define WM_ADD_NONE 0
 #define WM_ADD_CARD 1
@@ -131,121 +121,137 @@ unsigned int cursor_y = 0;
 #define WM_CLOSE_MARGIN 3
 #define WM_TASK_STACK_MAX 8
 
-typedef struct {
-	int bx;
-	int by;
-	int bw;
-	int bh;
-	int x;
-	int y;
-	int w;
-	int h;
-	unsigned int cx;
-	unsigned int cy;
-	int cwd;
-	int alive;
-	int fullscreen;
-	int carded;
-	int card_old_bx;
-	int card_old_by;
-	int card_old_bw;
-	int card_old_bh;
-	int old_bx;
-	int old_by;
-	int old_bw;
-	int old_bh;
-	char title[WM_TITLE_MAX];
-	char input[WM_INPUT_MAX];
-	int input_len;
-	int input_x;
-	int input_y;
-	char task_cmd[WM_INPUT_MAX];
-	int task_pending;
-	char *task_data;
-	int task_size;
-	int task_pos;
-	int task_running;
-	char *task_stack_data[WM_TASK_STACK_MAX];
-	int task_stack_size[WM_TASK_STACK_MAX];
-	int task_stack_pos[WM_TASK_STACK_MAX];
-	int task_sp;
+TD ST {
+	INT bx;
+	INT by;
+	INT bw;
+	INT bh;
+	INT x;
+	INT y;
+	INT w;
+	INT h;
+	U INT cx;
+	U INT cy;
+	INT cwd;
+	INT alive;
+	INT fullscreen;
+	INT carded;
+	INT card_old_bx;
+	INT card_old_by;
+	INT card_old_bw;
+	INT card_old_bh;
+	INT old_bx;
+	INT old_by;
+	INT old_bw;
+	INT old_bh;
+	C title[WM_TITLE_MAX];
+	C input[WM_INPUT_MAX];
+	INT input_len;
+	INT input_x;
+	INT input_y;
+	C task_cmd[WM_INPUT_MAX];
+	INT task_pending;
+	C *task_data;
+	INT task_size;
+	INT task_pos;
+	INT task_running;
+	C *task_stack_data[WM_TASK_STACK_MAX];
+	INT task_stack_size[WM_TASK_STACK_MAX];
+	INT task_stack_pos[WM_TASK_STACK_MAX];
+	INT task_sp;
 	u64 task_wake;
-	char tune_song[WM_INPUT_MAX];
-	int tune_pos;
-	int tune_tempo;
-	int tune_running;
+	C tune_song[WM_INPUT_MAX];
+	INT tune_pos;
+	INT tune_tempo;
+	INT tune_running;
 	u64 tune_until;
-	int tune_sounding;
+	INT tune_sounding;
 } WMWindow;
 
 WMWindow wm_windows[WM_WINDOWS];
-int console_mode = CON_FULL;
-int con_x = 0;
-int con_y = 0;
-int con_w = W;
-int con_h = H;
-int wm_on = 0;
-int wm_active = 0;
-int wm_redrawing = 0;
-char wm_buf_chars[WM_WINDOWS][WM_CONTENT_W * WM_CONTENT_H];
-u8 wm_buf_attrs[WM_WINDOWS][WM_CONTENT_W * WM_CONTENT_H];
-int wm_selected_win = -1;
-int wm_selected_row = -1;
-int wm_selected_type = 0;
-int wm_sel_x0 = 0;
-int wm_sel_y0 = 0;
-int wm_sel_x1 = 0;
-int wm_sel_y1 = 0;
-char wm_selected_cmd[WM_INPUT_MAX];
-int wm_drag_win = -1;
-int wm_drag_dx = 0;
-int wm_drag_dy = 0;
-int wm_add_menu = 0;
-int wm_next_side = 0;
-int wm_next_card_x = 0;
-int wm_next_card_y = 1;
-int wm_mouse_select_win = -1;
-int wm_z_order[WM_WINDOWS];
-int wm_z_count = 0;
-int wm_shift_selecting = 0;
-int wm_shift_ax = 0;
-int wm_shift_ay = 0;
-int wm_task_exec_win = -1;
-int wm_in_task_step = 0;
-int wm_help_win = -1;
-int wm_task_focus_win = -1;
+INT console_mode = CON_FULL;
+INT con_x = 0;
+INT con_y = 0;
+INT con_w = W;
+INT con_h = H;
+INT wm_on = 0;
+INT wm_active = 0;
+INT wm_redrawing = 0;
+/* Flat arrays are intentional. AneoC currently reverses the dimensions of
+   multidimensional C arrays, which made adjacent window buffers overlap. */
+C wm_buf_Cs[WM_ALL_BUFFERS_SIZE];
+u8 wm_buf_attrs[WM_ALL_BUFFERS_SIZE];
+INT wm_selected_win = -1;
+INT wm_selected_row = -1;
+INT wm_selected_type = 0;
+INT wm_sel_x0 = 0;
+INT wm_sel_y0 = 0;
+INT wm_sel_x1 = 0;
+INT wm_sel_y1 = 0;
+C wm_selected_cmd[WM_INPUT_MAX];
+INT wm_drag_win = -1;
+INT wm_drag_dx = 0;
+INT wm_drag_dy = 0;
+INT wm_add_menu = 0;
+INT wm_next_side = 0;
+INT wm_next_card_x = 0;
+INT wm_next_card_y = 1;
+INT wm_mouse_select_win = -1;
+INT wm_z_order[WM_WINDOWS];
+INT wm_z_count = 0;
+INT wm_shift_selecting = 0;
+INT wm_shift_ax = 0;
+INT wm_shift_ay = 0;
+INT wm_task_exec_win = -1;
+INT wm_in_task_step = 0;
+INT wm_help_win = -1;
+INT wm_task_focus_win = -1;
 
 #define MEMSTAT_OVERLAY_X 0
-#define MEMSTAT_OVERLAY_W W
-#define MEMSTAT_OVERLAY_H (H - 1)
+#define MEMSTAT_OVERLAY_W 80
+#define MEMSTAT_OVERLAY_H 59
+#define MEMSTAT_OVERLAY_SIZE 4720
 
-char memstat_overlay_chars[MEMSTAT_OVERLAY_H][MEMSTAT_OVERLAY_W];
-u8 memstat_overlay_attrs[MEMSTAT_OVERLAY_H][MEMSTAT_OVERLAY_W];
-int memstat_overlay_ready = 0;
-int memstat_overlay_y = H;
-int memstat_overlay_rows = 0;
+C memstat_overlay_Cs[MEMSTAT_OVERLAY_SIZE];
+u8 memstat_overlay_attrs[MEMSTAT_OVERLAY_SIZE];
+INT memstat_overlay_ready = 0;
+INT memstat_overlay_y = H;
+INT memstat_overlay_rows = 0;
 
-int mouse_ready = 0;
-int mouse_x = 320;
-int mouse_y = 240;
-int mouse_drawn = 0;
-int mouse_old_x = 0;
-int mouse_old_y = 0;
-int mouse_left = 0;
-int mouse_prev_left = 0;
-int mouse_packet_index = 0;
+INT mouse_ready = 0;
+INT mouse_x = 320;
+INT mouse_y = 240;
+INT mouse_drawn = 0;
+INT mouse_old_x = 0;
+INT mouse_old_y = 0;
+INT mouse_left = 0;
+INT mouse_prev_left = 0;
+INT mouse_packet_index = 0;
 u8 mouse_packet[3];
 #define MOUSE_SPEED 1
 #define MOUSE_W 11
 #define MOUSE_H 16
 
+SC const u16 mouse_arrow[MOUSE_H] = {
+	0x400, 0x600, 0x700, 0x780,
+	0x7C0, 0x7E0, 0x7F0, 0x7F8,
+	0x7C0, 0x6E0, 0x4E0, 0x070,
+	0x070, 0x038, 0x038, 0x010
+};
+SC INT wm_tune_table[12] = {262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
+SC u32 memstat_total_cached = 0;
+SC INT memstat_last_sec = -1;
+SC u16 ticks_last = 0;
+SC INT ticks_initialized = 0;
+SC INT wm_task_rr = 0;
+
 u8 color = 0x0F;
 u8 defcolor = 0x1F;
 
-volatile u64 idle_ticks=0;
-volatile u64 total_ticks=1;
+u64 idle_ticks=0;
+u64 total_ticks=1;
 u64 wm_flash_last=0;
-int wm_flash_phase=0;
+INT wm_flash_phase=0;
 
 u32 mem_used=0;
 
@@ -258,176 +264,161 @@ u32 total_mem=
 
 extern u32 heap_ptr;
 
-void putc(char c);
-void clear(void);
-void printx(uint32_t x);
-void print(const char *s);
-void printint(unsigned int n);
-void screen_draw_cell(int x, int y, char c, u8 col, int cursor);
-void screen_redraw(void);
-void cursor_hide(void);
-void cursor_update(void);
-void draw_tb(void);
-void update_rtc_only(void);
-void screen_put_at(int x, int y, char c, u8 col);
-void screen_write_at(int x, int y, const char *s, u8 col);
-void screen_set_cell(int i, char c, u8 col);
-void screen_get_cell(int i, char *c, u8 *col);
-int con_abs_x(void);
-int con_abs_y(void);
-void con_set_full(void);
-void con_set_window(int x, int y, int w, int h);
-void con_save(WMWindow *win);
-void con_load(WMWindow *win);
-void wm(void);
-void wm_draw(void);
-void wm_prompt(void);
-void wm_switch(void);
-void wm_set_title(int id, const char *s);
-void gfx_clear_text_rect(int x, int y, int w, int h, u8 col);
-void gfx_scroll_text_rect_up_8(int x, int y, int w, int h, u8 col);
-void gfx_scroll_wm_text_rect_up_8(int x, int y, int w, int h, u8 col);
-void wm_draw_one(int id);
-void wm_clear_background(void);
-void wm_redraw_all(void);
-void wm_capture(int id);
-void wm_capture_window(WMWindow *win);
-void wm_store_cell(int x, int y, char c, u8 col);
-void wm_draw_content(int id);
-void wm_draw_content_region(int id, int rx0, int ry0, int rx1, int ry1);
-void wm_redraw_region(int rx0, int ry0, int rx1, int ry1);
-void wm_redraw_window_move(int id, int obx, int oby);
-void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, int oldy0, int oldx1, int oldy1, int newwin, int newtype, int newrow, int newx0, int newy0, int newx1, int newy1);
-int wm_cell_in_selection(int type, int row, int x0, int y0, int x1, int y1, int x, int y);
-void wm_finish_selected_cmd(int id);
-void wm_extract_line_command(int id, int row, char *out);
-void wm_init_buffers(void);
-void wm_activate(int id);
-int wm_hit_window(int tx, int ty);
-void wm_select_line(int id, int row);
-void wm_select_range(int id, int x0, int y0, int x1, int y1);
-void wm_clear_highlight(void);
-int wm_cell_selected(int id, int x, int y);
-void wm_extract_range_command(int id, char *out);
-int wm_alive_count(void);
-int wm_next_alive_from(int from);
-void wm_apply_geometry(int id, int bx, int by, int bw, int bh);
-void wm_blank_window_buffer(int id);
-void wm_init_new_window(int id, int bx, int by, int bw, int bh);
-int wm_create_window(int kind);
-void wm_start_window(int id);
-void wm_start_shell_window(int id);
-void wm_close_window(int id);
-void wm_toggle_fullscreen(int id);
-void wm_toggle_card(int id);
-void wm_z_remove(int id);
-void wm_z_add_top(int id);
-void wm_bring_front(int id);
-int wm_active_ok(void);
-void wm_draw_top_controls(void);
-void wm_draw_add_menu(void);
-void wm_hide_add_menu(void);
-int wm_handle_add_menu_click(int tx, int ty);
-void wm_prepare_selected_run_line(const char *cmd);
-void wm_sync_input_from_screen(int id);
-void wm_insert_char_here(int id, char c);
-void wm_backspace_here(int id);
-int wm_cursor_on_prompt_line(int id);
-void wm_open_help_window(void);
-void wm_compose_cell(int sx, int sy, char *outc, u8 *outcol);
-int wm_cell_visible_for(int id, int sx, int sy);
-void wm_enqueue_cmd(int id, const char *cmd);
-void wm_task_start_script(int id, const char *path);
-void wm_task_step(int id);
-int wm_task_run_line(int id, char *line);
-void wm_task_clean_path(const char *src, char *dst);
-int wm_task_try_file(int id, const char *line);
-void wm_extract_quoted_arg(const char *line, char *out);
-void wm_tasks_step(void);
-void ticks_poll(void);
-void wm_flash_poll(void);
+VD putc(C c);
+VD clear(VD);
+VD printx(u32 x);
+VD print(CC *s);
+VD printINT(U INT n);
+VD printint(U INT n);
+VD screen_draw_cell(INT x, INT y, C c, u8 col, INT cursor);
+VD screen_redraw(VD);
+VD cursor_hide(VD);
+VD cursor_update(VD);
+VD draw_tb(VD);
+VD update_rtc_only(VD);
+VD screen_put_at(INT x, INT y, C c, u8 col);
+VD screen_write_at(INT x, INT y, CC *s, u8 col);
+VD screen_set_cell(INT i, C c, u8 col);
+VD screen_get_cell(INT i, C *c, u8 *col);
+INT con_abs_x(VD);
+INT con_abs_y(VD);
+VD con_set_full(VD);
+VD con_set_window(INT x, INT y, INT w, INT h);
+VD con_save(WMWindow *win);
+VD con_load(WMWindow *win);
+VD wm(VD);
+VD wm_draw(VD);
+VD wm_prompt(VD);
+VD wm_switch(VD);
+VD wm_set_title(INT id, CC *s);
+VD gfx_clear_text_rect(INT x, INT y, INT w, INT h, u8 col);
+VD gfx_scroll_text_rect_up_8(INT x, INT y, INT w, INT h, u8 col);
+VD gfx_scroll_wm_text_rect_up_8(INT x, INT y, INT w, INT h, u8 col);
+VD wm_draw_one(INT id);
+VD wm_clear_background(VD);
+VD wm_redraw_all(VD);
+VD wm_capture(INT id);
+VD wm_capture_window(WMWindow *win);
+VD wm_store_cell(INT x, INT y, C c, u8 col);
+VD wm_draw_content(INT id);
+VD wm_draw_content_region(INT id, INT rx0, INT ry0, INT rx1, INT ry1);
+VD wm_redraw_region(INT rx0, INT ry0, INT rx1, INT ry1);
+VD wm_redraw_window_move(INT id, INT obx, INT oby);
+VD wm_redraw_selection_change(INT oldwin, INT oldtype, INT oldrow, INT oldx0, INT oldy0, INT oldx1, INT oldy1, INT newwin, INT newtype, INT newrow, INT newx0, INT newy0, INT newx1, INT newy1);
+INT wm_cell_in_selection(INT type, INT row, INT x0, INT y0, INT x1, INT y1, INT x, INT y);
+VD wm_finish_selected_cmd(INT id);
+VD wm_extract_line_command(INT id, INT row, C *out);
+VD wm_init_buffers(VD);
+VD wm_activate(INT id);
+INT wm_hit_window(INT tx, INT ty);
+VD wm_select_line(INT id, INT row);
+VD wm_select_range(INT id, INT x0, INT y0, INT x1, INT y1);
+VD wm_clear_highlight(VD);
+INT wm_cell_selected(INT id, INT x, INT y);
+VD wm_extract_range_command(INT id, C *out);
+INT wm_alive_count(VD);
+INT wm_next_alive_from(INT from);
+VD wm_apply_geometry(INT id, INT bx, INT by, INT bw, INT bh);
+VD wm_blank_window_buffer(INT id);
+VD wm_init_new_window(INT id, INT bx, INT by, INT bw, INT bh);
+INT wm_create_window(INT kind);
+VD wm_start_window(INT id);
+VD wm_start_shell_window(INT id);
+VD wm_close_window(INT id);
+VD wm_toggle_fullscreen(INT id);
+VD wm_toggle_card(INT id);
+VD wm_z_remove(INT id);
+VD wm_z_add_top(INT id);
+VD wm_bring_front(INT id);
+INT wm_active_ok(VD);
+VD wm_draw_top_controls(VD);
+VD wm_draw_add_menu(VD);
+VD wm_hide_add_menu(VD);
+INT wm_handle_add_menu_click(INT tx, INT ty);
+VD wm_prepare_selected_run_line(CC *cmd);
+VD wm_sync_input_from_screen(INT id);
+VD wm_insert_C_here(INT id, C c);
+VD wm_backspace_here(INT id);
+INT wm_cursor_on_prompt_line(INT id);
+VD wm_open_help_window(VD);
+VD wm_compose_cell(INT sx, INT sy, C *outc, u8 *outcol);
+INT wm_cell_visible_for(INT id, INT sx, INT sy);
+VD wm_enqueue_cmd(INT id, CC *cmd);
+VD wm_task_start_script(INT id, CC *path);
+VD wm_task_step(INT id);
+INT wm_task_run_line(INT id, C *line);
+VD wm_task_clean_path(CC *src, C *dst);
+INT wm_task_try_file(INT id, CC *line);
+VD wm_extract_quoted_arg(CC *line, C *out);
+VD wm_tasks_step(VD);
+VD ticks_poll(VD);
+VD wm_flash_poll(VD);
 u8 wm_flash_attr(u8 col);
-void memstat(void);
-void memstat_overlay_refresh(int force);
-int memstat_overlay_cell(int x, int y);
-void memstat_overlay_compose(int sx, int sy, char *outc, u8 *outcol);
-u32 memstat_window_bytes(int id);
-void memstat_window_state(int id, const char **name, u8 *col);
-void wm_tune_start(int id, const char *song);
-int wm_tune_step(int id);
-int wm_tune_freq(char note, int accidental, int octave);
-int wm_tune_duration_ms(int tempo, char dur);
-int wm_is_wm_command(const char *line);
-void wm_handle_key(int c);
-void wm_mouse_poll(void);
-void mouse_init(void);
-void ps2_flush_output(void);
-void kb_drain_mouse(void);
-void mouse_show(void);
-void mouse_hide(void);
-int mouse_cell_hit(int x, int y);
-void gfx_pixel(int px, int py, u8 col);
-u8 screen_pixel_color(int px, int py);
-void gfx_set_start(unsigned int off);
-void wm_setup(void);
-void wm_start_window(int id);
-int rtc_get_second(void);
-void wm_switch(void);
-void wm_redraw_region(int rx0, int ry0, int rx1, int ry1);
-void mouse_hide(void);
-void mouse_show(void);
-int mouse_cell_hit(int x, int y);
+VD memstat(VD);
+VD memstat_overlay_refresh(INT force);
+INT memstat_overlay_cell(INT x, INT y);
+VD memstat_overlay_compose(INT sx, INT sy, C *outc, u8 *outcol);
+u32 memstat_window_bytes(INT id);
+VD memstat_window_state(INT id, CC **name, u8 *col);
+VD wm_tune_start(INT id, CC *song);
+INT wm_tune_step(INT id);
+INT wm_tune_freq(C note, INT accidental, INT octave);
+INT wm_tune_duration_ms(INT tempo, C dur);
+INT wm_is_wm_command(CC *line);
+VD wm_handle_key(INT c);
+VD wm_mouse_poll(VD);
+VD mouse_init(VD);
+VD ps2_flush_output(VD);
+VD kb_drain_mouse(VD);
+VD mouse_show(VD);
+VD mouse_hide(VD);
+INT mouse_cell_hit(INT x, INT y);
+VD gfx_pixel(INT px, INT py, u8 col);
+u8 screen_pixel_color(INT px, INT py);
+VD gfx_set_start(U INT off);
+VD wm_setup(VD);
+VD wm_start_window(INT id);
+INT rtc_get_second(VD);
+VD wm_switch(VD);
+VD wm_redraw_region(INT rx0, INT ry0, INT rx1, INT ry1);
+VD mouse_hide(VD);
+VD mouse_show(VD);
+INT mouse_cell_hit(INT x, INT y);
 
-void outb(u16 port, u8 val)
-{//write 8-bit value to IO port
-	asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
+/* Port I/O is implemented in Kernel/PortIO.ASM.
+   Kernel.AC remains fully compiled by AneoC. */
+extern VD outb(U INT port, u8 val);
+extern u8 inb(U INT port);
+extern VD outw(U INT port, u16 val);
+extern u16 inw(U INT port);
+extern VD outl(U INT port, u32 val);
+extern u32 inl(U INT port);
+
+VD vga_stosl(VD *dst, u32 val, U INT count)
+{//fast VGA fill using 32-bit stores
+	u32 *d;
+
+	d = (u32*)dst;
+	while(count--)
+		*d++ = val;
 }
 
-u8 inb(u16 port)
-{//read 8-bit value from IO port
-	u8 ret;
-	asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
-	return ret;
+VD vga_movsl(VD *dst, const VD *src, U INT count)
+{//fast VGA copy using 32-bit loads and stores
+	u32 *d;
+	const u32 *s;
+
+	d = (u32*)dst;
+	s = (const u32*)src;
+	while(count--)
+		*d++ = *s++;
 }
 
-void outw(u16 port, u16 val)
-{//write 16-bit value to IO port
-	asm volatile("outw %0, %1" : : "a"(val), "Nd"(port));
-}
-
-void outl(u16 port, u32 val)
-{//write 32-bit value to IO port
-	asm volatile("outl %0, %1" : : "a"(val), "Nd"(port));
-}
-
-u32 inl(u16 port)
-{//read 32-bit value from IO port
-	u32 ret;
-	asm volatile("inl %1, %0" : "=a"(ret) : "Nd"(port));
-	return ret;
-}
-
-void vga_stosl(void *dst, u32 val, unsigned int count)
-{//fast VGA fill using 32-bit repeat stores
-	asm volatile("cld; rep stosl"
-		: "+D"(dst), "+c"(count)
-		: "a"(val)
-		: "memory");
-}
-
-void vga_movsl(void *dst, const void *src, unsigned int count)
-{//fast VGA copy using 32-bit repeat moves
-	asm volatile("cld; rep movsl"
-		: "+D"(dst), "+S"(src), "+c"(count)
-		:
-		: "memory");
-}
-
-void fast_memset8(void *dst, u8 val, unsigned int bytes)
+VD fast_memset8(VD *dst, u8 val, U INT bytes)
 {
 	u32 fill;
 	u8 *tail;
-	unsigned int rem;
+	U INT rem;
 
 	fill = (u32)val;
 	fill |= fill << 8;
@@ -440,11 +431,11 @@ void fast_memset8(void *dst, u8 val, unsigned int bytes)
 		*tail++ = val;
 }
 
-void fast_memcpy8(void *dst, const void *src, unsigned int bytes)
+VD fast_memcpy8(VD *dst, const VD *src, U INT bytes)
 {
 	u8 *d;
 	const u8 *s;
-	unsigned int rem;
+	U INT rem;
 
 	vga_movsl(dst, src, bytes / 4);
 	d = (u8*)dst + (bytes & ~3U);
@@ -454,12 +445,12 @@ void fast_memcpy8(void *dst, const void *src, unsigned int bytes)
 		*d++ = *s++;
 }
 
-unsigned int gfx_off(unsigned int off)
+U INT gfx_off(U INT off)
 {
 	return off & 0xFFFF;
 }
 
-void gfx_set_start(unsigned int off)
+VD gfx_set_start(U INT off)
 {
 	vga_start = off & 0xFFFF;
 	outb(0x3D4, 0x0C);
@@ -468,7 +459,7 @@ void gfx_set_start(unsigned int off)
 	outb(0x3D5, (u8)vga_start);
 }
 
-void gfx_ready(void)
+VD gfx_ready(VD)
 {
 	outb(0x3C4, 0x02);
 	outb(0x3C5, 0x0F);
@@ -490,9 +481,9 @@ void gfx_ready(void)
 	outb(0x3CF, 0xFF);
 }
 
-void gfx_write_masked(unsigned int off, u8 mask, u8 col)
+VD gfx_write_masked(U INT off, u8 mask, u8 col)
 {
-	volatile u8 junk;
+	u8 junk;
 
 	if(mask == 0)
 		return;
@@ -500,11 +491,11 @@ void gfx_write_masked(unsigned int off, u8 mask, u8 col)
 	outb(0x3CE, 0x08);
 	outb(0x3CF, mask);
 	junk = GFX[off];
-	(void)junk;
+	(VD)junk;
 	GFX[off] = col & 0x0F;
 }
 
-void gfx_direct_plane(unsigned int plane)
+VD gfx_direct_plane(U INT plane)
 {
 	outb(0x3C4, 0x02);
 	outb(0x3C5, 1 << plane);
@@ -526,7 +517,7 @@ void gfx_direct_plane(unsigned int plane)
 	outb(0x3CF, 0xFF);
 }
 
-void gfx_mode2(void)
+VD gfx_mode2(VD)
 {
 	outb(0x3C4, 0x02);
 	outb(0x3C5, 0x0F);
@@ -548,11 +539,11 @@ void gfx_mode2(void)
 	outb(0x3CF, 0xFF);
 }
 
-void gfx_fill_linear(unsigned int off, unsigned int bytes, u8 col)
+VD gfx_fill_linear(U INT off, U INT bytes, u8 col)
 {
 	u32 val;
-	volatile u8 *tail;
-	unsigned int rem;
+	u8 *tail;
+	U INT rem;
 
 	if(bytes == 0)
 		return;
@@ -562,16 +553,16 @@ void gfx_fill_linear(unsigned int off, unsigned int bytes, u8 col)
 	val = (u32)(col & 0x0F);
 	val |= val << 8;
 	val |= val << 16;
-	vga_stosl((void*)(GFX + off), val, bytes / 4);
+	vga_stosl((VD*)(GFX + off), val, bytes / 4);
 	tail = GFX + off + (bytes & ~3U);
 	rem = bytes & 3U;
 	while(rem--)
 		*tail++ = col & 0x0F;
 }
 
-void gfx_fill_span(unsigned int off, unsigned int bytes, u8 col)
+VD gfx_fill_span(U INT off, U INT bytes, u8 col)
 {
-	unsigned int first;
+	U INT first;
 
 	off &= 0xFFFF;
 	while(bytes)
@@ -585,15 +576,15 @@ void gfx_fill_span(unsigned int off, unsigned int bytes, u8 col)
 	}
 }
 
-void gfx_fill(u8 col)
+VD gfx_fill(u8 col)
 {
 	gfx_set_start(0);
 	gfx_fill_span(0, 80 * 480, col);
 }
 
-void gfx_clear_text_row(int row, u8 col)
+VD gfx_clear_text_row(INT row, u8 col)
 {
-	unsigned int line;
+	U INT line;
 
 	if(row < 0 || row >= H)
 		return;
@@ -602,14 +593,14 @@ void gfx_clear_text_row(int row, u8 col)
 		gfx_fill_span(vga_start + row * 8 * 80 + line * 80, 80, col);
 }
 
-void gfx_clear_text_rect(int x, int y, int w, int h, u8 col)
+VD gfx_clear_text_rect(INT x, INT y, INT w, INT h, u8 col)
 {
-	int py;
-	int lines;
+	INT py;
+	INT lines;
 	u32 val;
-	volatile u8 *tail;
-	unsigned int off;
-	unsigned int rem;
+	u8 *tail;
+	U INT off;
+	U INT rem;
 
 	if(w <= 0 || h <= 0)
 		return;
@@ -626,28 +617,28 @@ void gfx_clear_text_rect(int x, int y, int w, int h, u8 col)
 	for(py = 0; py < lines; py++)
 	{
 		off = gfx_off(vga_start + ((y * 8 + py) * 80) + x);
-		if(off + (unsigned int)w > 0x10000)
+		if(off + (U INT)w > 0x10000)
 		{
 			gfx_fill_span(vga_start + ((y * 8 + py) * 80) + x, w, col);
 			gfx_mode2();
 			continue;
 		}
 
-		vga_stosl((void*)(GFX + off), val, ((unsigned int)w) / 4);
-		tail = GFX + off + (((unsigned int)w) & ~3U);
-		rem = ((unsigned int)w) & 3U;
+		vga_stosl((VD*)(GFX + off), val, ((U INT)w) / 4);
+		tail = GFX + off + (((U INT)w) & ~3U);
+		rem = ((U INT)w) & 3U;
 		while(rem--)
 			*tail++ = col & 0x0F;
 	}
 }
 
-void gfx_scroll_text_rect_up_8(int x, int y, int w, int h, u8 col)
+VD gfx_scroll_text_rect_up_8(INT x, INT y, INT w, INT h, u8 col)
 {
-	int plane;
-	int py;
-	int lines;
-	unsigned int dst;
-	unsigned int src;
+	INT plane;
+	INT py;
+	INT lines;
+	U INT dst;
+	U INT src;
 
 	if(w <= 0 || h <= 1)
 		return;
@@ -663,7 +654,7 @@ void gfx_scroll_text_rect_up_8(int x, int y, int w, int h, u8 col)
 		{
 			dst = gfx_off(vga_start + ((y * 8 + py) * 80) + x);
 			src = gfx_off(dst + 8 * 80);
-			fast_memcpy8((void*)(GFX + dst), (const void*)(GFX + src), w);
+			fast_memcpy8((VD*)(GFX + dst), (const VD*)(GFX + src), w);
 		}
 	}
 
@@ -671,13 +662,13 @@ void gfx_scroll_text_rect_up_8(int x, int y, int w, int h, u8 col)
 	gfx_ready();
 }
 
-void gfx_scroll_wm_text_rect_up_8(int x, int y, int w, int h, u8 col)
+VD gfx_scroll_wm_text_rect_up_8(INT x, INT y, INT w, INT h, u8 col)
 {
-	int plane;
-	int py;
-	int lines;
-	unsigned int dst;
-	unsigned int src;
+	INT plane;
+	INT py;
+	INT lines;
+	U INT dst;
+	U INT src;
 
 	if(w != 40 || (x & 3))
 	{
@@ -699,7 +690,7 @@ void gfx_scroll_wm_text_rect_up_8(int x, int y, int w, int h, u8 col)
 		{
 			dst = gfx_off(vga_start + ((y * 8 + py) * 80) + x);
 			src = gfx_off(vga_start + (((y + 1) * 8 + py) * 80) + x);
-			VGA_COPY40(GFX + dst, GFX + src);
+			fast_memcpy8((VD*)(GFX + dst), (const VD*)(GFX + src), 40);
 		}
 	}
 
@@ -707,9 +698,9 @@ void gfx_scroll_wm_text_rect_up_8(int x, int y, int w, int h, u8 col)
 	gfx_ready();
 }
 
-void gfx_scroll_up_8(u8 col)
+VD gfx_scroll_up_8(u8 col)
 {
-	unsigned int next;
+	U INT next;
 
 	next = vga_start + 8 * 80;
 
@@ -724,28 +715,28 @@ void gfx_scroll_up_8(u8 col)
 	gfx_clear_text_row(H - 1, col);
 }
 
-void cursor_hide(void)
+VD cursor_hide(VD)
 {
-	int old;
+	INT old;
 
 	if(cursor_drawn && cursor_x < W && cursor_y < H)
 	{
 		old = cursor_y * W + cursor_x;
 		cursor_drawn = 0;
-		screen_draw_cell(cursor_x, cursor_y, screen_chars[old], screen_attrs[old], 0);
+		screen_draw_cell(cursor_x, cursor_y, screen_Cs[old], screen_attrs[old], 0);
 	}
 	else
 		cursor_drawn = 0;
 }
 
-void screen_draw_cell(int x, int y, char c, u8 col, int cursor)
+VD screen_draw_cell(INT x, INT y, C c, u8 col, INT cursor)
 {
-	int row;
+	INT row;
 	u8 fg;
 	u8 bg;
 	u8 bits;
 	u8 *font;
-	unsigned int off;
+	U INT off;
 
 	if(x < 0 || x >= W || y < 0 || y >= H)
 		return;
@@ -765,21 +756,24 @@ void screen_draw_cell(int x, int y, char c, u8 col, int cursor)
 
 	for(row = 0; row < 8; row++)
 	{
-		bits = (c == ' ') ? 0 : font[row];
+		if(c == ' ')
+			bits = 0;
+		else
+			bits = font[row];
 		off = gfx_off(vga_start + ((y * 8 + row) * 80) + x);
 		gfx_write_masked(off, 0xFF, bg);
 		gfx_write_masked(off, bits, fg);
 	}
 }
 
-void screen_put_at(int x, int y, char c, u8 col)
+VD screen_put_at(INT x, INT y, C c, u8 col)
 {
-	int i;
-	int redraw_mouse;
+	INT i;
+	INT redraw_mouse;
 
 	if(wm_on && !wm_redrawing && console_mode == CON_WINDOW)
 	{
-		/* Store into the window buffer before clipping to the
+		/* Store INTo the window buffer before clipping to the
 		   physical screen. This keeps offscreen/half-offscreen
 		   windows from losing output while they are outside view. */
 		wm_store_cell(x, y, c, col);
@@ -796,16 +790,16 @@ void screen_put_at(int x, int y, char c, u8 col)
 		mouse_hide();
 
 	i = y * W + x;
-	screen_chars[i] = c;
+	screen_Cs[i] = c;
 	screen_attrs[i] = col;
-	screen_draw_cell(x, y, c, col, cursor_drawn && cursor_x == (unsigned int)x && cursor_y == (unsigned int)y);
+	screen_draw_cell(x, y, c, col, cursor_drawn && cursor_x == (U INT)x && cursor_y == (U INT)y);
 
 	if(redraw_mouse)
 		mouse_show();
 }
 
 
-void screen_set_cell(int i, char c, u8 col)
+VD screen_set_cell(INT i, C c, u8 col)
 {
 	if(i < 0 || i >= W * H)
 		return;
@@ -813,7 +807,7 @@ void screen_set_cell(int i, char c, u8 col)
 	screen_put_at(i % W, i / W, c, col);
 }
 
-void screen_get_cell(int i, char *c, u8 *col)
+VD screen_get_cell(INT i, C *c, u8 *col)
 {
 	if(i < 0 || i >= W * H)
 	{
@@ -822,11 +816,11 @@ void screen_get_cell(int i, char *c, u8 *col)
 		return;
 	}
 
-	*c = screen_chars[i];
+	*c = screen_Cs[i];
 	*col = screen_attrs[i];
 }
 
-int con_abs_x(void)
+INT con_abs_x(VD)
 {
 	if(console_mode == CON_WINDOW)
 		return con_x + cx;
@@ -834,7 +828,7 @@ int con_abs_x(void)
 	return cx;
 }
 
-int con_abs_y(void)
+INT con_abs_y(VD)
 {
 	if(console_mode == CON_WINDOW)
 		return con_y + cy;
@@ -842,7 +836,7 @@ int con_abs_y(void)
 	return cy;
 }
 
-void con_set_full(void)
+VD con_set_full(VD)
 {
 	console_mode = CON_FULL;
 	con_x = 0;
@@ -851,7 +845,7 @@ void con_set_full(void)
 	con_h = H;
 }
 
-void con_set_window(int x, int y, int w, int h)
+VD con_set_window(INT x, INT y, INT w, INT h)
 {
 	console_mode = CON_WINDOW;
 	con_x = x;
@@ -860,7 +854,7 @@ void con_set_window(int x, int y, int w, int h)
 	con_h = h;
 }
 
-void con_save(WMWindow *win)
+VD con_save(WMWindow *win)
 {
 	win->cx = cx;
 	win->cy = cy;
@@ -868,7 +862,7 @@ void con_save(WMWindow *win)
 }
 
 
-void con_load(WMWindow *win)
+VD con_load(WMWindow *win)
 {
 	con_set_window(win->x, win->y, win->w, win->h);
 	cx = win->cx;
@@ -877,9 +871,9 @@ void con_load(WMWindow *win)
 }
 
 
-int wm_index_of(WMWindow *win)
+INT wm_index_of(WMWindow *win)
 {
-	int i;
+	INT i;
 
 	for(i = 0; i < WM_WINDOWS; i++)
 		if(win == &wm_windows[i])
@@ -888,25 +882,25 @@ int wm_index_of(WMWindow *win)
 	return -1;
 }
 
-void wm_init_buffers(void)
+VD wm_init_buffers(VD)
 {
-	int id;
-	int i;
+	INT id;
+	INT i;
 
 	for(id = 0; id < WM_WINDOWS; id++)
 	{
 		for(i = 0; i < WM_CONTENT_W * WM_CONTENT_H; i++)
 		{
-			wm_buf_chars[id][i] = ' ';
-			wm_buf_attrs[id][i] = 0x1F;
+			wm_buf_Cs[id * WM_BUFFER_SIZE + i] = ' ';
+			wm_buf_attrs[id * WM_BUFFER_SIZE + i] = 0x1F;
 		}
 	}
 }
 
-int wm_alive_count(void)
+INT wm_alive_count(VD)
 {
-	int id;
-	int n;
+	INT id;
+	INT n;
 
 	n = 0;
 	for(id = 0; id < WM_WINDOWS; id++)
@@ -916,10 +910,10 @@ int wm_alive_count(void)
 	return n;
 }
 
-int wm_next_alive_from(int from)
+INT wm_next_alive_from(INT from)
 {
-	int i;
-	int id;
+	INT i;
+	INT id;
 
 	for(i = 1; i <= WM_WINDOWS; i++)
 	{
@@ -932,15 +926,15 @@ int wm_next_alive_from(int from)
 }
 
 
-int wm_active_ok(void)
+INT wm_active_ok(VD)
 {
 	return wm_active >= 0 && wm_active < WM_WINDOWS && wm_windows[wm_active].alive;
 }
 
-void wm_z_remove(int id)
+VD wm_z_remove(INT id)
 {
-	int i;
-	int j;
+	INT i;
+	INT j;
 
 	for(i = 0; i < wm_z_count; i++)
 	{
@@ -954,7 +948,7 @@ void wm_z_remove(int id)
 	}
 }
 
-void wm_z_add_top(int id)
+VD wm_z_add_top(INT id)
 {
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -963,12 +957,12 @@ void wm_z_add_top(int id)
 		wm_z_order[wm_z_count++] = id;
 }
 
-void wm_bring_front(int id)
+VD wm_bring_front(INT id)
 {
 	wm_z_add_top(id);
 }
 
-void wm_apply_geometry(int id, int bx, int by, int bw, int bh)
+VD wm_apply_geometry(INT id, INT bx, INT by, INT bw, INT bh)
 {
 	WMWindow *win;
 
@@ -984,7 +978,7 @@ void wm_apply_geometry(int id, int bx, int by, int bw, int bh)
 		bw = W;
 	if(bh > H - 1)
 		bh = H - 1;
-	/* Position is intentionally NOT clamped.
+	/* Position is INTentionally NOT clamped.
 	   Windows may be dragged/spawned past the screen borders;
 	   the drawing code clips whatever is actually visible. */
 
@@ -1000,27 +994,30 @@ void wm_apply_geometry(int id, int bx, int by, int bw, int bh)
 		win->w = WM_CONTENT_W;
 	if(win->h > WM_CONTENT_H)
 		win->h = WM_CONTENT_H;
-	if(win->cx >= (unsigned int)win->w)
+	if(win->cx >= (U INT)win->w)
 		win->cx = 0;
-	if(win->cy >= (unsigned int)win->h)
-		win->cy = win->h ? win->h - 1 : 0;
+	if(win->cy >= (U INT)win->h)
+		if(win->h)
+			win->cy = win->h - 1;
+		else
+			win->cy = 0;
 }
 
-void wm_blank_window_buffer(int id)
+VD wm_blank_window_buffer(INT id)
 {
-	int i;
+	INT i;
 
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
 
 	for(i = 0; i < WM_CONTENT_W * WM_CONTENT_H; i++)
 	{
-		wm_buf_chars[id][i] = ' ';
-		wm_buf_attrs[id][i] = 0x1F;
+		wm_buf_Cs[id * WM_BUFFER_SIZE + i] = ' ';
+		wm_buf_attrs[id * WM_BUFFER_SIZE + i] = 0x1F;
 	}
 }
 
-void wm_init_new_window(int id, int bx, int by, int bw, int bh)
+VD wm_init_new_window(INT id, INT bx, INT by, INT bw, INT bh)
 {
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
@@ -1062,14 +1059,14 @@ void wm_init_new_window(int id, int bx, int by, int bw, int bh)
 	wm_set_title(id, "Shell");
 }
 
-int wm_create_window(int kind)
+INT wm_create_window(INT kind)
 {
-	int id;
-	int bx;
-	int by;
-	int bw;
-	int bh;
-	int old;
+	INT id;
+	INT bx;
+	INT by;
+	INT bw;
+	INT bh;
+	INT old;
 
 	for(id = 0; id < WM_WINDOWS; id++)
 		if(!wm_windows[id].alive)
@@ -1093,7 +1090,10 @@ int wm_create_window(int kind)
 	{
 		bw = WM_SIDE_W;
 		bh = WM_SIDE_H;
-		bx = wm_next_side ? W - WM_SIDE_W : 0;
+		if(wm_next_side)
+			bx = W - WM_SIDE_W;
+		else
+			bx = 0;
 		by = 1;
 		wm_next_side = !wm_next_side;
 	}
@@ -1112,9 +1112,9 @@ int wm_create_window(int kind)
 	return id;
 }
 
-void wm_close_window(int id)
+VD wm_close_window(INT id)
 {
-	int next;
+	INT next;
 
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
@@ -1147,7 +1147,10 @@ void wm_close_window(int id)
 
 	if(wm_active == id)
 	{
-		next = (wm_z_count > 0) ? wm_z_order[wm_z_count - 1] : -1;
+		if(wm_z_count > 0)
+			next = wm_z_order[wm_z_count - 1];
+		else
+			next = -1;
 		wm_active = next;
 	}
 
@@ -1159,7 +1162,7 @@ void wm_close_window(int id)
 	wm_redraw_region(wm_windows[id].bx, wm_windows[id].by, wm_windows[id].bx + wm_windows[id].bw - 1, wm_windows[id].by + wm_windows[id].bh - 1);
 }
 
-void wm_toggle_fullscreen(int id)
+VD wm_toggle_fullscreen(INT id)
 {
 	WMWindow *win;
 
@@ -1189,11 +1192,11 @@ void wm_toggle_fullscreen(int id)
 	wm_redraw_all();
 }
 
-void wm_toggle_card(int id)
+VD wm_toggle_card(INT id)
 {
 	WMWindow *win;
-	int bx;
-	int by;
+	INT bx;
+	INT by;
 
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
@@ -1236,7 +1239,7 @@ void wm_toggle_card(int id)
 	wm_redraw_all();
 }
 
-void wm_draw_top_controls(void)
+VD wm_draw_top_controls(VD)
 {
 	if(!wm_on)
 		return;
@@ -1246,34 +1249,34 @@ void wm_draw_top_controls(void)
 	screen_put_at(WM_PLUS_X + 1, 0, ']', 0xF1);
 }
 
-void wm_draw_add_menu(void)
+VD wm_draw_add_menu(VD)
 {
-	int x;
-	int y;
+	INT x;
+	INT y;
 	u8 col;
 
 	col = 0x1F;
 	for(x = 0; x < WM_MENU_W; x++)
 	{
-		screen_put_at(WM_MENU_X + x, WM_MENU_Y, (char)196, col);
-		screen_put_at(WM_MENU_X + x, WM_MENU_Y + WM_MENU_H - 1, (char)196, col);
+		screen_put_at(WM_MENU_X + x, WM_MENU_Y, (C)196, col);
+		screen_put_at(WM_MENU_X + x, WM_MENU_Y + WM_MENU_H - 1, (C)196, col);
 	}
 	for(y = 0; y < WM_MENU_H; y++)
 	{
-		screen_put_at(WM_MENU_X, WM_MENU_Y + y, (char)179, col);
-		screen_put_at(WM_MENU_X + WM_MENU_W - 1, WM_MENU_Y + y, (char)179, col);
+		screen_put_at(WM_MENU_X, WM_MENU_Y + y, (C)179, col);
+		screen_put_at(WM_MENU_X + WM_MENU_W - 1, WM_MENU_Y + y, (C)179, col);
 	}
-	screen_put_at(WM_MENU_X, WM_MENU_Y, (char)218, col);
-	screen_put_at(WM_MENU_X + WM_MENU_W - 1, WM_MENU_Y, (char)191, col);
-	screen_put_at(WM_MENU_X, WM_MENU_Y + WM_MENU_H - 1, (char)192, col);
-	screen_put_at(WM_MENU_X + WM_MENU_W - 1, WM_MENU_Y + WM_MENU_H - 1, (char)217, col);
+	screen_put_at(WM_MENU_X, WM_MENU_Y, (C)218, col);
+	screen_put_at(WM_MENU_X + WM_MENU_W - 1, WM_MENU_Y, (C)191, col);
+	screen_put_at(WM_MENU_X, WM_MENU_Y + WM_MENU_H - 1, (C)192, col);
+	screen_put_at(WM_MENU_X + WM_MENU_W - 1, WM_MENU_Y + WM_MENU_H - 1, (C)217, col);
 
 	screen_write_at(WM_MENU_X + 2, WM_MENU_Y + 1, "+ Add window", col);
 	screen_write_at(WM_MENU_X + 2, WM_MENU_Y + 2, "Card window", 0x1F);
 	screen_write_at(WM_MENU_X + 2, WM_MENU_Y + 3, "Side window", 0x1F);
 }
 
-void wm_hide_add_menu(void)
+VD wm_hide_add_menu(VD)
 {
 	if(!wm_add_menu)
 		return;
@@ -1283,7 +1286,7 @@ void wm_hide_add_menu(void)
 	wm_draw_top_controls();
 }
 
-int wm_handle_add_menu_click(int tx, int ty)
+INT wm_handle_add_menu_click(INT tx, INT ty)
 {
 	if(!wm_add_menu)
 		return 0;
@@ -1310,10 +1313,10 @@ int wm_handle_add_menu_click(int tx, int ty)
 	return 0;
 }
 
-void wm_prepare_selected_run_line(const char *cmd)
+VD wm_prepare_selected_run_line(CC *cmd)
 {
-	int x;
-	int oldcolor;
+	INT x;
+	INT oldcolor;
 
 	if(!cmd || !cmd[0])
 		return;
@@ -1331,12 +1334,12 @@ void wm_prepare_selected_run_line(const char *cmd)
 	color = oldcolor;
 }
 
-void wm_sync_input_from_screen(int id)
+VD wm_sync_input_from_screen(INT id)
 {
 	WMWindow *win;
-	int pos;
-	int len;
-	char c;
+	INT pos;
+	INT len;
+	C c;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -1354,7 +1357,7 @@ void wm_sync_input_from_screen(int id)
 	len = 0;
 	for(pos = win->input_x; pos < win->w && len < WM_INPUT_MAX - 1; pos++)
 	{
-		c = wm_buf_chars[id][win->input_y * WM_CONTENT_W + pos];
+		c = wm_buf_Cs[id * WM_BUFFER_SIZE + win->input_y * WM_CONTENT_W + pos];
 		win->input[len++] = c;
 	}
 	while(len > 0 && win->input[len - 1] == ' ')
@@ -1363,20 +1366,20 @@ void wm_sync_input_from_screen(int id)
 	win->input_len = len;
 }
 
-int wm_cursor_on_prompt_line(int id)
+INT wm_cursor_on_prompt_line(INT id)
 {
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return 0;
-	return cy == (unsigned int)wm_windows[id].input_y && cx >= (unsigned int)wm_windows[id].input_x;
+	return cy == (U INT)wm_windows[id].input_y && cx >= (U INT)wm_windows[id].input_x;
 }
 
-void wm_insert_char_here(int id, char c)
+VD wm_insert_C_here(INT id, C c)
 {
 	WMWindow *win;
-	int row;
-	int col;
-	int x;
-	int i;
+	INT row;
+	INT col;
+	INT x;
+	INT i;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -1390,16 +1393,16 @@ void wm_insert_char_here(int id, char c)
 	cursor_hide();
 	for(x = win->w - 1; x > col; x--)
 	{
-		wm_buf_chars[id][row * WM_CONTENT_W + x] = wm_buf_chars[id][row * WM_CONTENT_W + x - 1];
-		wm_buf_attrs[id][row * WM_CONTENT_W + x] = wm_buf_attrs[id][row * WM_CONTENT_W + x - 1];
+		wm_buf_Cs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x] = wm_buf_Cs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x - 1];
+		wm_buf_attrs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x] = wm_buf_attrs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x - 1];
 	}
 	i = row * WM_CONTENT_W + col;
-	wm_buf_chars[id][i] = c;
-	wm_buf_attrs[id][i] = color;
+	wm_buf_Cs[id * WM_BUFFER_SIZE + i] = c;
+	wm_buf_attrs[id * WM_BUFFER_SIZE + i] = color;
 	if(wm_selected_win == id)
 		wm_clear_highlight();
 	wm_draw_content_region(id, col, row, win->w - 1, row);
-	if(cx + 1 < (unsigned int)win->w)
+	if(cx + 1 < (U INT)win->w)
 		cx++;
 	if(wm_cursor_on_prompt_line(id))
 		wm_sync_input_from_screen(id);
@@ -1408,12 +1411,12 @@ void wm_insert_char_here(int id, char c)
 	cursor_update();
 }
 
-void wm_backspace_here(int id)
+VD wm_backspace_here(INT id)
 {
 	WMWindow *win;
-	int row;
-	int col;
-	int x;
+	INT row;
+	INT col;
+	INT x;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -1432,11 +1435,11 @@ void wm_backspace_here(int id)
 	cx = col;
 	for(x = col; x < win->w - 1; x++)
 	{
-		wm_buf_chars[id][row * WM_CONTENT_W + x] = wm_buf_chars[id][row * WM_CONTENT_W + x + 1];
-		wm_buf_attrs[id][row * WM_CONTENT_W + x] = wm_buf_attrs[id][row * WM_CONTENT_W + x + 1];
+		wm_buf_Cs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x] = wm_buf_Cs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x + 1];
+		wm_buf_attrs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x] = wm_buf_attrs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + x + 1];
 	}
-	wm_buf_chars[id][row * WM_CONTENT_W + win->w - 1] = ' ';
-	wm_buf_attrs[id][row * WM_CONTENT_W + win->w - 1] = color;
+	wm_buf_Cs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + win->w - 1] = ' ';
+	wm_buf_attrs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + win->w - 1] = color;
 	if(wm_selected_win == id)
 		wm_clear_highlight();
 	wm_draw_content_region(id, col, row, win->w - 1, row);
@@ -1447,14 +1450,14 @@ void wm_backspace_here(int id)
 	cursor_update();
 }
 
-int wm_create_plain_window(int kind)
+INT wm_create_plain_window(INT kind)
 {
-	int id;
-	int bx;
-	int by;
-	int bw;
-	int bh;
-	int old;
+	INT id;
+	INT bx;
+	INT by;
+	INT bw;
+	INT bh;
+	INT old;
 
 	for(id = 0; id < WM_WINDOWS; id++)
 		if(!wm_windows[id].alive)
@@ -1478,7 +1481,10 @@ int wm_create_plain_window(int kind)
 	{
 		bw = WM_SIDE_W;
 		bh = WM_SIDE_H;
-		bx = wm_next_side ? W - WM_SIDE_W : 0;
+		if(wm_next_side)
+			bx = W - WM_SIDE_W;
+		else
+			bx = 0;
 		by = 1;
 		wm_next_side = !wm_next_side;
 	}
@@ -1495,9 +1501,9 @@ int wm_create_plain_window(int kind)
 	return id;
 }
 
-void wm_draw_help_card(int id)
+VD wm_draw_help_card(INT id)
 {
-	int old;
+	INT old;
 	u8 oldcolor;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
@@ -1528,9 +1534,9 @@ void wm_draw_help_card(int id)
 		con_load(&wm_windows[wm_active]);
 }
 
-void wm_open_help_window(void)
+VD wm_open_help_window(VD)
 {
-	int id;
+	INT id;
 
 	if(!wm_on)
 	{
@@ -1563,12 +1569,12 @@ void wm_open_help_window(void)
 	wm_task_focus_win = id;
 }
 
-void wm_store_cell(int x, int y, char c, u8 col)
+VD wm_store_cell(INT x, INT y, C c, u8 col)
 {
 	WMWindow *win;
-	int rx;
-	int ry;
-	int i;
+	INT rx;
+	INT ry;
+	INT i;
 
 	if(!wm_on || wm_redrawing)
 		return;
@@ -1589,17 +1595,17 @@ void wm_store_cell(int x, int y, char c, u8 col)
 		return;
 
 	i = ry * WM_CONTENT_W + rx;
-	wm_buf_chars[wm_active][i] = c;
-	wm_buf_attrs[wm_active][i] = col;
+	wm_buf_Cs[wm_active * WM_BUFFER_SIZE + i] = c;
+	wm_buf_attrs[wm_active * WM_BUFFER_SIZE + i] = col;
 }
 
-void wm_capture(int id)
+VD wm_capture(INT id)
 {
 	WMWindow *win;
-	int x;
-	int y;
-	int si;
-	int di;
+	INT x;
+	INT y;
+	INT si;
+	INT di;
 
 	if(!wm_on || id < 0 || id >= WM_WINDOWS)
 		return;
@@ -1614,35 +1620,35 @@ void wm_capture(int id)
 	{
 		for(x = 0; x < win->w; x++)
 		{
-			int sx = win->x + x;
-			int sy = win->y + y;
+			INT sx = win->x + x;
+			INT sy = win->y + y;
 			if(sx < 0 || sx >= W || sy < 0 || sy >= H)
 				continue;
 			si = sy * W + sx;
 			di = y * WM_CONTENT_W + x;
-			wm_buf_chars[id][di] = screen_chars[si];
+			wm_buf_Cs[id * WM_BUFFER_SIZE + di] = screen_Cs[si];
 			if(!wm_cell_selected(id, x, y))
-				wm_buf_attrs[id][di] = screen_attrs[si];
+				wm_buf_attrs[id * WM_BUFFER_SIZE + di] = screen_attrs[si];
 		}
 	}
 }
 
-void wm_capture_window(WMWindow *win)
+VD wm_capture_window(WMWindow *win)
 {
-	int id;
+	INT id;
 
 	id = wm_index_of(win);
 	if(id >= 0)
 		wm_capture(id);
 }
 
-void wm_draw_content(int id)
+VD wm_draw_content(INT id)
 {
 	WMWindow *win;
-	int x;
-	int y;
-	int si;
-	int di;
+	INT x;
+	INT y;
+	INT si;
+	INT di;
 	u8 col;
 
 	if(id < 0 || id >= WM_WINDOWS)
@@ -1656,33 +1662,33 @@ void wm_draw_content(int id)
 	{
 		for(x = 0; x < win->w; x++)
 		{
-			int sx = win->x + x;
-			int sy = win->y + y;
+			INT sx = win->x + x;
+			INT sy = win->y + y;
 			if(sx < 0 || sx >= W || sy < 0 || sy >= H)
 				continue;
 			di = y * WM_CONTENT_W + x;
 			si = sy * W + sx;
-			col = wm_buf_attrs[id][di];
+			col = wm_buf_attrs[id * WM_BUFFER_SIZE + di];
 			if(wm_cell_selected(id, x, y))
 				col = 0x70;
-			screen_chars[si] = wm_buf_chars[id][di];
+			screen_Cs[si] = wm_buf_Cs[id * WM_BUFFER_SIZE + di];
 			screen_attrs[si] = col;
-			screen_draw_cell(sx, sy, screen_chars[si], col, 0);
+			screen_draw_cell(sx, sy, screen_Cs[si], col, 0);
 		}
 	}
 	wm_redrawing = 0;
 }
 
 
-void wm_draw_content_region(int id, int rx0, int ry0, int rx1, int ry1)
+VD wm_draw_content_region(INT id, INT rx0, INT ry0, INT rx1, INT ry1)
 {
 	WMWindow *win;
-	int x;
-	int y;
-	int sx;
-	int sy;
-	int si;
-	int di;
+	INT x;
+	INT y;
+	INT sx;
+	INT sy;
+	INT si;
+	INT di;
 	u8 col;
 
 	if(id < 0 || id >= WM_WINDOWS)
@@ -1717,32 +1723,32 @@ void wm_draw_content_region(int id, int rx0, int ry0, int rx1, int ry1)
 				continue;
 			di = y * WM_CONTENT_W + x;
 			si = sy * W + sx;
-			col = wm_buf_attrs[id][di];
+			col = wm_buf_attrs[id * WM_BUFFER_SIZE + di];
 			if(wm_cell_selected(id, x, y))
 				col = 0x70;
-			screen_chars[si] = wm_buf_chars[id][di];
+			screen_Cs[si] = wm_buf_Cs[id * WM_BUFFER_SIZE + di];
 			screen_attrs[si] = col;
-			screen_draw_cell(sx, sy, screen_chars[si], col, 0);
+			screen_draw_cell(sx, sy, screen_Cs[si], col, 0);
 		}
 	}
 	wm_redrawing = 0;
 }
 
-void wm_compose_window_cell(int id, int sx, int sy, char *outc, u8 *outcol)
+VD wm_compose_window_cell(INT id, INT sx, INT sy, C *outc, u8 *outcol)
 {
 	WMWindow *win;
-	const char *status;
+	CC *status;
 	u32 memory_bytes;
 	u32 memory_temp;
-	char memory_text[11];
-	int rx;
-	int ry;
-	int max;
-	int ti;
-	int status_len;
-	int memory_digits;
-	int memory_start;
-	int memory_index;
+	C memory_text[11];
+	INT rx;
+	INT ry;
+	INT max;
+	INT ti;
+	INT status_len;
+	INT memory_digits;
+	INT memory_start;
+	INT memory_index;
 	u8 col;
 	u8 status_col;
 
@@ -1753,7 +1759,10 @@ void wm_compose_window_cell(int id, int sx, int sy, char *outc, u8 *outcol)
 	if(sx < win->bx || sy < win->by || sx >= win->bx + win->bw || sy >= win->by + win->bh)
 		return;
 
-	col = (id == wm_active) ? 0x1F : 0x17;
+	if(id == wm_active)
+		col = 0x1F;
+	else
+		col = 0x17;
 	rx = sx - win->bx;
 	ry = sy - win->by;
 
@@ -1762,17 +1771,17 @@ void wm_compose_window_cell(int id, int sx, int sy, char *outc, u8 *outcol)
 		*outcol = col;
 		*outc = ' ';
 		if(ry == 0 && rx == 0)
-			*outc = (char)218;
+			*outc = (C)218;
 		else if(ry == 0 && rx == win->bw - 1)
-			*outc = (char)191;
+			*outc = (C)191;
 		else if(ry == win->bh - 1 && rx == 0)
-			*outc = (char)192;
+			*outc = (C)192;
 		else if(ry == win->bh - 1 && rx == win->bw - 1)
-			*outc = (char)217;
+			*outc = (C)217;
 		else if(ry == 0 || ry == win->bh - 1)
-			*outc = (char)196;
+			*outc = (C)196;
 		else
-			*outc = (char)179;
+			*outc = (C)179;
 
 		if(ry == 0)
 		{
@@ -1856,23 +1865,26 @@ void wm_compose_window_cell(int id, int sx, int sy, char *outc, u8 *outcol)
 
 	if(sx >= win->x && sy >= win->y && sx < win->x + win->w && sy < win->y + win->h)
 	{
-		int bi;
-		int cx0;
-		int cy0;
+		INT bi;
+		INT cx0;
+		INT cy0;
 
 		cx0 = sx - win->x;
 		cy0 = sy - win->y;
 		bi = cy0 * WM_CONTENT_W + cx0;
-		*outc = wm_buf_chars[id][bi];
-		*outcol = wm_cell_selected(id, cx0, cy0) ? 0x70 : wm_buf_attrs[id][bi];
+		*outc = wm_buf_Cs[id * WM_BUFFER_SIZE + bi];
+		if(wm_cell_selected(id, cx0, cy0))
+			*outcol = 0x70;
+		else
+			*outcol = wm_buf_attrs[id * WM_BUFFER_SIZE + bi];
 	}
 }
 
 
-void wm_compose_menu_cell(int sx, int sy, char *outc, u8 *outcol)
+VD wm_compose_menu_cell(INT sx, INT sy, C *outc, u8 *outcol)
 {
-	const char *s;
-	int idx;
+	CC *s;
+	INT idx;
 
 	if(!wm_add_menu)
 		return;
@@ -1882,17 +1894,17 @@ void wm_compose_menu_cell(int sx, int sy, char *outc, u8 *outcol)
 	*outc = ' ';
 	*outcol = 0x1F;
 	if(sy == WM_MENU_Y || sy == WM_MENU_Y + WM_MENU_H - 1)
-		*outc = (char)196;
+		*outc = (C)196;
 	if(sx == WM_MENU_X || sx == WM_MENU_X + WM_MENU_W - 1)
-		*outc = (char)179;
+		*outc = (C)179;
 	if(sx == WM_MENU_X && sy == WM_MENU_Y)
-		*outc = (char)218;
+		*outc = (C)218;
 	else if(sx == WM_MENU_X + WM_MENU_W - 1 && sy == WM_MENU_Y)
-		*outc = (char)191;
+		*outc = (C)191;
 	else if(sx == WM_MENU_X && sy == WM_MENU_Y + WM_MENU_H - 1)
-		*outc = (char)192;
+		*outc = (C)192;
 	else if(sx == WM_MENU_X + WM_MENU_W - 1 && sy == WM_MENU_Y + WM_MENU_H - 1)
-		*outc = (char)217;
+		*outc = (C)217;
 
 	s = 0;
 	if(sy == WM_MENU_Y + 1)
@@ -1909,10 +1921,10 @@ void wm_compose_menu_cell(int sx, int sy, char *outc, u8 *outcol)
 	}
 }
 
-void wm_compose_cell(int sx, int sy, char *outc, u8 *outcol)
+VD wm_compose_cell(INT sx, INT sy, C *outc, u8 *outcol)
 {
-	int zi;
-	int id;
+	INT zi;
+	INT id;
 
 	*outc = ' ';
 	*outcol = WM_BG_ATTR;
@@ -1928,11 +1940,11 @@ void wm_compose_cell(int sx, int sy, char *outc, u8 *outcol)
 	wm_compose_menu_cell(sx, sy, outc, outcol);
 }
 
-int wm_cell_visible_for(int id, int sx, int sy)
+INT wm_cell_visible_for(INT id, INT sx, INT sy)
 {
-	int zi;
-	int pos;
-	int top;
+	INT zi;
+	INT pos;
+	INT top;
 	WMWindow *win;
 
 	if(!wm_on || wm_redrawing)
@@ -1962,14 +1974,14 @@ int wm_cell_visible_for(int id, int sx, int sy)
 	return 1;
 }
 
-void wm_redraw_region(int rx0, int ry0, int rx1, int ry1)
+VD wm_redraw_region(INT rx0, INT ry0, INT rx1, INT ry1)
 {
-	int x;
-	int y;
-	int i;
-	char c;
+	INT x;
+	INT y;
+	INT i;
+	C c;
 	u8 col;
-	int redraw_mouse;
+	INT redraw_mouse;
 
 	if(rx0 < 0)
 		rx0 = 0;
@@ -1994,9 +2006,9 @@ void wm_redraw_region(int rx0, int ry0, int rx1, int ry1)
 		{
 			wm_compose_cell(x, y, &c, &col);
 			i = y * W + x;
-			if(screen_chars[i] != c || screen_attrs[i] != col)
+			if(screen_Cs[i] != c || screen_attrs[i] != col)
 			{
-				screen_chars[i] = c;
+				screen_Cs[i] = c;
 				screen_attrs[i] = col;
 				screen_draw_cell(x, y, c, col, 0);
 			}
@@ -2010,13 +2022,13 @@ void wm_redraw_region(int rx0, int ry0, int rx1, int ry1)
 }
 
 
-void wm_redraw_window_move(int id, int obx, int oby)
+VD wm_redraw_window_move(INT id, INT obx, INT oby)
 {
 	WMWindow *win;
-	int rx0;
-	int ry0;
-	int rx1;
-	int ry1;
+	INT rx0;
+	INT ry0;
+	INT rx1;
+	INT ry1;
 
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
@@ -2039,11 +2051,11 @@ void wm_redraw_window_move(int id, int obx, int oby)
 	wm_redraw_region(rx0, ry0, rx1, ry1);
 }
 
-void wm_clear_background(void)
+VD wm_clear_background(VD)
 {
-	int x;
-	int y;
-	int i;
+	INT x;
+	INT y;
+	INT i;
 
 	cursor_hide();
 	mouse_hide();
@@ -2054,21 +2066,21 @@ void wm_clear_background(void)
 		for(x = 0; x < W; x++)
 		{
 			i = y * W + x;
-			screen_chars[i] = ' ';
+			screen_Cs[i] = ' ';
 			screen_attrs[i] = WM_BG_ATTR;
 		}
 	}
 }
 
-void wm_redraw_all(void)
+VD wm_redraw_all(VD)
 {
-	int oldmode;
-	int oldx;
-	int oldy;
-	int oldw;
-	int oldh;
-	unsigned int oldcx;
-	unsigned int oldcy;
+	INT oldmode;
+	INT oldx;
+	INT oldy;
+	INT oldw;
+	INT oldh;
+	U INT oldcx;
+	U INT oldcy;
 
 	oldmode = console_mode;
 	oldx = con_x;
@@ -2094,13 +2106,13 @@ void wm_redraw_all(void)
 }
 
 
-void wm_activate(int id)
+VD wm_activate(INT id)
 {
-	int old;
-	int rx0;
-	int ry0;
-	int rx1;
-	int ry1;
+	INT old;
+	INT rx0;
+	INT ry0;
+	INT rx1;
+	INT ry1;
 	WMWindow *win;
 	WMWindow *oldwin;
 
@@ -2136,10 +2148,10 @@ void wm_activate(int id)
 }
 
 
-int wm_hit_window(int tx, int ty)
+INT wm_hit_window(INT tx, INT ty)
 {
-	int zi;
-	int id;
+	INT zi;
+	INT id;
 	WMWindow *win;
 
 	for(zi = wm_z_count - 1; zi >= 0; zi--)
@@ -2156,13 +2168,13 @@ int wm_hit_window(int tx, int ty)
 	return -1;
 }
 
-void wm_extract_line_command(int id, int row, char *out)
+VD wm_extract_line_command(INT id, INT row, C *out)
 {
-	int i;
-	int end;
-	int start;
+	INT i;
+	INT end;
+	INT start;
 	WMWindow *win;
-	char line[WM_CONTENT_W + 1];
+	C line[WM_CONTENT_W + 1];
 
 	out[0] = 0;
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
@@ -2172,7 +2184,7 @@ void wm_extract_line_command(int id, int row, char *out)
 		return;
 
 	for(i = 0; i < win->w; i++)
-		line[i] = wm_buf_chars[id][row * WM_CONTENT_W + i];
+		line[i] = wm_buf_Cs[id * WM_BUFFER_SIZE + row * WM_CONTENT_W + i];
 	line[win->w] = 0;
 
 	end = win->w;
@@ -2194,11 +2206,11 @@ void wm_extract_line_command(int id, int row, char *out)
 	out[i] = 0;
 }
 
-int wm_cell_in_selection(int type, int row, int x0, int y0, int x1, int y1, int x, int y)
+INT wm_cell_in_selection(INT type, INT row, INT x0, INT y0, INT x1, INT y1, INT x, INT y)
 {
-	int a;
-	int b;
-	int p;
+	INT a;
+	INT b;
+	INT p;
 
 	if(type == 1)
 		return y == row;
@@ -2211,7 +2223,7 @@ int wm_cell_in_selection(int type, int row, int x0, int y0, int x1, int y1, int 
 	p = y * WM_CONTENT_W + x;
 	if(a > b)
 	{
-		int t = a;
+		INT t = a;
 		a = b;
 		b = t;
 	}
@@ -2219,7 +2231,7 @@ int wm_cell_in_selection(int type, int row, int x0, int y0, int x1, int y1, int 
 	return p >= a && p <= b;
 }
 
-int wm_cell_selected(int id, int x, int y)
+INT wm_cell_selected(INT id, INT x, INT y)
 {
 	if(id != wm_selected_win)
 		return 0;
@@ -2227,11 +2239,11 @@ int wm_cell_selected(int id, int x, int y)
 	return wm_cell_in_selection(wm_selected_type, wm_selected_row, wm_sel_x0, wm_sel_y0, wm_sel_x1, wm_sel_y1, x, y);
 }
 
-void wm_draw_selected_cell(int id, int x, int y, int selected)
+VD wm_draw_selected_cell(INT id, INT x, INT y, INT selected)
 {
 	WMWindow *win;
-	int si;
-	int bi;
+	INT si;
+	INT bi;
 	u8 col;
 
 	if(id < 0 || id >= WM_WINDOWS || x < 0 || y < 0 || x >= WM_CONTENT_W || y >= WM_CONTENT_H)
@@ -2241,28 +2253,31 @@ void wm_draw_selected_cell(int id, int x, int y, int selected)
 	if(!win->alive || x >= win->w || y >= win->h)
 		return;
 	{
-		int sx = win->x + x;
-		int sy = win->y + y;
+		INT sx = win->x + x;
+		INT sy = win->y + y;
 		if(sx < 0 || sx >= W || sy < 0 || sy >= H)
 			return;
 		bi = y * WM_CONTENT_W + x;
 		si = sy * W + sx;
-		col = selected ? 0x70 : wm_buf_attrs[id][bi];
-		screen_chars[si] = wm_buf_chars[id][bi];
+		if(selected)
+			col = 0x70;
+		else
+			col = wm_buf_attrs[id * WM_BUFFER_SIZE + bi];
+		screen_Cs[si] = wm_buf_Cs[id * WM_BUFFER_SIZE + bi];
 		screen_attrs[si] = col;
-		screen_draw_cell(sx, sy, screen_chars[si], col, 0);
+		screen_draw_cell(sx, sy, screen_Cs[si], col, 0);
 	}
 }
 
-void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, int oldy0, int oldx1, int oldy1, int newwin, int newtype, int newrow, int newx0, int newy0, int newx1, int newy1)
+VD wm_redraw_selection_change(INT oldwin, INT oldtype, INT oldrow, INT oldx0, INT oldy0, INT oldx1, INT oldy1, INT newwin, INT newtype, INT newrow, INT newx0, INT newy0, INT newx1, INT newy1)
 {
-	int id;
-	int x;
-	int y;
-	int oldsel;
-	int newsel;
-	int miny;
-	int maxy;
+	INT id;
+	INT x;
+	INT y;
+	INT oldsel;
+	INT newsel;
+	INT miny;
+	INT maxy;
 	WMWindow *win;
 
 	if(oldwin < 0 && newwin < 0)
@@ -2284,10 +2299,10 @@ void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, 
 		maxy = win->h - 1;
 		if(id == oldwin && id == newwin)
 		{
-			int omin;
-			int omax;
-			int nmin;
-			int nmax;
+			INT omin;
+			INT omax;
+			INT nmin;
+			INT nmax;
 
 			omin = 0;
 			omax = WM_CONTENT_H - 1;
@@ -2298,20 +2313,38 @@ void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, 
 				omin = omax = oldrow;
 			else if(oldtype == 2)
 			{
-				omin = oldy0 < oldy1 ? oldy0 : oldy1;
-				omax = oldy0 > oldy1 ? oldy0 : oldy1;
+				if(oldy0 < oldy1)
+					omin = oldy0;
+				else
+					omin = oldy1;
+				if(oldy0 > oldy1)
+					omax = oldy0;
+				else
+					omax = oldy1;
 			}
 
 			if(newtype == 1)
 				nmin = nmax = newrow;
 			else if(newtype == 2)
 			{
-				nmin = newy0 < newy1 ? newy0 : newy1;
-				nmax = newy0 > newy1 ? newy0 : newy1;
+				if(newy0 < newy1)
+					nmin = newy0;
+				else
+					nmin = newy1;
+				if(newy0 > newy1)
+					nmax = newy0;
+				else
+					nmax = newy1;
 			}
 
-			miny = omin < nmin ? omin : nmin;
-			maxy = omax > nmax ? omax : nmax;
+			if(omin < nmin)
+				miny = omin;
+			else
+				miny = nmin;
+			if(omax > nmax)
+				maxy = omax;
+			else
+				maxy = nmax;
 		}
 		else if(id == oldwin)
 		{
@@ -2319,8 +2352,14 @@ void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, 
 				miny = maxy = oldrow;
 			else if(oldtype == 2)
 			{
-				miny = oldy0 < oldy1 ? oldy0 : oldy1;
-				maxy = oldy0 > oldy1 ? oldy0 : oldy1;
+				if(oldy0 < oldy1)
+					miny = oldy0;
+				else
+					miny = oldy1;
+				if(oldy0 > oldy1)
+					maxy = oldy0;
+				else
+					maxy = oldy1;
 			}
 		}
 		else if(id == newwin)
@@ -2329,8 +2368,14 @@ void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, 
 				miny = maxy = newrow;
 			else if(newtype == 2)
 			{
-				miny = newy0 < newy1 ? newy0 : newy1;
-				maxy = newy0 > newy1 ? newy0 : newy1;
+				if(newy0 < newy1)
+					miny = newy0;
+				else
+					miny = newy1;
+				if(newy0 > newy1)
+					maxy = newy0;
+				else
+					maxy = newy1;
 			}
 		}
 		if(miny < 0)
@@ -2342,8 +2387,14 @@ void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, 
 		{
 			for(x = 0; x < win->w; x++)
 			{
-				oldsel = (id == oldwin) ? wm_cell_in_selection(oldtype, oldrow, oldx0, oldy0, oldx1, oldy1, x, y) : 0;
-				newsel = (id == newwin) ? wm_cell_in_selection(newtype, newrow, newx0, newy0, newx1, newy1, x, y) : 0;
+				if(id == oldwin)
+					oldsel = wm_cell_in_selection(oldtype, oldrow, oldx0, oldy0, oldx1, oldy1, x, y);
+				else
+					oldsel = 0;
+				if(id == newwin)
+					newsel = wm_cell_in_selection(newtype, newrow, newx0, newy0, newx1, newy1, x, y);
+				else
+					newsel = 0;
 				if(oldsel != newsel)
 					wm_draw_selected_cell(id, x, y, newsel);
 			}
@@ -2355,13 +2406,13 @@ void wm_redraw_selection_change(int oldwin, int oldtype, int oldrow, int oldx0, 
 	mouse_show();
 }
 
-void wm_extract_range_command(int id, char *out)
+VD wm_extract_range_command(INT id, C *out)
 {
-	int a;
-	int b;
-	int p;
-	int i;
-	int len;
+	INT a;
+	INT b;
+	INT p;
+	INT i;
+	INT len;
 
 	out[0] = 0;
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
@@ -2371,7 +2422,7 @@ void wm_extract_range_command(int id, char *out)
 	b = wm_sel_y1 * WM_CONTENT_W + wm_sel_x1;
 	if(a > b)
 	{
-		int t = a;
+		INT t = a;
 		a = b;
 		b = t;
 	}
@@ -2381,7 +2432,7 @@ void wm_extract_range_command(int id, char *out)
 	{
 		if((p % WM_CONTENT_W) == 0 && p != a && len < WM_INPUT_MAX - 1)
 			out[len++] = ' ';
-		out[len++] = wm_buf_chars[id][p];
+		out[len++] = wm_buf_Cs[id * WM_BUFFER_SIZE + p];
 	}
 	out[len] = 0;
 
@@ -2398,11 +2449,11 @@ void wm_extract_range_command(int id, char *out)
 	}
 }
 
-void wm_finish_selected_cmd(int id)
+VD wm_finish_selected_cmd(INT id)
 {
-	int i;
-	int start;
-	int len;
+	INT i;
+	INT start;
+	INT len;
 
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
@@ -2437,15 +2488,15 @@ void wm_finish_selected_cmd(int id)
 		wm_selected_cmd[--len] = 0;
 }
 
-void wm_clear_highlight(void)
+VD wm_clear_highlight(VD)
 {
-	int oldwin;
-	int oldtype;
-	int oldrow;
-	int oldx0;
-	int oldy0;
-	int oldx1;
-	int oldy1;
+	INT oldwin;
+	INT oldtype;
+	INT oldrow;
+	INT oldx0;
+	INT oldy0;
+	INT oldx1;
+	INT oldy1;
 
 	oldwin = wm_selected_win;
 	oldtype = wm_selected_type;
@@ -2463,16 +2514,16 @@ void wm_clear_highlight(void)
 	wm_redraw_selection_change(oldwin, oldtype, oldrow, oldx0, oldy0, oldx1, oldy1, -1, 0, -1, 0, 0, 0, 0);
 }
 
-void wm_select_line(int id, int row)
+VD wm_select_line(INT id, INT row)
 {
-	int oldwin;
-	int oldtype;
-	int oldrow;
-	int oldx0;
-	int oldy0;
-	int oldx1;
-	int oldy1;
-	int lastx;
+	INT oldwin;
+	INT oldtype;
+	INT oldrow;
+	INT oldx0;
+	INT oldy0;
+	INT oldx1;
+	INT oldy1;
+	INT lastx;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -2503,15 +2554,15 @@ void wm_select_line(int id, int row)
 	wm_redraw_selection_change(oldwin, oldtype, oldrow, oldx0, oldy0, oldx1, oldy1, id, 1, row, 0, row, lastx, row);
 }
 
-void wm_select_range(int id, int x0, int y0, int x1, int y1)
+VD wm_select_range(INT id, INT x0, INT y0, INT x1, INT y1)
 {
-	int oldwin;
-	int oldtype;
-	int oldrow;
-	int oldx0;
-	int oldy0;
-	int oldx1;
-	int oldy1;
+	INT oldwin;
+	INT oldtype;
+	INT oldrow;
+	INT oldx0;
+	INT oldy0;
+	INT oldx1;
+	INT oldy1;
 	WMWindow *win;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
@@ -2554,9 +2605,9 @@ void wm_select_range(int id, int x0, int y0, int x1, int y1)
 	wm_redraw_selection_change(oldwin, oldtype, oldrow, oldx0, oldy0, oldx1, oldy1, id, 2, -1, x0, y0, x1, y1);
 }
 
-void screen_write_at(int x, int y, const char *s, u8 col)
+VD screen_write_at(INT x, INT y, CC *s, u8 col)
 {
-	int i;
+	INT i;
 
 	i = 0;
 	while(s[i] && x + i < W)
@@ -2566,26 +2617,26 @@ void screen_write_at(int x, int y, const char *s, u8 col)
 	}
 }
 
-void screen_put2_at(int x, int y, u8 n, u8 col)
+VD screen_put2_at(INT x, INT y, u8 n, u8 col)
 {
 	screen_put_at(x, y, '0' + (n / 10), col);
 	screen_put_at(x + 1, y, '0' + (n % 10), col);
 }
 
-void screen_redraw(void)
+VD screen_redraw(VD)
 {
-	int i;
+	INT i;
 
 	gfx_fill((color >> 4) & 0x0F);
 
 	for(i = 0; i < W * H; i++)
-		screen_draw_cell(i % W, i / W, screen_chars[i], screen_attrs[i], cursor_drawn && cursor_x == (unsigned int)(i % W) && cursor_y == (unsigned int)(i / W));
+		screen_draw_cell(i % W, i / W, screen_Cs[i], screen_attrs[i], cursor_drawn && cursor_x == (U INT)(i % W) && cursor_y == (U INT)(i / W));
 }
 
 
-void gfx_pixel(int px, int py, u8 col)
+VD gfx_pixel(INT px, INT py, u8 col)
 {
-	unsigned int off;
+	U INT off;
 	u8 mask;
 
 	if(px < 0 || px >= 640 || py < 0 || py >= 480)
@@ -2596,12 +2647,12 @@ void gfx_pixel(int px, int py, u8 col)
 	gfx_write_masked(off, mask, col & 0x0F);
 }
 
-int mouse_cell_hit(int x, int y)
+INT mouse_cell_hit(INT x, INT y)
 {
-	int x0;
-	int y0;
-	int x1;
-	int y1;
+	INT x0;
+	INT y0;
+	INT x1;
+	INT y1;
 
 	if(!mouse_drawn)
 		return 0;
@@ -2614,15 +2665,15 @@ int mouse_cell_hit(int x, int y)
 	return x >= x0 && x <= x1 && y >= y0 && y <= y1;
 }
 
-void mouse_redraw_area(int px, int py)
+VD mouse_redraw_area(INT px, INT py)
 {
-	int x;
-	int y;
-	int x0;
-	int y0;
-	int x1;
-	int y1;
-	int i;
+	INT x;
+	INT y;
+	INT x0;
+	INT y0;
+	INT x1;
+	INT y1;
+	INT i;
 
 	x0 = px / 8;
 	y0 = py / 8;
@@ -2643,12 +2694,12 @@ void mouse_redraw_area(int px, int py)
 		for(x = x0; x <= x1; x++)
 		{
 			i = y * W + x;
-			screen_draw_cell(x, y, screen_chars[i], screen_attrs[i], cursor_drawn && cursor_x == (unsigned int)x && cursor_y == (unsigned int)y);
+			screen_draw_cell(x, y, screen_Cs[i], screen_attrs[i], cursor_drawn && cursor_x == (U INT)x && cursor_y == (U INT)y);
 		}
 	}
 }
 
-void mouse_hide(void)
+VD mouse_hide(VD)
 {
 	if(!mouse_drawn)
 		return;
@@ -2657,18 +2708,18 @@ void mouse_hide(void)
 	mouse_drawn = 0;
 }
 
-u8 screen_pixel_color(int px, int py)
+u8 screen_pixel_color(INT px, INT py)
 {
-	int tx;
-	int ty;
-	int rx;
-	int ry;
-	int i;
+	INT tx;
+	INT ty;
+	INT rx;
+	INT ry;
+	INT i;
 	u8 col;
 	u8 fg;
 	u8 bg;
 	u8 bits;
-	char c;
+	C c;
 
 	if(px < 0 || px >= 640 || py < 0 || py >= 480)
 		return 0;
@@ -2678,49 +2729,45 @@ u8 screen_pixel_color(int px, int py)
 	rx = px & 7;
 	ry = py & 7;
 	i = ty * W + tx;
-	c = screen_chars[i];
+	c = screen_Cs[i];
 	col = screen_attrs[i];
 
 	fg = col & 0x0F;
 	bg = (col >> 4) & 0x0F;
 
-	if(cursor_drawn && cursor_x == (unsigned int)tx && cursor_y == (unsigned int)ty)
+	if(cursor_drawn && cursor_x == (U INT)tx && cursor_y == (U INT)ty)
 	{
 		u8 t = fg;
 		fg = bg;
 		bg = t;
 	}
 
-	bits = (c == ' ') ? 0 : FONT8X8[((u8)c * 8) + ry];
+	if(c == ' ')
+		bits = 0;
+	else
+		bits = FONT8X8[((u8)c * 8) + ry];
 	if(bits & (0x80 >> rx))
 		return fg;
 
 	return bg;
 }
 
-void mouse_draw_shape(int x, int y)
+VD mouse_draw_shape(INT x, INT y)
 {
-	int row;
-	int col;
-	static const u16 arrow[MOUSE_H] = {
-		0x400, 0x600, 0x700, 0x780,
-		0x7C0, 0x7E0, 0x7F0, 0x7F8,
-		0x7C0, 0x6E0, 0x4E0, 0x070,
-		0x070, 0x038, 0x038, 0x010
-	};
-
+	INT row;
+	INT col;
 	gfx_ready();
 	for(row = 0; row < MOUSE_H; row++)
 	{
 		for(col = 0; col < MOUSE_W; col++)
 		{
-			if(arrow[row] & (0x400 >> col))
+			if(mouse_arrow[row] & (0x400 >> col))
 				gfx_pixel(x + col, y + row, screen_pixel_color(x + col, y + row) ^ 0x0F);
 		}
 	}
 }
 
-void mouse_show(void)
+VD mouse_show(VD)
 {
 	if(!mouse_ready || mouse_drawn)
 		return;
@@ -2731,9 +2778,9 @@ void mouse_show(void)
 	mouse_drawn = 1;
 }
 
-int ps2_wait_input_clear(void)
+INT ps2_wait_input_clear(VD)
 {
-	int t;
+	INT t;
 
 	for(t = 0; t < 100000; t++)
 		if((inb(0x64) & 2) == 0)
@@ -2742,9 +2789,9 @@ int ps2_wait_input_clear(void)
 	return 0;
 }
 
-int ps2_wait_output_full(void)
+INT ps2_wait_output_full(VD)
 {
-	int t;
+	INT t;
 
 	for(t = 0; t < 100000; t++)
 		if(inb(0x64) & 1)
@@ -2753,7 +2800,7 @@ int ps2_wait_output_full(void)
 	return 0;
 }
 
-void mouse_write(u8 val)
+VD mouse_write(u8 val)
 {
 	ps2_wait_input_clear();
 	outb(0x64, 0xD4);
@@ -2763,10 +2810,10 @@ void mouse_write(u8 val)
 	inb(0x60);
 }
 
-void mouse_flush_aux(void)
+VD mouse_flush_aux(VD)
 {
 	u8 st;
-	int t;
+	INT t;
 
 	for(t = 0; t < 64; t++)
 	{
@@ -2779,10 +2826,10 @@ void mouse_flush_aux(void)
 	}
 }
 
-void ps2_flush_output(void)
+VD ps2_flush_output(VD)
 {//discard anything sitting in the PS/2 output buffer,
 //keyboard or mouse, so command replies aren't misread
-	int t;
+	INT t;
 
 	for(t = 0; t < 64; t++)
 	{
@@ -2792,11 +2839,11 @@ void ps2_flush_output(void)
 	}
 }
 
-void kb_drain_mouse(void)
+VD kb_drain_mouse(VD)
 {//throw away pending mouse bytes so modal getkey()
 //loops (like the editor) never jam behind mouse data
 	u8 st;
-	int t;
+	INT t;
 
 	for(t = 0; t < 64; t++)
 	{
@@ -2810,7 +2857,7 @@ void kb_drain_mouse(void)
 	}
 }
 
-void mouse_init(void)
+VD mouse_init(VD)
 {
 	u8 status;
 
@@ -2844,11 +2891,11 @@ void mouse_init(void)
 	mouse_show();
 }
 
-void wm_move_window(int id, int nbx, int nby)
+VD wm_move_window(INT id, INT nbx, INT nby)
 {
 	WMWindow *win;
-	int obx;
-	int oby;
+	INT obx;
+	INT oby;
 
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
@@ -2875,9 +2922,9 @@ void wm_move_window(int id, int nbx, int nby)
 	wm_redraw_window_move(id, obx, oby);
 }
 
-void wm_mouse_down(int tx, int ty)
+VD wm_mouse_down(INT tx, INT ty)
 {
-	int id;
+	INT id;
 	WMWindow *win;
 
 	if(ty == 0 && tx >= WM_PLUS_X - 1 && tx <= WM_PLUS_X + 1)
@@ -2927,13 +2974,13 @@ void wm_mouse_down(int tx, int ty)
 	}
 }
 
-void wm_mouse_up(void)
+VD wm_mouse_up(VD)
 {
 	wm_drag_win = -1;
 	wm_mouse_select_win = -1;
 }
 
-void wm_mouse_drag(int tx, int ty)
+VD wm_mouse_drag(INT tx, INT ty)
 {
 	if(wm_drag_win >= 0)
 	{
@@ -2942,42 +2989,37 @@ void wm_mouse_drag(int tx, int ty)
 	}
 }
 
-void wm_mouse_poll(void)
+VD wm_mouse_poll(VD)
 {
 	u8 st;
 	u8 b;
-	int dx;
-	int dy;
-	int move_x;
-	int move_y;
-	int tx;
-	int ty;
-	int old_left;
-	int new_left;
-	int got_packet;
-	int packets;
-	int old_tx;
-	int old_ty;
+	INT dx;
+	INT dy;
+	INT tx;
+	INT ty;
+	INT old_left;
+	INT old_tx;
+	INT old_ty;
+	INT bytes_read;
 
 	if(!mouse_ready)
 		return;
 
-	move_x = 0;
-	move_y = 0;
-	got_packet = 0;
-	packets = 0;
 	old_left = mouse_left;
-	new_left = mouse_left;
 	old_tx = mouse_x / 8;
 	old_ty = mouse_y / 8;
+	bytes_read = 0;
 
-	while((inb(0x64) & 1) && packets < 16)
+	/* Consume at most one complete PS/2 packet per poll. This preserves
+	   the controller's native 1x motion and avoids burst acceleration. */
+	while((inb(0x64) & 1) && bytes_read < 3)
 	{
 		st = inb(0x64);
 		if(!(st & 0x20))
 			break;
 
 		b = inb(0x60);
+		bytes_read++;
 
 		if(mouse_packet_index == 0)
 		{
@@ -2987,64 +3029,60 @@ void wm_mouse_poll(void)
 				continue;
 		}
 
-		mouse_packet[mouse_packet_index++] = b;
+		mouse_packet[mouse_packet_index] = b;
+		mouse_packet_index++;
 		if(mouse_packet_index < 3)
 			continue;
 
 		mouse_packet_index = 0;
-		packets++;
 
-		if(!(mouse_packet[0] & 0x08))
-			continue;
-		if(mouse_packet[0] & 0xC0)
-			continue;
+		/* Decode the PS/2 sign bits explicitly. AneoC's signed-char cast
+		   does not sign-extend these bytes the same way GCC did. */
+		dx = (INT)mouse_packet[1];
+		if(mouse_packet[0] & 0x10)
+			dx -= 256;
 
-		new_left = mouse_packet[0] & 1;
-		dx = (int)(signed char)mouse_packet[1];
-		dy = (int)(signed char)mouse_packet[2];
+		dy = (INT)mouse_packet[2];
+		if(mouse_packet[0] & 0x20)
+			dy -= 256;
 
-		move_x += dx;
-		move_y -= dy;
-		got_packet = 1;
-	}
+		mouse_hide();
 
-	if(!got_packet)
-		return;
+		mouse_x += dx * MOUSE_SPEED;
+		mouse_y -= dy * MOUSE_SPEED;
 
-	mouse_hide();
+		if(mouse_x < 0)
+			mouse_x = 0;
+		if(mouse_y < 0)
+			mouse_y = 0;
+		if(mouse_x > 639)
+			mouse_x = 639;
+		if(mouse_y > 479)
+			mouse_y = 479;
 
-	mouse_x += move_x;
-	mouse_y += move_y;
+		mouse_prev_left = old_left;
+		mouse_left = mouse_packet[0] & 1;
+		tx = mouse_x / 8;
+		ty = mouse_y / 8;
 
-	if(mouse_x < 0)
-		mouse_x = 0;
-	if(mouse_y < 0)
-		mouse_y = 0;
-	if(mouse_x > 639)
-		mouse_x = 639;
-	if(mouse_y > 479)
-		mouse_y = 479;
-
-	mouse_prev_left = old_left;
-	mouse_left = new_left;
-	tx = mouse_x / 8;
-	ty = mouse_y / 8;
-
-	if(wm_on)
-	{
-		if(mouse_left && !mouse_prev_left)
-			wm_mouse_down(tx, ty);
-		else if(mouse_left && mouse_prev_left)
+		if(wm_on)
 		{
-			if(tx != old_tx || ty != old_ty)
-				wm_mouse_drag(tx, ty);
+			if(mouse_left && !mouse_prev_left)
+				wm_mouse_down(tx, ty);
+			else if(mouse_left && mouse_prev_left)
+			{
+				if(tx != old_tx || ty != old_ty)
+					wm_mouse_drag(tx, ty);
+			}
+			else if(!mouse_left && mouse_prev_left)
+				wm_mouse_up();
 		}
-		else if(!mouse_left && mouse_prev_left)
-			wm_mouse_up();
-	}
 
-	mouse_show();
+		mouse_show();
+		return;
+	}
 }
+
 
 
 u8 cmos_read(u8 reg)
@@ -3058,9 +3096,9 @@ u8 bcd_to_bin(u8 val)
         return (val & 0x0F) + ((val >> 4) * 10);
 }
 
-typedef unsigned char u8;
+TD U C u8;
 
-typedef struct {
+TD ST {
         u8 second;
         u8 minute;
         u8 hour;
@@ -3069,7 +3107,7 @@ typedef struct {
         u8 year;
 } RTCDateTime;
 
-RTCDateTime rtc_get_datetime(void)
+RTCDateTime rtc_get_datetime(VD)
 {//write certain RTC values to CMOS to get
 //the date and time from RTC
 
@@ -3085,17 +3123,17 @@ RTCDateTime rtc_get_datetime(void)
         return t;
 }
 
-void cursor_update(void)
+VD cursor_update(VD)
 {//common cursor updater
-	int old;
-	int now;
-	int ax;
-	int ay;
+	INT old;
+	INT now;
+	INT ax;
+	INT ay;
 
 	if(cursor_drawn && cursor_x < W && cursor_y < H)
 	{
 		old = cursor_y * W + cursor_x;
-		screen_draw_cell(cursor_x, cursor_y, screen_chars[old], screen_attrs[old], 0);
+		screen_draw_cell(cursor_x, cursor_y, screen_Cs[old], screen_attrs[old], 0);
 	}
 
 	ax = con_abs_x();
@@ -3114,13 +3152,13 @@ void cursor_update(void)
 	if(cursor_x < W && cursor_y < H)
 	{
 		now = cursor_y * W + cursor_x;
-		screen_draw_cell(cursor_x, cursor_y, screen_chars[now], screen_attrs[now], 1);
+		screen_draw_cell(cursor_x, cursor_y, screen_Cs[now], screen_attrs[now], 1);
 	}
 }
 
-int strlen(const char *s)
+INT strlen(CC *s)
 {//return string length
-	int i = 0;
+	INT i = 0;
 
 	while(s[i])
 		i++;
@@ -3128,9 +3166,9 @@ int strlen(const char *s)
 	return i;
 }
 
-int strcmp(const char *a, const char *b)
+INT strcmp(CC *a, CC *b)
 {//compare two strings
-	int i = 0;
+	INT i = 0;
 
 	while(a[i] && b[i] && a[i] == b[i])
 		i++;
@@ -3138,9 +3176,9 @@ int strcmp(const char *a, const char *b)
 	return a[i] - b[i];
 }
 
-void strcpy(char *d, const char *s)
+VD strcpy(C *d, CC *s)
 {//copy a string
-	int i = 0;
+	INT i = 0;
 
 	while(s[i])
 	{
@@ -3151,10 +3189,10 @@ void strcpy(char *d, const char *s)
 	d[i] = 0;
 }
 
-void memset(void *p, int v, int n)
+VD memset(VD *p, INT v, INT n)
 {//set a block value to one byte value
 	u8 *b = (u8*)p;
-	int i = 0;
+	INT i = 0;
 
 	while(i < n)
 	{
@@ -3163,16 +3201,19 @@ void memset(void *p, int v, int n)
 	}
 }
 
-void scroll(void)
+VD scroll(VD)
 {//scroll the screen
-	int x;
-	int y;
-	int src;
-	int dst;
-	int limit;
+	INT x;
+	INT y;
+	INT src;
+	INT dst;
+	INT limit;
 
-	limit = (console_mode == CON_WINDOW) ? con_h : H;
-	if(cy < (unsigned int)limit)
+	if(console_mode == CON_WINDOW)
+		limit = con_h;
+	else
+		limit = H;
+	if(cy < (U INT)limit)
 		return;
 
 	cursor_hide();
@@ -3181,18 +3222,18 @@ void scroll(void)
 	{
 		if(wm_on && wm_active >= 0 && wm_active < WM_WINDOWS && wm_windows[wm_active].alive)
 		{
-			int id;
+			INT id;
 			id = wm_active;
 			for(y = 0; y < con_h - 1; y++)
 			{
 				src = (y + 1) * WM_CONTENT_W;
 				dst = y * WM_CONTENT_W;
-				fast_memcpy8(wm_buf_chars[id] + dst, wm_buf_chars[id] + src, con_w);
-				fast_memcpy8(wm_buf_attrs[id] + dst, wm_buf_attrs[id] + src, con_w);
+				fast_memcpy8(wm_buf_Cs + id * WM_BUFFER_SIZE + dst, wm_buf_Cs + id * WM_BUFFER_SIZE + src, con_w);
+				fast_memcpy8(wm_buf_attrs + id * WM_BUFFER_SIZE + dst, wm_buf_attrs + id * WM_BUFFER_SIZE + src, con_w);
 			}
 			dst = (con_h - 1) * WM_CONTENT_W;
-			fast_memset8(wm_buf_chars[id] + dst, ' ', con_w);
-			fast_memset8(wm_buf_attrs[id] + dst, color, con_w);
+			fast_memset8(wm_buf_Cs + id * WM_BUFFER_SIZE + dst, ' ', con_w);
+			fast_memset8(wm_buf_attrs + id * WM_BUFFER_SIZE + dst, color, con_w);
 			cy = con_h - 1;
 			wm_redraw_region(wm_windows[id].x, wm_windows[id].y, wm_windows[id].x + wm_windows[id].w - 1, wm_windows[id].y + wm_windows[id].h - 1);
 			return;
@@ -3203,12 +3244,12 @@ void scroll(void)
 		{
 			src = (con_y + y + 1) * W + con_x;
 			dst = (con_y + y) * W + con_x;
-			fast_memcpy8(screen_chars + dst, screen_chars + src, con_w);
+			fast_memcpy8(screen_Cs + dst, screen_Cs + src, con_w);
 			fast_memcpy8(screen_attrs + dst, screen_attrs + src, con_w);
 		}
 
 		dst = (con_y + con_h - 1) * W + con_x;
-		fast_memset8(screen_chars + dst, ' ', con_w);
+		fast_memset8(screen_Cs + dst, ' ', con_w);
 		fast_memset8(screen_attrs + dst, color, con_w);
 		gfx_scroll_text_rect_up_8(con_x, con_y, con_w, con_h, (color >> 4) & 0x0F);
 		cy = con_h - 1;
@@ -3216,13 +3257,13 @@ void scroll(void)
 		return;
 	}
 
-	vga_movsl((void*)screen_chars, (const void*)(screen_chars + W), ((H - 1) * W) / 4);
-	vga_movsl((void*)screen_attrs, (const void*)(screen_attrs + W), ((H - 1) * W) / 4);
+	vga_movsl((VD*)screen_Cs, (const VD*)(screen_Cs + W), ((H - 1) * W) / 4);
+	vga_movsl((VD*)screen_attrs, (const VD*)(screen_attrs + W), ((H - 1) * W) / 4);
 
 	for(x = 0; x < W; x++)
 	{
 		dst = (H - 1) * W + x;
-		screen_chars[dst] = ' ';
+		screen_Cs[dst] = ' ';
 		screen_attrs[dst] = color;
 	}
 
@@ -3231,16 +3272,19 @@ void scroll(void)
 	cy = H - 1;
 }
 
-void run_script(const char *path);
-void clear(void);
+VD run_script(CC *path);
+VD clear(VD);
 
-void putc(char c)
-{//place character
-	int limit;
-	int ax;
-	int ay;
+VD putc(C c)
+{//place Cacter
+	INT limit;
+	INT ax;
+	INT ay;
 
-	limit = (console_mode == CON_WINDOW) ? con_w : W;
+	if(console_mode == CON_WINDOW)
+		limit = con_w;
+	else
+		limit = W;
 
 	if(c == '\n')
 	{
@@ -3267,7 +3311,7 @@ void putc(char c)
 	screen_put_at(ax, ay, c, color);
 	cx++;
 
-	if(cx >= (unsigned int)limit)
+	if(cx >= (U INT)limit)
 	{
 		cx = 0;
 		cy++;
@@ -3277,24 +3321,24 @@ void putc(char c)
 	cursor_update();
 }
 
-void printx(uint32_t x)
+VD printx(u32 x)
 {//print a hexadecimal value
-        char hex[] = "0123456789ABCDEF";
+        C hex[] = "0123456789ABCDEF";
 
         putc('0');
 	putc('x');
 
-        for (int i = 28; i >= 0; i -= 4)
+        for (INT i = 28; i >= 0; i -= 4)
         {
-                uint8_t digit = (x >> i) &  0xF;
+                u8 digit = (x >> i) &  0xF;
                 putc(hex[digit]);
         }
 }
 
 
-void print(const char *s)
+VD print(CC *s)
 {//simplified putc funtion that prints strings
-	int i = 0;
+	INT i = 0;
 
 	while(s[i])
 	{
@@ -3304,13 +3348,13 @@ void print(const char *s)
 
 }
 
-void print2(u8 n)
-{//print an int with two digits
+VD print2(u8 n)
+{//print an INT with two digits
         putc('0' + (n / 10));
         putc('0' + (n % 10));
 }
 
-void rtc_print_datetime(void)
+VD rtc_print_datetime(VD)
 {//print RTC information
         RTCDateTime t = rtc_get_datetime();
 
@@ -3330,7 +3374,7 @@ void rtc_print_datetime(void)
         print2(t.second);
 }
 
-void perror(char *line)
+VD perror(C *line)
 {//shell error funtion
 	const u8 oldcolor = color;
 	color = 0xCF;
@@ -3352,11 +3396,11 @@ void perror(char *line)
 }
 
 
-void clear(void)
+VD clear(VD)
 {//clear the screen
-	int i;
-	int x;
-	int y;
+	INT i;
+	INT x;
+	INT y;
 
 	cursor_hide();
 
@@ -3364,13 +3408,13 @@ void clear(void)
 	{
 		if(wm_on && wm_active >= 0 && wm_active < WM_WINDOWS && wm_windows[wm_active].alive)
 		{
-			int id;
+			INT id;
 			id = wm_active;
 			for(y = 0; y < con_h; y++)
 			{
 				i = y * WM_CONTENT_W;
-				fast_memset8(wm_buf_chars[id] + i, ' ', con_w);
-				fast_memset8(wm_buf_attrs[id] + i, color, con_w);
+				fast_memset8(wm_buf_Cs + id * WM_BUFFER_SIZE + i, ' ', con_w);
+				fast_memset8(wm_buf_attrs + id * WM_BUFFER_SIZE + i, color, con_w);
 			}
 			cx = 0;
 			cy = 0;
@@ -3383,7 +3427,7 @@ void clear(void)
 		for(y = 0; y < con_h; y++)
 		{
 			i = (con_y + y) * W + con_x;
-			fast_memset8(screen_chars + i, ' ', con_w);
+			fast_memset8(screen_Cs + i, ' ', con_w);
 			fast_memset8(screen_attrs + i, color, con_w);
 		}
 
@@ -3400,7 +3444,7 @@ void clear(void)
 
 	while(i < W * H)
 	{
-		screen_chars[i] = ' ';
+		screen_Cs[i] = ' ';
 		screen_attrs[i] = color;
 		i++;
 	}
@@ -3410,10 +3454,10 @@ void clear(void)
 	cursor_update();
 }
 
-void printint(unsigned int n)
-{//print an integer
-	char buf[16];
-	int i = 0;
+VD printINT(U INT n)
+{//print an INTeger
+	C buf[16];
+	INT i = 0;
 
 	if (n == 0)
 	{
@@ -3431,7 +3475,12 @@ void printint(unsigned int n)
 		putc(buf[i]);
 }
 
-void printad(const char *s, uint32_t x)
+VD printint(U INT n)
+{
+	printINT(n);
+}
+
+VD printad(CC *s, u32 x)
 {//print a memory address
 	print(s);
 	print(":");
@@ -3439,7 +3488,7 @@ void printad(const char *s, uint32_t x)
 	putc('\n');
 }
 
-void printadl(const char *s, uint32_t x)
+VD printadl(CC *s, u32 x)
 {//print a memory address on the same line
         print(s);
         print(":");
@@ -3448,7 +3497,7 @@ void printadl(const char *s, uint32_t x)
 }
 
 
-void comment(const char *s)
+VD comment(CC *s)
 {//comment something
 	u8 oldcolor = color;
 	color = 0x1A;
@@ -3458,7 +3507,7 @@ void comment(const char *s)
 	color = oldcolor;
 }
 
-void printadocu(const char *s, uint32_t x1, uint32_t x2)
+VD printadocu(CC *s, u32 x1, u32 x2)
 {//print a memory address that occupies from one address
 //to another one
         print(s);
@@ -3469,7 +3518,7 @@ void printadocu(const char *s, uint32_t x1, uint32_t x2)
 	putc('\n');
 }
 
-void indprintad(const char *s, uint32_t x)
+VD indprintad(CC *s, u32 x)
 {//same as printad but with an indentation
         print("        ");
 	print(s);
@@ -3478,7 +3527,7 @@ void indprintad(const char *s, uint32_t x)
         putc('\n');
 }
 
-void indprintadocu(const char *s, uint32_t x1, uint32_t x2)
+VD indprintadocu(CC *s, u32 x1, u32 x2)
 {//same as printadocu but with an indentation
         print("        ");
 	print(s);
@@ -3489,7 +3538,7 @@ void indprintadocu(const char *s, uint32_t x1, uint32_t x2)
         putc('\n');
 }
 
-void poutw(u16 port, u16 val)
+VD poutw(u16 port, u16 val)
 {//outw with verbose
 	outw(port, val);
 	print("VAL:");
@@ -3500,7 +3549,7 @@ void poutw(u16 port, u16 val)
 }
 
 
-void poutb(u16 port, u8 val)
+VD poutb(u16 port, u8 val)
 {//outb with verbose
         outb(port, val);
         print("VAL:");
@@ -3510,7 +3559,7 @@ void poutb(u16 port, u8 val)
         putc('\n');
 }
 
-void poutwfail(u16 port, u16 val)
+VD poutwfail(u16 port, u16 val)
 {//outw failure message
 	print("ERR: Failed to write value to IO port\n");
 	print("        VAL:");
@@ -3520,7 +3569,7 @@ void poutwfail(u16 port, u16 val)
 	putc('\n');
 }
 
-void poutbfail(u16 port, u8 val)
+VD poutbfail(u16 port, u8 val)
 {//outb failure message
         print("ERR: Failed to write value to IO port\n");
         print("        VAL:");
@@ -3530,7 +3579,7 @@ void poutbfail(u16 port, u8 val)
         putc('\n');
 }
 
-void ata_debug(void) {
+VD ata_debug(VD) {
         print("ATA status: \n");
         u16 port = 0x1F7;
 	u8 s = inb(port);
@@ -3547,7 +3596,7 @@ void ata_debug(void) {
 }
 
 
-int rtc_get_second(void)
+INT rtc_get_second(VD)
 {//get the current second from the RTC
         outb(0x70, 0x00);
         return inb(0x71);
@@ -3558,12 +3607,12 @@ int rtc_get_second(void)
 #define RTC_Y  0
 
 
-void update_rtc_only(void)
+VD update_rtc_only(VD)
 {//update RTC line
 	RTCDateTime t;
 	u8 col;
-	int x;
-	int y;
+	INT x;
+	INT y;
 
 	t = rtc_get_datetime();
 	col = 0xF1;
@@ -3585,9 +3634,9 @@ void update_rtc_only(void)
 	screen_put2_at(x + 17, y, t.second, col);
 }
 
-void draw_tb(void)
+VD draw_tb(VD)
 {//draw top bar
-	int x;
+	INT x;
 
 	for(x = 0; x < W; x++)
 		screen_put_at(x, 0, ' ', 0xF1);
@@ -3597,9 +3646,9 @@ void draw_tb(void)
 		wm_draw_top_controls();
 }
 
-void redraw_shell_input(char *buf, int len)
+VD redraw_shell_input(C *buf, INT len)
 {//Ctrl-L: redraw the full-screen shell prompt and keep the typed command.
-	int n;
+	INT n;
 	u8 oldcolor;
 
 	oldcolor = color;
@@ -3629,23 +3678,23 @@ void redraw_shell_input(char *buf, int len)
 #define KEY_LEFT  0x103
 #define KEY_RIGHT 0x104
 
-int readline(char *buf, int max)
+INT readline(C *buf, INT max)
 {//read input
-        int i = 0;
-        int c;
-        int last_sec = -1;
-        int sec;
-        int maxx;
-        int maxy;
+        INT i = 0;
+        INT c;
+        INT memstat_last_sec = -1;
+        INT sec;
+        INT maxx;
+        INT maxy;
 
         for(;;)
         {//while waiting, update the RTC from the top bar
                 sec = rtc_get_second();
 
-		if(sec != last_sec)
+		if(sec != memstat_last_sec)
 		{
         		update_rtc_only();
-        		last_sec = sec;
+        		memstat_last_sec = sec;
 		}
 		if(wm_on)
 			wm_mouse_poll();
@@ -3708,13 +3757,19 @@ int readline(char *buf, int max)
                         continue;
                 }
 
-		maxx = (console_mode == CON_WINDOW) ? con_w : W;
-		maxy = (console_mode == CON_WINDOW) ? con_h : H;
+		if(console_mode == CON_WINDOW)
+			maxx = con_w;
+		else
+			maxx = W;
+		if(console_mode == CON_WINDOW)
+			maxy = con_h;
+		else
+			maxy = H;
 
 		if(c == KEY_UP || c == KEY_DOWN || c == KEY_LEFT || c == KEY_RIGHT)
 		{
-			unsigned int oldcx;
-			unsigned int oldcy;
+			U INT oldcx;
+			U INT oldcy;
 
 			oldcx = cx;
 			oldcy = cy;
@@ -3733,7 +3788,7 @@ int readline(char *buf, int max)
 			}
 			else if(c == KEY_DOWN)
 			{
-				if(cy + 1 < (unsigned int)maxy)
+				if(cy + 1 < (U INT)maxy)
 					cy++;
 			}
 			else if(c == KEY_LEFT)
@@ -3743,7 +3798,7 @@ int readline(char *buf, int max)
 			}
 			else if(c == KEY_RIGHT)
 			{
-				if(cx + 1 < (unsigned int)maxx)
+				if(cx + 1 < (U INT)maxx)
 					cx++;
 			}
 
@@ -3760,8 +3815,8 @@ int readline(char *buf, int max)
 			}
 			else
 			{
-				(void)oldcx;
-				(void)oldcy;
+				(VD)oldcx;
+				(VD)oldcy;
 			}
 
 			cursor_update();
@@ -3791,9 +3846,9 @@ int readline(char *buf, int max)
 	return 0;
 }
 
-int starts(const char *s, const char *p)
+INT starts(CC *s, CC *p)
 {
-	int i = 0;
+	INT i = 0;
 
 	while(p[i])
 	{
@@ -3806,15 +3861,15 @@ int starts(const char *s, const char *p)
 	return 1;
 }
 
-int ends(const char *s, const char *p)
+INT ends(CC *s, CC *p)
 {
 	if (!s || !p)
 		return 0;
-	int s_len = strlen(s);
-    	int p_len = strlen(p);
+	INT s_len = strlen(s);
+    	INT p_len = strlen(p);
     	if (p_len > s_len)
 		return 0;
-    	int i = p_len - 1;
+    	INT i = p_len - 1;
     	while (i >= 0)
 	{
         	if (s[s_len - p_len + i] != p[i])
@@ -3825,7 +3880,7 @@ int ends(const char *s, const char *p)
 }
 
 
-char *skip(char *s)
+C *skip(C *s)
 {
 	while(*s == ' ')
 		s++;
@@ -3834,9 +3889,9 @@ char *skip(char *s)
 }
 
 
-int atoi(const char *s)
+INT atoi(CC *s)
 {
-	int n = 0;
+	INT n = 0;
 
 	while(*s >= '0' && *s <= '9')
 	{
@@ -3847,32 +3902,13 @@ int atoi(const char *s)
 	return n;
 }
 
-u32 cpuid_threads()
+u32 cpuid_threads(VD)
 {
-	u32 ebx;
-
-	__asm__ volatile(
-		"mov $1, %%eax\n"
-		"cpuid"
-		: "=b"(ebx)
-		:
-		: "eax",
-		  "ecx",
-		  "edx"
-	);
-
-	return
-	(
-		ebx
-		>>
-		16
-	)
-	&
-	255U;
+	return 1;
 }
 
 
-void cpustat(void)
+VD cpustat(VD)
 {
 	u32 threads;
 	u32 used_mb;
@@ -3903,7 +3939,7 @@ void cpustat(void)
 		{
 			print("CPU Thread ");
 
-			printint(i);
+			printINT(i);
 
 			print(":                 ");
 
@@ -3918,11 +3954,11 @@ void cpustat(void)
 
 		print("\nMemory:     ");
 
-		printint(used_mb);
+		printINT(used_mb);
 
 		print("MB/");
 
-		printint(total_mb);
+		printINT(total_mb);
 
 		print("MB    ");
 
@@ -3944,9 +3980,9 @@ void cpustat(void)
 	}
 }
 
-void trim_end(char *s)
+VD trim_end(C *s)
 {
-	int i;
+	INT i;
 
 	i = 0;
 	while(s[i])
@@ -3963,10 +3999,10 @@ void trim_end(char *s)
 	}
 }
 
-void as_two_args(const char *s, char *a, char *b)
+VD as_two_args(CC *s, C *a, C *b)
 {
-	int i = 0;
-	int j = 0;
+	INT i = 0;
+	INT j = 0;
 
 	while(*s == ' ')
 		s++;
@@ -3985,13 +4021,13 @@ void as_two_args(const char *s, char *a, char *b)
 	b[j] = 0;
 }
 
-void rmsemiv(char *line)
+VD rmsemiv(C *line)
 {
         if (!line)
                 return;
 
-        int i = 0;
-        int j = 0;
+        INT i = 0;
+        INT j = 0;
 
         while (line[i])
         {
@@ -4010,13 +4046,13 @@ void rmsemiv(char *line)
 }
 
 
-void rmsemi(char *line)
+VD rmsemi(C *line)
 {
         if (!line)
                 return;
 
-        int i = 0;
-        int j = 0;
+        INT i = 0;
+        INT j = 0;
 
         while (line[i])
         {
@@ -4034,13 +4070,13 @@ void rmsemi(char *line)
         line[j] = '\0';
 }
 
-void rmsemia(char *line)
+VD rmsemia(C *line)
 {
         if (!line)
                 return;
 
-        int i = 0;
-        int j = 0;
+        INT i = 0;
+        INT j = 0;
 
         while (line[i])
         {
@@ -4058,7 +4094,7 @@ void rmsemia(char *line)
         line[j] = '\0';
 }
 
-u8 hexval(char c)
+u8 hexval(C c)
 {
 	if(c >= '0' && c <= '9')
 		return c - '0';
@@ -4072,13 +4108,13 @@ u8 hexval(char c)
 	return 0;
 }
 
-u32 atox(const char *s)
+u32 atox(CC *s)
 {
 	u32 value = 0;
 
 	while(*s)
 	{
-		char c = *s++;
+		C c = *s++;
 
 		if(c >= '0' && c <= '9')
 			value = (value << 4) | (c - '0');
@@ -4093,7 +4129,7 @@ u32 atox(const char *s)
 	return value;
 }
 
-u32 parsex(const char *s)
+u32 parsex(CC *s)
 {
 	if(s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
 		return atox(s + 2);
@@ -4106,12 +4142,12 @@ u32 parsex(const char *s)
 #define CP_ATA 1
 #define CP_ATAPI 2
 
-typedef unsigned char CP_U8;
-typedef unsigned short CP_U16;
-typedef unsigned int CP_U32;
-typedef unsigned long long CP_U64;
+TD U C CP_U8;
+TD U S CP_U16;
+TD U INT CP_U32;
+TD ULL CP_U64;
 
-typedef struct {
+TD ST {
 	CP_U16 io;
 	CP_U16 ctrl;
 	CP_U8 slave;
@@ -4119,39 +4155,36 @@ typedef struct {
 	CP_U8 lba48;
 	CP_U64 sectors;
 	CP_U32 block_size;
-	char model[41];
+	C model[41];
 } CPDrive;
 
-static CPDrive cp_drives[CP_MAX_DRIVES];
-static CP_U16 cp_buffer[1024];
+SC CPDrive cp_drives[CP_MAX_DRIVES];
+SC CP_U16 cp_buffer[1024];
+SC CP_U16 cp_scan_ios[4] = {0x1F0, 0x1F0, 0x170, 0x170};
+SC CP_U16 cp_scan_ctrls[4] = {0x3F6, 0x3F6, 0x376, 0x376};
+SC CP_U8 cp_scan_slaves[4] = {0, 1, 0, 1};
 
-static inline CP_U8 cp_inb(CP_U16 port)
+SC inline CP_U8 cp_inb(CP_U16 port)
 {
-	CP_U8 value;
-
-	asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
-	return value;
+	return inb(port);
 }
 
-static inline CP_U16 cp_inw(CP_U16 port)
+SC inline CP_U16 cp_inw(CP_U16 port)
 {
-	CP_U16 value;
-
-	asm volatile("inw %1, %0" : "=a"(value) : "Nd"(port));
-	return value;
+	return inw(port);
 }
 
-static inline void cp_outb(CP_U16 port, CP_U8 value)
+SC inline VD cp_outb(CP_U16 port, CP_U8 value)
 {
-	asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
+	outb(port, value);
 }
 
-static inline void cp_outw(CP_U16 port, CP_U16 value)
+SC inline VD cp_outw(CP_U16 port, CP_U16 value)
 {
-	asm volatile("outw %0, %1" : : "a"(value), "Nd"(port));
+	outw(port, value);
 }
 
-static void cp_delay(CPDrive *drive)
+SC VD cp_delay(CPDrive *drive)
 {
 	cp_inb(drive->ctrl);
 	cp_inb(drive->ctrl);
@@ -4159,7 +4192,7 @@ static void cp_delay(CPDrive *drive)
 	cp_inb(drive->ctrl);
 }
 
-static int cp_wait_not_busy(CPDrive *drive)
+SC INT cp_wait_not_busy(CPDrive *drive)
 {
 	CP_U32 timeout = 10000000;
 
@@ -4170,7 +4203,7 @@ static int cp_wait_not_busy(CPDrive *drive)
 	return 0;
 }
 
-static int cp_wait_drq(CPDrive *drive)
+SC INT cp_wait_drq(CPDrive *drive)
 {
 	CP_U32 timeout = 10000000;
 	CP_U8 status;
@@ -4188,7 +4221,7 @@ static int cp_wait_drq(CPDrive *drive)
 	return 0;
 }
 
-static int cp_wait_done(CPDrive *drive)
+SC INT cp_wait_done(CPDrive *drive)
 {
 	CP_U8 status;
 
@@ -4203,7 +4236,7 @@ static int cp_wait_done(CPDrive *drive)
 	return 1;
 }
 
-static void cp_set_name(CPDrive *drive, const char *name)
+SC VD cp_set_name(CPDrive *drive, CC *name)
 {
 	CP_U32 i = 0;
 
@@ -4215,15 +4248,15 @@ static void cp_set_name(CPDrive *drive, const char *name)
 	drive->model[i] = 0;
 }
 
-static void cp_model_from_identify(CPDrive *drive, CP_U16 *identify)
+SC VD cp_model_from_identify(CPDrive *drive, CP_U16 *identify)
 {
 	CP_U32 i;
 	CP_U32 end;
 
 	for(i = 0; i < 20; i++) {
-		drive->model[i * 2] = (char)(identify[27 + i] >> 8);
+		drive->model[i * 2] = (C)(identify[27 + i] >> 8);
 		drive->model[i * 2 + 1] =
-			(char)(identify[27 + i] & 0xFF);
+			(C)(identify[27 + i] & 0xFF);
 	}
 
 	drive->model[40] = 0;
@@ -4237,7 +4270,7 @@ static void cp_model_from_identify(CPDrive *drive, CP_U16 *identify)
 	drive->model[end] = 0;
 }
 
-static int cp_atapi_packet_read(CPDrive *drive,
+SC INT cp_atapi_packet_read(CPDrive *drive,
 				CP_U8 *packet,
 				CP_U32 bytes,
 				CP_U8 *buffer)
@@ -4306,7 +4339,7 @@ static int cp_atapi_packet_read(CPDrive *drive,
 	return cp_wait_done(drive);
 }
 
-static int cp_atapi_capacity(CPDrive *drive)
+SC INT cp_atapi_capacity(CPDrive *drive)
 {
 	CP_U8 packet[12];
 	CP_U8 data[8];
@@ -4343,7 +4376,7 @@ static int cp_atapi_capacity(CPDrive *drive)
 	return 1;
 }
 
-static int cp_identify(CPDrive *drive)
+SC INT cp_identify(CPDrive *drive)
 {
 	CP_U16 identify[256];
 	CP_U32 i;
@@ -4434,33 +4467,15 @@ static int cp_identify(CPDrive *drive)
 	return cp_atapi_capacity(drive);
 }
 
-static int cp_scan_drives(void)
+SC INT cp_scan_drives(VD)
 {
 	CP_U32 i;
-	CP_U16 ios[4] = {
-		0x1F0,
-		0x1F0,
-		0x170,
-		0x170
-	};
-	CP_U16 ctrls[4] = {
-		0x3F6,
-		0x3F6,
-		0x376,
-		0x376
-	};
-	CP_U8 slaves[4] = {
-		0,
-		1,
-		0,
-		1
-	};
-	int count = 0;
+	INT count = 0;
 
 	for(i = 0; i < CP_MAX_DRIVES; i++) {
-		cp_drives[i].io = ios[i];
-		cp_drives[i].ctrl = ctrls[i];
-		cp_drives[i].slave = slaves[i];
+		cp_drives[i].io = cp_scan_ios[i];
+		cp_drives[i].ctrl = cp_scan_ctrls[i];
+		cp_drives[i].slave = cp_scan_slaves[i];
 
 		if(cp_identify(&cp_drives[i]))
 			count++;
@@ -4469,25 +4484,25 @@ static int cp_scan_drives(void)
 	return count;
 }
 
-static int cp_find_source(void)
+SC INT cp_find_source(VD)
 {
 	CP_U8 bios_drive =
-		*((volatile CP_U8 *)0x0500);
+		*((CP_U8 *)0x0500);
 
 	CP_U32 wanted;
 	CP_U32 found;
 	CP_U32 i;
-	int first_ata = -1;
-	int first_atapi = -1;
+	INT first_ata = -1;
+	INT first_atapi = -1;
 
 	for(i = 0; i < CP_MAX_DRIVES; i++) {
 		if(cp_drives[i].type == CP_ATA &&
 		   first_ata < 0)
-			first_ata = (int)i;
+			first_ata = (INT)i;
 
 		if(cp_drives[i].type == CP_ATAPI &&
 		   first_atapi < 0)
-			first_atapi = (int)i;
+			first_atapi = (INT)i;
 	}
 
 	if(bios_drive < 0x80)
@@ -4502,7 +4517,7 @@ static int cp_find_source(void)
 				continue;
 
 			if(found == wanted)
-				return (int)i;
+				return (INT)i;
 
 			found++;
 		}
@@ -4518,7 +4533,7 @@ static int cp_find_source(void)
 			continue;
 
 		if(found == wanted)
-			return (int)i;
+			return (INT)i;
 
 		found++;
 	}
@@ -4526,7 +4541,7 @@ static int cp_find_source(void)
 	return first_ata;
 }
 
-static int cp_ata_read(CPDrive *drive,
+SC INT cp_ata_read(CPDrive *drive,
 		       CP_U64 lba,
 		       CP_U16 *buffer)
 {
@@ -4589,7 +4604,7 @@ static int cp_ata_read(CPDrive *drive,
 	return cp_wait_done(drive);
 }
 
-static int cp_ata_write(CPDrive *drive,
+SC INT cp_ata_write(CPDrive *drive,
 			CP_U64 lba,
 			CP_U16 *buffer)
 {
@@ -4652,7 +4667,7 @@ static int cp_ata_write(CPDrive *drive,
 	return cp_wait_done(drive);
 }
 
-static int cp_ata_flush(CPDrive *drive)
+SC INT cp_ata_flush(CPDrive *drive)
 {
 	if(!cp_wait_not_busy(drive))
 		return 0;
@@ -4660,13 +4675,15 @@ static int cp_ata_flush(CPDrive *drive)
 	cp_outb(drive->io + 6,
 		0xE0 | (drive->slave << 4));
 
-	cp_outb(drive->io + 7,
-		drive->lba48 ? 0xEA : 0xE7);
+	if(drive->lba48)
+		cp_outb(drive->io + 7, 0xEA);
+	else
+		cp_outb(drive->io + 7, 0xE7);
 
 	return cp_wait_done(drive);
 }
 
-static int cp_atapi_read(CPDrive *drive,
+SC INT cp_atapi_read(CPDrive *drive,
 			 CP_U32 lba,
 			 CP_U16 *buffer)
 {
@@ -4689,9 +4706,9 @@ static int cp_atapi_read(CPDrive *drive,
 				     (CP_U8 *)buffer);
 }
 
-static void cp_print_u32(CP_U32 value)
+SC VD cp_print_u32(CP_U32 value)
 {
-	char buffer[11];
+	C buffer[11];
 	CP_U32 count = 0;
 
 	if(!value) {
@@ -4709,7 +4726,7 @@ static void cp_print_u32(CP_U32 value)
 		putc(buffer[--count]);
 }
 
-static CP_U32 cp_mib(CPDrive *drive)
+SC CP_U32 cp_mib(CPDrive *drive)
 {
 	if(drive->block_size == 2048)
 		return (CP_U32)(drive->sectors >> 9);
@@ -4717,7 +4734,7 @@ static CP_U32 cp_mib(CPDrive *drive)
 	return (CP_U32)(drive->sectors >> 11);
 }
 
-static void cp_print_location(CPDrive *drive)
+SC VD cp_print_location(CPDrive *drive)
 {
 	if(drive->io == 0x1F0)
 		print("Primary ");
@@ -4730,11 +4747,11 @@ static void cp_print_location(CPDrive *drive)
 		print("Master");
 }
 
-static CP_U32 cp_read_line(char *buffer,
+SC CP_U32 cp_read_line(C *buffer,
 			   CP_U32 max)
 {
 	CP_U32 length = 0;
-	int key;
+	INT key;
 
 	while(1) {
 		key = getkey();
@@ -4759,13 +4776,13 @@ static CP_U32 cp_read_line(char *buffer,
 		if(key >= 32 &&
 		   key <= 126 &&
 		   length + 1 < max) {
-			buffer[length++] = (char)key;
-			putc((char)key);
+			buffer[length++] = (C)key;
+			putc((C)key);
 		}
 	}
 }
 
-static CP_U32 cp_parse_number(char *buffer)
+SC CP_U32 cp_parse_number(C *buffer)
 {
 	CP_U32 value = 0;
 	CP_U32 i = 0;
@@ -4785,7 +4802,7 @@ static CP_U32 cp_parse_number(char *buffer)
 	return value;
 }
 
-static int cp_is_yes(char *buffer)
+SC INT cp_is_yes(C *buffer)
 {
 	return
 		(buffer[0] == 'Y' ||
@@ -4797,14 +4814,14 @@ static int cp_is_yes(char *buffer)
 		buffer[3] == 0;
 }
 
-static void cp_progress(CP_U32 mib)
+SC VD cp_progress(CP_U32 mib)
 {
 	print("Copied ");
 	cp_print_u32(mib);
 	print(" MiB\n");
 }
 
-static int cp_copy_ata(CPDrive *source,
+SC INT cp_copy_ata(CPDrive *source,
 		       CPDrive *target)
 {
 	CP_U64 lba;
@@ -4840,7 +4857,7 @@ static int cp_copy_ata(CPDrive *source,
 	return cp_ata_flush(target);
 }
 
-static int cp_copy_atapi(CPDrive *source,
+SC INT cp_copy_atapi(CPDrive *source,
 			 CPDrive *target)
 {
 	CP_U64 lba;
@@ -4889,16 +4906,16 @@ static int cp_copy_atapi(CPDrive *source,
 	return cp_ata_flush(target);
 }
 
-void cpdrive(void)
+VD cpdrive(VD)
 {
-	int source_index;
-	int targets[CP_MAX_DRIVES];
-	int target_count = 0;
-	int target_index;
+	INT source_index;
+	INT targets[CP_MAX_DRIVES];
+	INT target_count = 0;
+	INT target_index;
 	CP_U32 i;
 	CP_U32 choice;
 	CP_U64 required_sectors;
-	char input[16];
+	C input[16];
 	CPDrive *source;
 	CPDrive *target;
 
@@ -4939,11 +4956,11 @@ void cpdrive(void)
 	print(")\n\n");
 
 	for(i = 0; i < CP_MAX_DRIVES; i++) {
-		if((int)i == source_index ||
+		if((INT)i == source_index ||
 		   cp_drives[i].type != CP_ATA)
 			continue;
 
-		targets[target_count] = (int)i;
+		targets[target_count] = (INT)i;
 
 		print("Device ");
 		cp_print_u32(
@@ -5030,7 +5047,7 @@ u16 u16port = 0x0;
 u16 u16val = 0x0;
 u8 u8val = 0x0;
 
-int wm_shell_target_window(void)
+INT wm_shell_target_window(VD)
 {
 	if(wm_task_exec_win >= 0 && wm_task_exec_win < WM_WINDOWS && wm_windows[wm_task_exec_win].alive)
 		return wm_task_exec_win;
@@ -5042,12 +5059,12 @@ int wm_shell_target_window(void)
 }
 
 
-void shell_exec(char *line)
+VD shell_exec(C *line)
 {
-	char arg1[INPUT_MAX];
-	char arg2[INPUT_MAX];
-	int wid;
-	int len;
+	C arg1[INPUT_MAX];
+	C arg2[INPUT_MAX];
+	INT wid;
+	INT len;
 
 	line = skip(line);
 
@@ -5072,8 +5089,7 @@ void shell_exec(char *line)
 
 	if(strcmp(line, "fault;") == 0)
 	{
-		asm volatile("mov $0x1234, %ax");
-		asm volatile("mov %ax, %ds");
+		triple_fault();
 	}
 	else if(strcmp(line, "cls;") == 0)
 		clear();
@@ -5271,7 +5287,7 @@ void shell_exec(char *line)
 	else if(starts(line, "print(\"") && ends(line, "\");"))
 	{
 		u8 oldcolor = color;
-		char *text;
+		C *text;
 
 		color = defcolor;
 		rmsemi(line);
@@ -5323,13 +5339,13 @@ void shell_exec(char *line)
 		perror(line);
 	}
 }
-void run_script(const char *path)
+VD run_script(CC *path)
 {
-	char *data;
-	int size;
-	int i;
-	int j;
-	char line[128];
+	C *data;
+	INT size;
+	INT i;
+	INT j;
+	C line[128];
 
 	if(as_get_file_data(path, &data, &size) != 0)
 	{
@@ -5362,9 +5378,9 @@ void run_script(const char *path)
 	}
 }
 
-void wm_setup(void)
+VD wm_setup(VD)
 {
-	int id;
+	INT id;
 
 	wm_init_buffers();
 	for(id = 0; id < WM_WINDOWS; id++)
@@ -5384,10 +5400,10 @@ void wm_setup(void)
 	wm_next_side = 0;
 }
 
-void wm_set_title(int id, const char *s)
+VD wm_set_title(INT id, CC *s)
 {
-	int i;
-	int max;
+	INT i;
+	INT max;
 
 	if(id < 0 || id >= WM_WINDOWS)
 		return;
@@ -5412,7 +5428,7 @@ void wm_set_title(int id, const char *s)
 	wm_windows[id].title[i] = 0;
 }
 
-void wm_draw_one(int id)
+VD wm_draw_one(INT id)
 {
 	WMWindow *win;
 
@@ -5424,7 +5440,7 @@ void wm_draw_one(int id)
 }
 
 
-void wm_draw(void)
+VD wm_draw(VD)
 {
 	draw_tb();
 	update_rtc_only();
@@ -5433,7 +5449,7 @@ void wm_draw(void)
 }
 
 
-void wm_prompt(void)
+VD wm_prompt(VD)
 {
 	if(raw == 0)
 	{
@@ -5454,11 +5470,10 @@ void wm_prompt(void)
 
 
 
-int wm_tune_freq(char note, int accidental, int octave)
+INT wm_tune_freq(C note, INT accidental, INT octave)
 {
-	int idx;
-	int f;
-	static int tbl[12] = {262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
+	INT idx;
+	INT f;
 
 	idx = 0;
 	if(note == 'C') idx = 0;
@@ -5481,15 +5496,15 @@ int wm_tune_freq(char note, int accidental, int octave)
 		octave++;
 	}
 
-	f = tbl[idx];
+	f = wm_tune_table[idx];
 	while(octave > 4)
 	{
-		f <<= 1;
+		f = f << 1;
 		octave--;
 	}
 	while(octave < 4)
 	{
-		f >>= 1;
+		f = f >> 1;
 		octave++;
 	}
 	if(f < 1)
@@ -5497,10 +5512,10 @@ int wm_tune_freq(char note, int accidental, int octave)
 	return f;
 }
 
-int wm_tune_duration_ms(int tempo, char dur)
+INT wm_tune_duration_ms(INT tempo, C dur)
 {
-	int q;
-	int ms;
+	INT q;
+	INT ms;
 
 	if(tempo <= 0)
 		tempo = 120;
@@ -5520,9 +5535,9 @@ int wm_tune_duration_ms(int tempo, char dur)
 	return ms;
 }
 
-void wm_tune_start(int id, const char *song)
+VD wm_tune_start(INT id, CC *song)
 {
-	int i;
+	INT i;
 	WMWindow *win;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive || !song)
@@ -5544,17 +5559,17 @@ void wm_tune_start(int id, const char *song)
 	win->tune_sounding = 0;
 }
 
-int wm_tune_step(int id)
+INT wm_tune_step(INT id)
 {
 	WMWindow *win;
-	char *s;
-	char note;
-	char dur;
-	int accidental;
-	int octave;
-	int freq;
-	int ms;
-	int tempo;
+	C *s;
+	C note;
+	C dur;
+	INT accidental;
+	INT octave;
+	INT freq;
+	INT ms;
+	INT tempo;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return 0;
@@ -5650,7 +5665,7 @@ int wm_tune_step(int id)
 	}
 }
 
-int wm_is_wm_command(const char *line)
+INT wm_is_wm_command(CC *line)
 {
 	if(!line)
 		return 0;
@@ -5676,7 +5691,7 @@ u8 memstat_overlay_attr(u8 src)
 	return 0xF0 | fg;
 }
 
-int memstat_overlay_cell(int x, int y)
+INT memstat_overlay_cell(INT x, INT y)
 {
 	if(!wm_on || !memstat_overlay_ready || memstat_overlay_rows <= 0)
 		return 0;
@@ -5688,36 +5703,36 @@ int memstat_overlay_cell(int x, int y)
 	return 1;
 }
 
-void memstat_overlay_clear_buf(void)
+VD memstat_overlay_clear_buf(VD)
 {
-	int x;
-	int y;
+	INT x;
+	INT y;
 
 	for(y = 0; y < MEMSTAT_OVERLAY_H; y++)
 	{
 		for(x = 0; x < MEMSTAT_OVERLAY_W; x++)
 		{
-			memstat_overlay_chars[y][x] = ' ';
-			memstat_overlay_attrs[y][x] = 0xF0;
+			memstat_overlay_Cs[y * MEMSTAT_OVERLAY_W + x] = ' ';
+			memstat_overlay_attrs[y * MEMSTAT_OVERLAY_W + x] = 0xF0;
 		}
 	}
 }
 
-void memstat_overlay_putc(int row, int *x, char c, u8 col)
+VD memstat_overlay_putc(INT row, INT *x, C c, u8 col)
 {
 	if(row < 0 || row >= MEMSTAT_OVERLAY_H)
 		return;
 	if(*x < 0 || *x >= MEMSTAT_OVERLAY_W)
 		return;
 
-	memstat_overlay_chars[row][*x] = c;
-	memstat_overlay_attrs[row][*x] = memstat_overlay_attr(col);
+	memstat_overlay_Cs[row * MEMSTAT_OVERLAY_W + *x] = c;
+	memstat_overlay_attrs[row * MEMSTAT_OVERLAY_W + *x] = memstat_overlay_attr(col);
 	(*x)++;
 }
 
-void memstat_overlay_puts(int row, int *x, const char *s, u8 col)
+VD memstat_overlay_puts(INT row, INT *x, CC *s, u8 col)
 {
-	int i;
+	INT i;
 
 	if(!s)
 		return;
@@ -5730,10 +5745,10 @@ void memstat_overlay_puts(int row, int *x, const char *s, u8 col)
 	}
 }
 
-void memstat_overlay_put_uint(int row, int *x, unsigned int n, u8 col)
+VD memstat_overlay_put_uINT(INT row, INT *x, U INT n, u8 col)
 {
-	char buf[11];
-	int i;
+	C buf[11];
+	INT i;
 
 	if(n == 0)
 	{
@@ -5752,7 +5767,7 @@ void memstat_overlay_put_uint(int row, int *x, unsigned int n, u8 col)
 		memstat_overlay_putc(row, x, buf[i], col);
 }
 
-u32 memstat_window_bytes(int id)
+u32 memstat_window_bytes(INT id)
 {
 	u32 bytes;
 	WMWindow *win;
@@ -5774,7 +5789,7 @@ u32 memstat_window_bytes(int id)
 	return bytes;
 }
 
-void memstat_window_state(int id, const char **name, u8 *col)
+VD memstat_window_state(INT id, CC **name, u8 *col)
 {
 	WMWindow *win;
 
@@ -5816,55 +5831,61 @@ void memstat_window_state(int id, const char **name, u8 *col)
 }
 
 
-const char *memstat_task_text(int id)
+CC *memstat_task_text(INT id)
 {
 	WMWindow *win = &wm_windows[id];
-	const char *s;
+	CC *s;
 	if(as_edit_win_open(id)) s = as_edit_win_path(id);
 	else if(win->tune_running && win->tune_song[0]) s = win->tune_song;
 	else if(win->task_cmd[0]) s = win->task_cmd;
 	else s = win->title;
-	return (s && s[0]) ? s : "Shell";
+	if(s && s[0])
+		return s;
+	return "Shell";
 }
 
-u32 memstat_total_ram_bytes(void)
+u32 memstat_total_ram_bytes(VD)
 {
-	static u32 cached = 0;
 	u32 n;
 
-	if(cached)
-		return cached;
+	if(memstat_total_cached)
+		return memstat_total_cached;
 	if(!wm_flash_last)
 		return total_mem;
 
 	n = (u32)cmos_read(0x34) | ((u32)cmos_read(0x35) << 8);
 	if(n && n != 0xFFFFU)
-		cached = n > 65279U ? 0xFFFFFFFFU : 16U * 1024U * 1024U + n * 65536U;
+		if(n > 65279U)
+			memstat_total_cached = 0xFFFFFFFFU;
+		else
+			memstat_total_cached = 16U * 1024U * 1024U + n * 65536U;
 	else
 	{
 		n = (u32)cmos_read(0x30) | ((u32)cmos_read(0x31) << 8);
 		if(n && n != 0xFFFFU)
-			cached = (1024U + n) * 1024U;
+			memstat_total_cached = (1024U + n) * 1024U;
 	}
-	return cached ? cached : total_mem;
+	if(memstat_total_cached)
+		return memstat_total_cached;
+	return total_mem;
 }
 
-void memstat_overlay_build(void)
+VD memstat_overlay_build(VD)
 {
-	int id;
-	int x;
-	int row;
-	int i;
-	int n;
-	int task_width = 1;
-	int memory_width = 1;
-	int used_column;
-	int line_width;
+	INT id;
+	INT x;
+	INT row;
+	INT i;
+	INT n;
+	INT task_width = 1;
+	INT memory_width = 1;
+	INT used_column;
+	INT line_width;
 	u32 bytes;
 	u32 used = 0;
 	u32 total;
-	const char *task;
-	const char *state;
+	CC *task;
+	CC *state;
 	u8 state_col;
 
 	memstat_overlay_clear_buf();
@@ -5909,7 +5930,7 @@ void memstat_overlay_build(void)
 		if(!wm_windows[id].alive)
 			continue;
 		x = 0;
-		memstat_overlay_put_uint(row, &x, (unsigned int)id, 0x1F);
+		memstat_overlay_put_uINT(row, &x, (U INT)id, 0x1F);
 		while(x < 4) memstat_overlay_putc(row, &x, ' ', 0x1F);
 		memstat_window_state(id, &state, &state_col);
 		memstat_overlay_putc(row, &x, '[', state_col);
@@ -5922,7 +5943,7 @@ void memstat_overlay_build(void)
 		task = memstat_task_text(id);
 		for(i = 0; task[i] && i < task_width; i++) memstat_overlay_putc(row, &x, task[i], 0x1F);
 		while(x < used_column) memstat_overlay_putc(row, &x, ' ', 0x1F);
-		memstat_overlay_put_uint(row++, &x, memstat_window_bytes(id), 0x1F);
+		memstat_overlay_put_uINT(row++, &x, memstat_window_bytes(id), 0x1F);
 	}
 
 	if(mem_used && row < MEMSTAT_OVERLAY_H)
@@ -5934,7 +5955,7 @@ void memstat_overlay_build(void)
 		while(x < 17) memstat_overlay_putc(row, &x, ' ', 0x1F);
 		memstat_overlay_puts(row, &x, "Core", 0x1F);
 		while(x < used_column) memstat_overlay_putc(row, &x, ' ', 0x1F);
-		memstat_overlay_put_uint(row++, &x, mem_used, 0x1F);
+		memstat_overlay_put_uINT(row++, &x, mem_used, 0x1F);
 	}
 
 	if(row < MEMSTAT_OVERLAY_H)
@@ -5950,20 +5971,20 @@ void memstat_overlay_build(void)
 	{
 		x = 0;
 		memstat_overlay_puts(row, &x, "Total memory: ", 0x1F);
-		memstat_overlay_put_uint(row, &x, total / 1024U, 0x1F);
+		memstat_overlay_put_uINT(row, &x, total / 1024U, 0x1F);
 		memstat_overlay_puts(row++, &x, " KB", 0x1F);
 	}
 	if(row < MEMSTAT_OVERLAY_H)
 	{
 		x = 0;
 		memstat_overlay_puts(row, &x, "Used memory: ", 0x1F);
-		memstat_overlay_put_uint(row++, &x, used, 0x1F);
+		memstat_overlay_put_uINT(row++, &x, used, 0x1F);
 	}
 	if(row < MEMSTAT_OVERLAY_H)
 	{
 		x = 0;
 		memstat_overlay_puts(row, &x, "Free memory : ", 0x1F);
-		memstat_overlay_put_uint(row++, &x, total - used, 0x1F);
+		memstat_overlay_put_uINT(row++, &x, total - used, 0x1F);
 	}
 
 	memstat_overlay_rows = row;
@@ -5973,10 +5994,10 @@ void memstat_overlay_build(void)
 	memstat_overlay_ready = 1;
 }
 
-void memstat_overlay_compose(int sx, int sy, char *outc, u8 *outcol)
+VD memstat_overlay_compose(INT sx, INT sy, C *outc, u8 *outcol)
 {
-	int ox;
-	int oy;
+	INT ox;
+	INT oy;
 
 	if(!memstat_overlay_cell(sx, sy))
 		return;
@@ -5986,31 +6007,30 @@ void memstat_overlay_compose(int sx, int sy, char *outc, u8 *outcol)
 
 	ox = sx - MEMSTAT_OVERLAY_X;
 	oy = sy - memstat_overlay_y;
-	*outc = memstat_overlay_chars[oy][ox];
-	*outcol = memstat_overlay_attrs[oy][ox];
+	*outc = memstat_overlay_Cs[oy * MEMSTAT_OVERLAY_W + ox];
+	*outcol = memstat_overlay_attrs[oy * MEMSTAT_OVERLAY_W + ox];
 }
 
-void memstat_overlay_refresh(int force)
+VD memstat_overlay_refresh(INT force)
 {
-	static int last_sec = -1;
-	int sec;
-	int old_y;
-	int old_rows;
-	int y0;
-	int y1;
-	int old_bottom;
-	int new_bottom;
+	INT sec;
+	INT old_y;
+	INT old_rows;
+	INT y0;
+	INT y1;
+	INT old_bottom;
+	INT new_bottom;
 
 	if(!wm_on)
 		return;
 
 	sec = rtc_get_second();
-	if(!force && sec == last_sec)
+	if(!force && sec == memstat_last_sec)
 		return;
 
 	old_y = memstat_overlay_y;
 	old_rows = memstat_overlay_rows;
-	last_sec = sec;
+	memstat_last_sec = sec;
 	memstat_overlay_build();
 
 	if(old_rows <= 0)
@@ -6022,8 +6042,14 @@ void memstat_overlay_refresh(int force)
 	{
 		old_bottom = old_y + old_rows - 1;
 		new_bottom = memstat_overlay_y + memstat_overlay_rows - 1;
-		y0 = old_y < memstat_overlay_y ? old_y : memstat_overlay_y;
-		y1 = old_bottom > new_bottom ? old_bottom : new_bottom;
+		if(old_y < memstat_overlay_y)
+			y0 = old_y;
+		else
+			y0 = memstat_overlay_y;
+		if(old_bottom > new_bottom)
+			y1 = old_bottom;
+		else
+			y1 = new_bottom;
 	}
 
 	if(y0 < 1)
@@ -6034,11 +6060,11 @@ void memstat_overlay_refresh(int force)
 		wm_redraw_region(0, y0, W - 1, y1);
 }
 
-void memstat(void)
+VD memstat(VD)
 {
-	int x;
-	int y;
-	int end;
+	INT x;
+	INT y;
+	INT end;
 	u8 oldcolor;
 
 	oldcolor = color;
@@ -6046,21 +6072,21 @@ void memstat(void)
 	for(y = 0; y < memstat_overlay_rows; y++)
 	{
 		end = MEMSTAT_OVERLAY_W;
-		while(end > 0 && memstat_overlay_chars[y][end - 1] == ' ')
+		while(end > 0 && memstat_overlay_Cs[y * MEMSTAT_OVERLAY_W + end - 1] == ' ')
 			end--;
 		for(x = 0; x < end; x++)
 		{
-			color = memstat_overlay_attrs[y][x];
-			putc(memstat_overlay_chars[y][x]);
+			color = memstat_overlay_attrs[y * MEMSTAT_OVERLAY_W + x];
+			putc(memstat_overlay_Cs[y * MEMSTAT_OVERLAY_W + x]);
 		}
 		putc('\n');
 	}
 	color = oldcolor;
 }
 
-void wm_enqueue_cmd(int id, const char *cmd)
+VD wm_enqueue_cmd(INT id, CC *cmd)
 {
-	int i;
+	INT i;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive || !cmd)
 		return;
@@ -6077,7 +6103,7 @@ void wm_enqueue_cmd(int id, const char *cmd)
 	wm_redraw_region(wm_windows[id].bx, wm_windows[id].by, wm_windows[id].bx + wm_windows[id].bw - 1, wm_windows[id].by);
 }
 
-void wm_task_begin_script_data(int id, char *data, int size)
+VD wm_task_begin_script_data(INT id, C *data, INT size)
 {
 	wm_windows[id].task_data = data;
 	wm_windows[id].task_size = size;
@@ -6090,13 +6116,13 @@ void wm_task_begin_script_data(int id, char *data, int size)
 	wm_windows[id].tune_sounding = 0;
 }
 
-void wm_task_start_script(int id, const char *path)
+VD wm_task_start_script(INT id, CC *path)
 {
-	char *data;
-	int size;
-	char clean[WM_INPUT_MAX];
-	int old_active;
-	int old_exec;
+	C *data;
+	INT size;
+	C clean[WM_INPUT_MAX];
+	INT old_active;
+	INT old_exec;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -6131,12 +6157,12 @@ void wm_task_start_script(int id, const char *path)
 	wm_task_begin_script_data(id, data, size);
 }
 
-void wm_task_chain_script(int id, const char *path)
+VD wm_task_chain_script(INT id, CC *path)
 {
 	WMWindow *win;
-	char *data;
-	int size;
-	char clean[WM_INPUT_MAX];
+	C *data;
+	INT size;
+	C clean[WM_INPUT_MAX];
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -6167,10 +6193,10 @@ void wm_task_chain_script(int id, const char *path)
 	wm_task_begin_script_data(id, data, size);
 }
 
-void wm_extract_quoted_arg(const char *line, char *out)
+VD wm_extract_quoted_arg(CC *line, C *out)
 {
-	int i;
-	int j;
+	INT i;
+	INT j;
 
 	out[0] = 0;
 	if(!line)
@@ -6189,10 +6215,10 @@ void wm_extract_quoted_arg(const char *line, char *out)
 	out[j] = 0;
 }
 
-void wm_task_clean_path(const char *src, char *dst)
+VD wm_task_clean_path(CC *src, C *dst)
 {
-	int i;
-	int j;
+	INT i;
+	INT j;
 
 	dst[0] = 0;
 	if(!src)
@@ -6215,13 +6241,13 @@ void wm_task_clean_path(const char *src, char *dst)
 	trim_end(dst);
 }
 
-int wm_task_try_file(int id, const char *line)
+INT wm_task_try_file(INT id, CC *line)
 {
-	char path[WM_INPUT_MAX];
-	char *data;
-	int size;
-	int old_active;
-	int old_exec;
+	C path[WM_INPUT_MAX];
+	C *data;
+	INT size;
+	INT old_active;
+	INT old_exec;
 
 	if(!line || !line[0])
 		return 0;
@@ -6264,13 +6290,13 @@ int wm_task_try_file(int id, const char *line)
 	return 0;
 }
 
-int wm_task_run_line(int id, char *line)
+INT wm_task_run_line(INT id, C *line)
 {
-	int old_active;
-	int old_exec;
-	int wait;
+	INT old_active;
+	INT old_exec;
+	INT wait;
 	u8 oldcolor;
-	char arg[WM_INPUT_MAX];
+	C arg[WM_INPUT_MAX];
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return 0;
@@ -6310,7 +6336,7 @@ int wm_task_run_line(int id, char *line)
 	else
 	{
 		shell_exec(line);
-		if(wm_windows[id].task_wake || wm_windows[id].tune_running)
+		if(wm_windows[id].task_wake != 0 || wm_windows[id].tune_running)
 			wait = 1;
 	}
 
@@ -6329,15 +6355,15 @@ int wm_task_run_line(int id, char *line)
 	return wait;
 }
 
-void wm_task_prompt_if_idle(int id)
+VD wm_task_prompt_if_idle(INT id)
 {
-	int old_active;
+	INT old_active;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
 	if(as_edit_win_open(id))
 		return;
-	if(wm_windows[id].task_running || wm_windows[id].task_pending || wm_windows[id].task_wake || wm_windows[id].tune_running)
+	if(wm_windows[id].task_running || wm_windows[id].task_pending || wm_windows[id].task_wake != 0 || wm_windows[id].tune_running)
 		return;
 
 	old_active = wm_active;
@@ -6350,12 +6376,12 @@ void wm_task_prompt_if_idle(int id)
 		con_load(&wm_windows[wm_active]);
 }
 
-void wm_task_step(int id)
+VD wm_task_step(INT id)
 {
 	WMWindow *win;
-	char line[WM_INPUT_MAX];
-	int j;
-	int had_wait;
+	C line[WM_INPUT_MAX];
+	INT j;
+	INT had_wait;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -6394,7 +6420,7 @@ void wm_task_step(int id)
 
 	for(j = 0; j < 8 && win->task_running; j++)
 	{
-		int k;
+		INT k;
 		k = 0;
 		while(win->task_pos < win->task_size && win->task_data[win->task_pos] != '\n' && k < WM_INPUT_MAX - 1)
 			line[k++] = win->task_data[win->task_pos++];
@@ -6408,7 +6434,7 @@ void wm_task_step(int id)
 			continue;
 		if(wm_task_run_line(id, line))
 			return;
-		if(wm_windows[id].task_wake || wm_windows[id].tune_running || wm_windows[id].task_pending)
+		if(wm_windows[id].task_wake != 0 || wm_windows[id].tune_running || wm_windows[id].task_pending)
 			return;
 		if(win->task_pos >= win->task_size)
 			break;
@@ -6430,41 +6456,41 @@ void wm_task_step(int id)
 	}
 }
 
-void ticks_poll(void)
+VD ticks_poll(VD)
 {//advance total_ticks by polling PIT channel 0
 //(same wraparound trick as sleep(), 1 wrap = ~1ms)
-	static u16 tick_last = 0;
-	static int tick_init = 0;
 	u16 now;
 
 	now = pit_read_counter();
 
-	if(!tick_init)
+	if(!ticks_initialized)
 	{
-		tick_last = now;
-		tick_init = 1;
+		ticks_last = now;
+		ticks_initialized = 1;
 		return;
 	}
 
-	if(now > tick_last)
+	if(now > ticks_last)
 		total_ticks++;
 
-	tick_last = now;
+	ticks_last = now;
 }
 
 u8 wm_flash_attr(u8 col)
 {
-	(void)col;
-	return wm_flash_phase ? 0x1F : 0xF1;
+	(VD)col;
+	if(wm_flash_phase)
+		return 0x1F;
+	return 0xF1;
 }
 
-void wm_flash_poll(void)
+VD wm_flash_poll(VD)
 {
 	WMWindow *win;
 	u64 now;
-	int id;
-	int redraw_top;
-	int redraw_bottom;
+	INT id;
+	INT redraw_top;
+	INT redraw_bottom;
 
 	if(!wm_on)
 		return;
@@ -6500,19 +6526,18 @@ void wm_flash_poll(void)
 	}
 }
 
-void wm_tasks_step(void)
+VD wm_tasks_step(VD)
 {
-	static int rr = 0;
-	int n;
-	int id;
-	int stepped;
+	INT n;
+	INT id;
+	INT stepped;
 
 	ticks_poll();
 
 	stepped = 0;
 	for(n = 0; n < WM_WINDOWS; n++)
 	{
-		id = (rr + n) % WM_WINDOWS;
+		id = (wm_task_rr + n) % WM_WINDOWS;
 		if(!wm_windows[id].alive)
 			continue;
 		if(!wm_windows[id].task_pending &&
@@ -6526,10 +6551,10 @@ void wm_tasks_step(void)
 	}
 
 	if(stepped)
-		rr = (rr + 1) % WM_WINDOWS;
+		wm_task_rr = (wm_task_rr + 1) % WM_WINDOWS;
 }
 
-void wm_submit_line(int id, const char *line)
+VD wm_submit_line(INT id, CC *line)
 {
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -6537,12 +6562,12 @@ void wm_submit_line(int id, const char *line)
 		wm_enqueue_cmd(id, line);
 }
 
-void wm_handle_key(int c)
+VD wm_handle_key(INT c)
 {
 	WMWindow *win;
-	int maxx;
-	int maxy;
-	char line[WM_INPUT_MAX];
+	INT maxx;
+	INT maxy;
+	C line[WM_INPUT_MAX];
 
 	if(c == '\t')
 	{
@@ -6703,7 +6728,7 @@ void wm_handle_key(int c)
 		}
 		else if(c == KEY_DOWN)
 		{
-			if(cy + 1 < (unsigned int)maxy)
+			if(cy + 1 < (U INT)maxy)
 				cy++;
 		}
 		else if(c == KEY_LEFT)
@@ -6713,7 +6738,7 @@ void wm_handle_key(int c)
 		}
 		else if(c == KEY_RIGHT)
 		{
-			if(cx + 1 < (unsigned int)maxx)
+			if(cx + 1 < (U INT)maxx)
 				cx++;
 		}
 		if(shift)
@@ -6728,12 +6753,12 @@ void wm_handle_key(int c)
 	if(c >= 32 && c < 127)
 	{
 		wm_shift_selecting = 0;
-		wm_insert_char_here(wm_active, (char)c);
+		wm_insert_C_here(wm_active, (C)c);
 		con_save(win);
 	}
 }
 
-void wm_start_shell_window(int id)
+VD wm_start_shell_window(INT id)
 {
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -6748,12 +6773,12 @@ void wm_start_shell_window(int id)
 }
 
 
-void wm_start_window(int id)
+VD wm_start_window(INT id)
 {
-	const char *path;
-	char cmd[WM_INPUT_MAX];
-	int i;
-	int j;
+	CC *path;
+	C cmd[WM_INPUT_MAX];
+	INT i;
+	INT j;
 
 	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
 		return;
@@ -6789,9 +6814,9 @@ void wm_start_window(int id)
 }
 
 
-void wm_switch(void)
+VD wm_switch(VD)
 {
-	int next;
+	INT next;
 
 	wm_clear_highlight();
 	next = wm_next_alive_from(wm_active);
@@ -6799,11 +6824,11 @@ void wm_switch(void)
 		wm_activate(next);
 }
 
-void wm(void)
+VD wm(VD)
 {
-	int c;
-	int last_sec;
-	int sec;
+	INT c;
+	INT memstat_last_sec;
+	INT sec;
 
 	wm_on = 1;
 	wm_active = 0;
@@ -6829,16 +6854,16 @@ void wm(void)
 	cursor_update();
 	wm_flash_phase = 0;
 	wm_flash_last = total_ticks;
-	last_sec = -1;
+	memstat_last_sec = -1;
 
 	for(;;)
 	{
 		sec = rtc_get_second();
-		if(sec != last_sec)
+		if(sec != memstat_last_sec)
 		{
 			update_rtc_only();
 			memstat_overlay_refresh(1);
-			last_sec = sec;
+			memstat_last_sec = sec;
 		}
 
 		ticks_poll();
@@ -6853,13 +6878,13 @@ void wm(void)
 }
 
 
-int shell(void)
+INT shell(VD)
 {//shell loop
 	wm();
 	return 0;
 }
 
-void kmain(void)
+VD kmain(VD)
 {//main
 	clear();
 	startupSeq();

@@ -1,0 +1,879 @@
++ set -e
++ cp README Root/Home
++ cp CHANGELOG Root/Home
++ cp LICENSE Root/Docs
++ ROOT=Root
++ KERNEL=Kernel/Startup.AC
++ TMP=/tmp/Startup.AC.as
++ SEED=/tmp/as_seed.txt
++ START='/* ANCHORSAND SEED START */'
++ END='/* ANCHORSAND SEED END */'
++ echo '	/* ANCHORSAND SEED START */'
++ echo '	as_cd("/");'
++ '[' -d Root ']'
++ gen_dir Root
++ dir=Root
++ find Root -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
+++ basename Root/Docs
++ name=Docs
+++ esc_name Docs
+++ printf %s Docs
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Docs
++ echo '	as_mkdir("Docs");'
++ echo '	as_cd("Docs");'
++ gen_dir Root/Docs
++ dir=Root/Docs
++ find Root/Docs -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
++ find Root/Docs -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Docs/FAQ.TXT
++ name=FAQ.TXT
+++ esc_name FAQ.TXT
+++ printf %s FAQ.TXT
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=FAQ.TXT
+++ esc_file Root/Docs/FAQ.TXT
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Docs/FAQ.TXT
++ text='>Why do you use your own license? Why not use the MIT License, Apache License,\n        or even the GNU GPL? Why would I use someone else'\''s license when I\n        can build my own? After all, a project that is hand-crafted from\n        scratch should also have a license that is also hand-crafted from\n        scratch. I also think that yes, the GPL does already have what mine\n        does, but it feels better comming from my words, because they'\''re mine.\n\n>Is it really built from scratch? You used GNU compilers, linkers, and\n        assemblers, that arent yours. Technically, you would be incorrect. The\n        operating system, including the boot loader and kernel, is built from\n        scratch. I used standard C and standard ASM. However, I never said I\n        made the build tools from scratch.\n\n>What operating system do you use daily?\n        Currently, I use Debian GNU/Linux 13.4 with the XFCE 4 desktop\n        enviornment. I run it both on my Intel Xeon E3-1230 v6 desktop, and my\n        AMD Ryzen 5 4650U laptop (Lenovo Thinkpad E14 Gen2)\n\n>Why do you use capital letters for your source file names?\n        Because thats what they start with, I give my kernel respect.'
++ echo '	as_touch("FAQ.TXT");'
++ echo '	as_write("FAQ.TXT", ">Why do you use your own license? Why not use the MIT License, Apache License,\n        or even the GNU GPL? Why would I use someone else'\''s license when I\n        can build my own? After all, a project that is hand-crafted from\n        scratch should also have a license that is also hand-crafted from\n        scratch. I also think that yes, the GPL does already have what mine\n        does, but it feels better comming from my words, because they'\''re mine.\n\n>Is it really built from scratch? You used GNU compilers, linkers, and\n        assemblers, that arent yours. Technically, you would be incorrect. The\n        operating system, including the boot loader and kernel, is built from\n        scratch. I used standard C and standard ASM. However, I never said I\n        made the build tools from scratch.\n\n>What operating system do you use daily?\n        Currently, I use Debian GNU/Linux 13.4 with the XFCE 4 desktop\n        enviornment. I run it both on my Intel Xeon E3-1230 v6 desktop, and my\n        AMD Ryzen 5 4650U laptop (Lenovo Thinkpad E14 Gen2)\n\n>Why do you use capital letters for your source file names?\n        Because thats what they start with, I give my kernel respect.");'
++ read f
+++ basename Root/Docs/LICENSE
++ name=LICENSE
+++ esc_name LICENSE
+++ printf %s LICENSE
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=LICENSE
+++ esc_file Root/Docs/LICENSE
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Docs/LICENSE
++ text='AneoEngine License V1.1\n\n28 May, 2026\nCopyright (C) 2026 Rocco Himel, All Rights Reserved.\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. The contents of the /docs directory are excluded\n   from this license. No permission is granted to\n   copy, modify, distribute, mirror, republish, or\n   otherwise redistribute any files contained within\n   the /docs directory without prior written\n   permission from the copyright holder.\n\n9. You shall NOT call or classify your copy of the \n   Software as official.\n\n10. Any redistributed version of the Software must\n    remain licensed under the AneoEngine License\n    version under which it was received, or a later\n    official version of the AneoEngine License.\n\n11. You shall not intentionally submit, promote,\n    request indexing of, or otherwise cause any\n    redistributed or modified copy of the Software\n    to be indexed by search engines. Only the\n    official AneoEngine project may be intentionally\n    indexed.\n\n12. You shall not redistribute the Software under\n    any license other than the AneoEngine License\n    V1.1.'
++ echo '	as_touch("LICENSE");'
++ echo '	as_write("LICENSE", "AneoEngine License V1.1\n\n28 May, 2026\nCopyright (C) 2026 Rocco Himel, All Rights Reserved.\nProject: https://roccohimel.github.io/AneoEngine/\n\nPermission is hereby granted to any person obtaining a copy\nof AneoEngine and its source code files (the \"Software\"),\nto use, study, modify, and distribute the Software,\nsubject to the following conditions:\n\n1. The original copyright notice and this license text\n   must remain included in all copies or substantial\n   portions of the Software.\n\n2. Modified versions of the Software must clearly state\n   that changes were made.\n\n3. Any redistributed version of the Software, modified\n   or unmodified, must include accessible source code.\n\n4. The name \"AneoEngine\" may not be used to falsely\n   represent modified versions as official releases.\n\n5. The Software is provided for educational,\n   experimental, and operating system development\n   purposes.\n\n6. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY\n   OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n   LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n   FITNESS FOR A PARTICULAR PURPOSE, AND\n   NON-INFRINGEMENT.\n\n7. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS\n   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER\n   LIABILITY ARISING FROM THE SOFTWARE OR THE USE OF\n   THE SOFTWARE.\n\n8. The contents of the /docs directory are excluded\n   from this license. No permission is granted to\n   copy, modify, distribute, mirror, republish, or\n   otherwise redistribute any files contained within\n   the /docs directory without prior written\n   permission from the copyright holder.\n\n9. You shall NOT call or classify your copy of the \n   Software as official.\n\n10. Any redistributed version of the Software must\n    remain licensed under the AneoEngine License\n    version under which it was received, or a later\n    official version of the AneoEngine License.\n\n11. You shall not intentionally submit, promote,\n    request indexing of, or otherwise cause any\n    redistributed or modified copy of the Software\n    to be indexed by search engines. Only the\n    official AneoEngine project may be intentionally\n    indexed.\n\n12. You shall not redistribute the Software under\n    any license other than the AneoEngine License\n    V1.1.");'
++ read f
++ echo '	as_cd("..");'
++ read d
+++ basename Root/Everist
++ name=Everist
+++ esc_name Everist
+++ printf %s Everist
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Everist
++ echo '	as_mkdir("Everist");'
++ echo '	as_cd("Everist");'
++ gen_dir Root/Everist
++ dir=Root/Everist
++ read d
++ find Root/Everist -mindepth 1 -maxdepth 1 -type d
++ sort
+++ basename Root/Everist/Index
++ name=Index
+++ esc_name Index
+++ printf %s Index
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Index
++ echo '	as_mkdir("Index");'
++ echo '	as_cd("Index");'
++ gen_dir Root/Everist/Index
++ dir=Root/Everist/Index
++ find Root/Everist/Index -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
++ find Root/Everist/Index -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Everist/Index/Main.AC
++ name=Main.AC
+++ esc_name Main.AC
+++ printf %s Main.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Main.AC
+++ esc_file Root/Everist/Index/Main.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Index/Main.AC
++ text='//Index penalization\n\nprint(\"\\n\\c[dc* Useful files *\\n\");\nprint(\"Extras:\\n\");\nprint(\"\\c[0x1C/Docs/LICENSE\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Keymap.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Logo.TXT\\c[dc\\n\");\nprint(\"Everything:\\n\");\nprint(\"\\c[0x1C/RunCmds.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Home/CHANGELOG\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Index/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/MInstall/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Music/0_Note.TXT\\c[dc\\n\");\nprint(\"Help:\\n\");\nprint(\"\\c[0x1C/Help/AboutAneoEngine.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/CommandHelp.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/Controls.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Docs/FAQ.TXT\\c[dc\\n\");\ncd(\"/Home\");'
++ echo '	as_touch("Main.AC");'
++ echo '	as_write("Main.AC", "//Index penalization\n\nprint(\"\\n\\c[dc* Useful files *\\n\");\nprint(\"Extras:\\n\");\nprint(\"\\c[0x1C/Docs/LICENSE\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Keymap.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Logo.TXT\\c[dc\\n\");\nprint(\"Everything:\\n\");\nprint(\"\\c[0x1C/RunCmds.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Home/CHANGELOG\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Index/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/MInstall/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Music/0_Note.TXT\\c[dc\\n\");\nprint(\"Help:\\n\");\nprint(\"\\c[0x1C/Help/AboutAneoEngine.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/CommandHelp.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/Controls.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Docs/FAQ.TXT\\c[dc\\n\");\ncd(\"/Home\");");'
++ read f
++ echo '	as_cd("..");'
++ read d
+++ basename Root/Everist/MInstall
++ name=MInstall
+++ esc_name MInstall
+++ printf %s MInstall
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=MInstall
++ echo '	as_mkdir("MInstall");'
++ echo '	as_cd("MInstall");'
++ gen_dir Root/Everist/MInstall
++ dir=Root/Everist/MInstall
++ find Root/Everist/MInstall -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
++ find Root/Everist/MInstall -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Everist/MInstall/Main.AC
++ name=Main.AC
+++ esc_name Main.AC
+++ printf %s Main.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Main.AC
+++ esc_file Root/Everist/MInstall/Main.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/MInstall/Main.AC
++ text='cd(\"/\");\nprint(\"[*] Removing /RunCmds.AC\\n\");\nrm(\"RunCmds.AC\");\nprint(\"[*] Copying /Everist/MInstall/RunCmds.AC to /RunCmds.AC\\n\");\ncp(\"/Everist/MInstall/RunCmds.AC /RunCmds.AC\");\nsave;\nprint(\"[!] Done!\\n\");\n'
++ echo '	as_touch("Main.AC");'
++ echo '	as_write("Main.AC", "cd(\"/\");\nprint(\"[*] Removing /RunCmds.AC\\n\");\nrm(\"RunCmds.AC\");\nprint(\"[*] Copying /Everist/MInstall/RunCmds.AC to /RunCmds.AC\\n\");\ncp(\"/Everist/MInstall/RunCmds.AC /RunCmds.AC\");\nsave;\nprint(\"[!] Done!\\n\");\n");'
++ read f
+++ basename Root/Everist/MInstall/RunCmds.AC
++ name=RunCmds.AC
+++ esc_name RunCmds.AC
+++ printf %s RunCmds.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=RunCmds.AC
+++ esc_file Root/Everist/MInstall/RunCmds.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/MInstall/RunCmds.AC
++ text='cd(\"/Home\");\nls;\nsaveity;'
++ echo '	as_touch("RunCmds.AC");'
++ echo '	as_write("RunCmds.AC", "cd(\"/Home\");\nls;\nsaveity;");'
++ read f
++ echo '	as_cd("..");'
++ read d
+++ basename Root/Everist/Music
++ name=Music
+++ esc_name Music
+++ printf %s Music
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Music
++ echo '	as_mkdir("Music");'
++ echo '	as_cd("Music");'
++ gen_dir Root/Everist/Music
++ dir=Root/Everist/Music
++ find Root/Everist/Music -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
+++ basename Root/Everist/Music/Parts
++ name=Parts
+++ esc_name Parts
+++ printf %s Parts
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Parts
++ echo '	as_mkdir("Parts");'
++ echo '	as_cd("Parts");'
++ gen_dir Root/Everist/Music/Parts
++ dir=Root/Everist/Music/Parts
++ find Root/Everist/Music/Parts -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
++ find Root/Everist/Music/Parts -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Everist/Music/Parts/2_Spoken_1.AC
++ name=2_Spoken_1.AC
+++ esc_name 2_Spoken_1.AC
+++ printf %s 2_Spoken_1.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=2_Spoken_1.AC
+++ esc_file Root/Everist/Music/Parts/2_Spoken_1.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Music/Parts/2_Spoken_1.AC
++ text='print(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken\\n\");\ntune(\"T72 G5h\");\nprint(\"A \");\ntune(\"T72 C5q\");\nprint(\"man \");\ntune(\"T72 D5q\");\nprint(\"lies \");\ntune(\"T72 E5q\");\nprint(\"down \");\ntune(\"T72 G5h\");\nprint(\"to \");\ntune(\"T72 A5q\");\nprint(\"sleep,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 E5q\");\nprint(\"room \");\ntune(\"T72 G5q\");\nprint(\"falls \");\ntune(\"T72 A5q\");\nprint(\"still \");\ntune(\"T72 G5h\");\nprint(\"and \");\ntune(\"T72 E5q\");\nprint(\"deep.\\n\");\ntune(\"T72 C5h\");\nprint(\"His \");\ntune(\"T72 C5q\");\nprint(\"eyes \");\ntune(\"T72 D5q\");\nprint(\"close \");\ntune(\"T72 E5q\");\nprint(\"soft,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 A5q\");\nprint(\"dark \");\ntune(\"T72 G5q\");\nprint(\"draws \");\ntune(\"T72 E5q\");\nprint(\"near,\\n\");\ntune(\"T72 C5h\");\nprint(\"Then \");\ntune(\"T72 E5q\");\nprint(\"in \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 A5q\");\nprint(\"dream,\\n\");\ntune(\"T72 B5h\");\nprint(\"A \");\ntune(\"T72 A5q\");\nprint(\"voice \");\ntune(\"T72 G5q\");\nprint(\"speaks \");\ntune(\"T72 E5q\");\nprint(\"clear.\\n\");\ntune(\"T72 C5h\");\nprint(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken, \");\ntune(\"T72 G5h\");\nprint(\"spo\");\ntune(\"T72 A5h\");\nprint(\"ken,\\n\");\ntune(\"T72 G5h\");\nprint(\"Wake \");\ntune(\"T72 E5q\");\nprint(\"and \");\ntune(\"T72 G5q\");\nprint(\"hear.\\n\");\ntune(\"T72 C5h\");\nprint(\"A \");\ntune(\"T72 C5q\");\nprint(\"speak\");\ntune(\"T72 D5q\");\nprint(\"er \");\ntune(\"T72 E5q\");\nprint(\"stands \");\ntune(\"T72 G5h\");\nprint(\"In \");\ntune(\"T72 A5q\");\nprint(\"white \");\ntune(\"T72 B5q\");\nprint(\"dream \");\ntune(\"T72 A5q\");\nprint(\"flame,\\n\");\ntune(\"T72 G5h\");\nprint(\"It \");\ntune(\"T72 E5q\");\nprint(\"calls \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 A5q\");\nprint(\"man \");\ntune(\"T72 B5h\");\nprint(\"By \");\ntune(\"T72 A5q\");\nprint(\"his \");\ntune(\"T72 G5q\");\nprint(\"true \");\ntune(\"T72 E5q\");\nprint(\"name.\\n\");\ntune(\"T72 C5h\");\nprint(\"It \");\ntune(\"T72 C5q\");\nprint(\"says, \");\ntune(\"T72 E5q\");\nprint(\"build \");\ntune(\"T72 G5h\");\nprint(\"A \");\ntune(\"T72 A5q\");\nprint(\"struc\");\ntune(\"T72 B5q\");\nprint(\"ture \");\ntune(\"T72 A5q\");\nprint(\"bright,\\n\");\ntune(\"T72 G5h\");\nprint(\"Give \");\ntune(\"T72 E5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"a \");\ntune(\"T72 A5q\");\nprint(\"life,\\n\");\ntune(\"T72 B5h\");\nprint(\"Give \");\ntune(\"T72 A5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"your \");\ntune(\"T72 E5q\");\nprint(\"might.\\n\");\ntune(\"T72 C5h\");\nprint(\"Make \");\ntune(\"T72 C5q\");\nprint(\"it \");\ntune(\"T72 E5q\");\nprint(\"go,\\n\");\ntune(\"T72 G5h\");\nprint(\"Make \");\ntune(\"T72 A5q\");\nprint(\"it \");\ntune(\"T72 B5q\");\nprint(\"run,\\n\");\ntune(\"T72 A5h\");\nprint(\"Write \");\ntune(\"T72 G5q\");\nprint(\"its \");\ntune(\"T72 E5q\");\nprint(\"heart \");\ntune(\"T72 D5q\");\nprint(\"line \");\ntune(\"T72 C5q\");\nprint(\"by \");\ntune(\"T72 D5q\");\nprint(\"line.\\n\");\ntune(\"T72 E5h\");\nprint(\"Give \");\ntune(\"T72 E5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"charm,\\n\");\ntune(\"T72 A5h\");\nprint(\"Give \");\ntune(\"T72 B5q\");\nprint(\"it \");\ntune(\"T72 A5q\");\nprint(\"song,\\n\");\ntune(\"T72 G5h\");\nprint(\"Let \");\ntune(\"T72 E5q\");\nprint(\"it'\''s \");\ntune(\"T72 G5q\");\nprint(\"face \");\ntune(\"T72 A5q\");\nprint(\"shine \");\ntune(\"T72 B5q\");\nprint(\"all \");\ntune(\"T72 A5q\");\nprint(\"night \");\ntune(\"T72 G5q\");\nprint(\"long.\\n\");\ntune(\"T72 E5h\");\nprint(\"He \");\ntune(\"T72 C5q\");\nprint(\"wakes \");\ntune(\"T72 D5q\");\nprint(\"up \");\ntune(\"T72 E5q\");\nprint(\"slow,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 A5q\");\nprint(\"com\");\ntune(\"T72 B5q\");\nprint(\"mand \");\ntune(\"T72 A5q\");\nprint(\"stays,\\n\");\ntune(\"T72 G5h\");\nprint(\"He \");\ntune(\"T72 E5q\");\nprint(\"starts \");\ntune(\"T72 G5q\");\nprint(\"to \");\ntune(\"T72 A5q\");\nprint(\"work \");\ntune(\"T72 B5h\");\nprint(\"Through \");\ntune(\"T72 A5q\");\nprint(\"night \");\ntune(\"T72 G5q\");\nprint(\"and \");\ntune(\"T72 E5q\");\nprint(\"days.\\n\");\ntune(\"T72 C5h\");\nprint(\"Bit \");\ntune(\"T72 C5q\");\nprint(\"by \");\ntune(\"T72 D5q\");\nprint(\"bit,\\n\");\ntune(\"T72 E5h\");\nprint(\"The \");\ntune(\"T72 G5q\");\nprint(\"struc\");\ntune(\"T72 A5q\");\nprint(\"ture \");\ntune(\"T72 B5q\");\nprint(\"grows,\\n\");\ntune(\"T72 A5h\");\nprint(\"From \");\ntune(\"T72 G5q\");\nprint(\"dream \");\ntune(\"T72 E5q\");\nprint(\"to \");\ntune(\"T72 D5q\");\nprint(\"disk,\\n\");\ntune(\"T72 C5h\");\nprint(\"The \");\ntune(\"T72 E5q\");\nprint(\"sys\");\ntune(\"T72 G5q\");\nprint(\"tem \");\ntune(\"T72 A5q\");\nprint(\"knows.\\n\");\ntune(\"T72 B5h\");'
++ echo '	as_touch("2_Spoken_1.AC");'
++ echo '	as_write("2_Spoken_1.AC", "print(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken\\n\");\ntune(\"T72 G5h\");\nprint(\"A \");\ntune(\"T72 C5q\");\nprint(\"man \");\ntune(\"T72 D5q\");\nprint(\"lies \");\ntune(\"T72 E5q\");\nprint(\"down \");\ntune(\"T72 G5h\");\nprint(\"to \");\ntune(\"T72 A5q\");\nprint(\"sleep,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 E5q\");\nprint(\"room \");\ntune(\"T72 G5q\");\nprint(\"falls \");\ntune(\"T72 A5q\");\nprint(\"still \");\ntune(\"T72 G5h\");\nprint(\"and \");\ntune(\"T72 E5q\");\nprint(\"deep.\\n\");\ntune(\"T72 C5h\");\nprint(\"His \");\ntune(\"T72 C5q\");\nprint(\"eyes \");\ntune(\"T72 D5q\");\nprint(\"close \");\ntune(\"T72 E5q\");\nprint(\"soft,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 A5q\");\nprint(\"dark \");\ntune(\"T72 G5q\");\nprint(\"draws \");\ntune(\"T72 E5q\");\nprint(\"near,\\n\");\ntune(\"T72 C5h\");\nprint(\"Then \");\ntune(\"T72 E5q\");\nprint(\"in \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 A5q\");\nprint(\"dream,\\n\");\ntune(\"T72 B5h\");\nprint(\"A \");\ntune(\"T72 A5q\");\nprint(\"voice \");\ntune(\"T72 G5q\");\nprint(\"speaks \");\ntune(\"T72 E5q\");\nprint(\"clear.\\n\");\ntune(\"T72 C5h\");\nprint(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken, \");\ntune(\"T72 G5h\");\nprint(\"spo\");\ntune(\"T72 A5h\");\nprint(\"ken,\\n\");\ntune(\"T72 G5h\");\nprint(\"Wake \");\ntune(\"T72 E5q\");\nprint(\"and \");\ntune(\"T72 G5q\");\nprint(\"hear.\\n\");\ntune(\"T72 C5h\");\nprint(\"A \");\ntune(\"T72 C5q\");\nprint(\"speak\");\ntune(\"T72 D5q\");\nprint(\"er \");\ntune(\"T72 E5q\");\nprint(\"stands \");\ntune(\"T72 G5h\");\nprint(\"In \");\ntune(\"T72 A5q\");\nprint(\"white \");\ntune(\"T72 B5q\");\nprint(\"dream \");\ntune(\"T72 A5q\");\nprint(\"flame,\\n\");\ntune(\"T72 G5h\");\nprint(\"It \");\ntune(\"T72 E5q\");\nprint(\"calls \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 A5q\");\nprint(\"man \");\ntune(\"T72 B5h\");\nprint(\"By \");\ntune(\"T72 A5q\");\nprint(\"his \");\ntune(\"T72 G5q\");\nprint(\"true \");\ntune(\"T72 E5q\");\nprint(\"name.\\n\");\ntune(\"T72 C5h\");\nprint(\"It \");\ntune(\"T72 C5q\");\nprint(\"says, \");\ntune(\"T72 E5q\");\nprint(\"build \");\ntune(\"T72 G5h\");\nprint(\"A \");\ntune(\"T72 A5q\");\nprint(\"struc\");\ntune(\"T72 B5q\");\nprint(\"ture \");\ntune(\"T72 A5q\");\nprint(\"bright,\\n\");\ntune(\"T72 G5h\");\nprint(\"Give \");\ntune(\"T72 E5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"a \");\ntune(\"T72 A5q\");\nprint(\"life,\\n\");\ntune(\"T72 B5h\");\nprint(\"Give \");\ntune(\"T72 A5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"your \");\ntune(\"T72 E5q\");\nprint(\"might.\\n\");\ntune(\"T72 C5h\");\nprint(\"Make \");\ntune(\"T72 C5q\");\nprint(\"it \");\ntune(\"T72 E5q\");\nprint(\"go,\\n\");\ntune(\"T72 G5h\");\nprint(\"Make \");\ntune(\"T72 A5q\");\nprint(\"it \");\ntune(\"T72 B5q\");\nprint(\"run,\\n\");\ntune(\"T72 A5h\");\nprint(\"Write \");\ntune(\"T72 G5q\");\nprint(\"its \");\ntune(\"T72 E5q\");\nprint(\"heart \");\ntune(\"T72 D5q\");\nprint(\"line \");\ntune(\"T72 C5q\");\nprint(\"by \");\ntune(\"T72 D5q\");\nprint(\"line.\\n\");\ntune(\"T72 E5h\");\nprint(\"Give \");\ntune(\"T72 E5q\");\nprint(\"it \");\ntune(\"T72 G5q\");\nprint(\"charm,\\n\");\ntune(\"T72 A5h\");\nprint(\"Give \");\ntune(\"T72 B5q\");\nprint(\"it \");\ntune(\"T72 A5q\");\nprint(\"song,\\n\");\ntune(\"T72 G5h\");\nprint(\"Let \");\ntune(\"T72 E5q\");\nprint(\"it'\''s \");\ntune(\"T72 G5q\");\nprint(\"face \");\ntune(\"T72 A5q\");\nprint(\"shine \");\ntune(\"T72 B5q\");\nprint(\"all \");\ntune(\"T72 A5q\");\nprint(\"night \");\ntune(\"T72 G5q\");\nprint(\"long.\\n\");\ntune(\"T72 E5h\");\nprint(\"He \");\ntune(\"T72 C5q\");\nprint(\"wakes \");\ntune(\"T72 D5q\");\nprint(\"up \");\ntune(\"T72 E5q\");\nprint(\"slow,\\n\");\ntune(\"T72 G5h\");\nprint(\"The \");\ntune(\"T72 A5q\");\nprint(\"com\");\ntune(\"T72 B5q\");\nprint(\"mand \");\ntune(\"T72 A5q\");\nprint(\"stays,\\n\");\ntune(\"T72 G5h\");\nprint(\"He \");\ntune(\"T72 E5q\");\nprint(\"starts \");\ntune(\"T72 G5q\");\nprint(\"to \");\ntune(\"T72 A5q\");\nprint(\"work \");\ntune(\"T72 B5h\");\nprint(\"Through \");\ntune(\"T72 A5q\");\nprint(\"night \");\ntune(\"T72 G5q\");\nprint(\"and \");\ntune(\"T72 E5q\");\nprint(\"days.\\n\");\ntune(\"T72 C5h\");\nprint(\"Bit \");\ntune(\"T72 C5q\");\nprint(\"by \");\ntune(\"T72 D5q\");\nprint(\"bit,\\n\");\ntune(\"T72 E5h\");\nprint(\"The \");\ntune(\"T72 G5q\");\nprint(\"struc\");\ntune(\"T72 A5q\");\nprint(\"ture \");\ntune(\"T72 B5q\");\nprint(\"grows,\\n\");\ntune(\"T72 A5h\");\nprint(\"From \");\ntune(\"T72 G5q\");\nprint(\"dream \");\ntune(\"T72 E5q\");\nprint(\"to \");\ntune(\"T72 D5q\");\nprint(\"disk,\\n\");\ntune(\"T72 C5h\");\nprint(\"The \");\ntune(\"T72 E5q\");\nprint(\"sys\");\ntune(\"T72 G5q\");\nprint(\"tem \");\ntune(\"T72 A5q\");\nprint(\"knows.\\n\");\ntune(\"T72 B5h\");");'
++ read f
+++ basename Root/Everist/Music/Parts/2_Spoken_2.AC
++ name=2_Spoken_2.AC
+++ esc_name 2_Spoken_2.AC
+++ printf %s 2_Spoken_2.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=2_Spoken_2.AC
+++ esc_file Root/Everist/Music/Parts/2_Spoken_2.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Music/Parts/2_Spoken_2.AC
++ text='print(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken, \");\ntune(\"T72 G5h\");\nprint(\"spo\");\ntune(\"T72 A5h\");\nprint(\"ken,\\n\");\ntune(\"T72 C5w\");\nprint(\"The \");\ntune(\"T72 C5q\");\nprint(\"voice \");\ntune(\"T72 E5q\");\nprint(\"was \");\ntune(\"T72 G5q\");\nprint(\"right.\\n\");\ntune(\"T72 A5h\");\nprint(\"The \");\ntune(\"T72 G5q\");\nprint(\"struc\");\ntune(\"T72 A5q\");\nprint(\"ture \");\ntune(\"T72 B5q\");\nprint(\"wakes \");\ntune(\"T72 A5q\");\nprint(\"in \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 E5q\");\nprint(\"night.\\n\");\ntune(\"T72 C5w\");\nnosound;'
++ echo '	as_touch("2_Spoken_2.AC");'
++ echo '	as_write("2_Spoken_2.AC", "print(\"Spo\");\ntune(\"T72 E5h\");\nprint(\"ken, \");\ntune(\"T72 G5h\");\nprint(\"spo\");\ntune(\"T72 A5h\");\nprint(\"ken,\\n\");\ntune(\"T72 C5w\");\nprint(\"The \");\ntune(\"T72 C5q\");\nprint(\"voice \");\ntune(\"T72 E5q\");\nprint(\"was \");\ntune(\"T72 G5q\");\nprint(\"right.\\n\");\ntune(\"T72 A5h\");\nprint(\"The \");\ntune(\"T72 G5q\");\nprint(\"struc\");\ntune(\"T72 A5q\");\nprint(\"ture \");\ntune(\"T72 B5q\");\nprint(\"wakes \");\ntune(\"T72 A5q\");\nprint(\"in \");\ntune(\"T72 G5q\");\nprint(\"the \");\ntune(\"T72 E5q\");\nprint(\"night.\\n\");\ntune(\"T72 C5w\");\nnosound;");'
++ read f
++ echo '	as_cd("..");'
++ read d
++ find Root/Everist/Music -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Everist/Music/0_Note.TXT
++ name=0_Note.TXT
+++ esc_name 0_Note.TXT
+++ printf %s 0_Note.TXT
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=0_Note.TXT
+++ esc_file Root/Everist/Music/0_Note.TXT
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Music/0_Note.TXT
++ text='All of these files can be played!\nJust press F4 followed by the song or tune\nyou want to play.'
++ echo '	as_touch("0_Note.TXT");'
++ echo '	as_write("0_Note.TXT", "All of these files can be played!\nJust press F4 followed by the song or tune\nyou want to play.");'
++ read f
+++ basename Root/Everist/Music/1_Spark
++ name=1_Spark
+++ esc_name 1_Spark
+++ printf %s 1_Spark
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=1_Spark
+++ esc_file Root/Everist/Music/1_Spark
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Music/1_Spark
++ text='print(\"\\nDo \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 G4h\");\nprint(\"s i\");\ntune(\"T120 F4h\");\nprint(\"t a \");\ntune(\"T120 E4q\");\nprint(\"spa\");\ntune(\"T120 C4w\");\nprint(\"rk?\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Do \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 E4h\");\nprint(\"t i\");\ntune(\"T120 G4h\");\nprint(\"s a \");\ntune(\"T120 A4q\");\nprint(\"spa\");\ntune(\"T120 C5w\");\nprint(\"rk!\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 Rq G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 Rq F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Make \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion.\\n\");\ntune(\"T120 G4q Rq\");\nprint(\"It \");\ntune(\"T120 A4h\");\nprint(\"is \");\ntune(\"T120 C5w Rq\");\nprint(\"a \");\ntune(\"T120 A4h\");\nprint(\"spa\");\ntune(\"T120 B4h\");\nprint(\"r\");\ntune(\"T120 C5h\");\nprint(\"k!\\n\\n\");\ntune(\"T120 C5w\");\n\n\n\n\n'
++ echo '	as_touch("1_Spark");'
++ echo '	as_write("1_Spark", "print(\"\\nDo \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 G4h\");\nprint(\"s i\");\ntune(\"T120 F4h\");\nprint(\"t a \");\ntune(\"T120 E4q\");\nprint(\"spa\");\ntune(\"T120 C4w\");\nprint(\"rk?\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Do \");\ntune(\"T120 C4e\");\nprint(\"I \");\ntune(\"T120 D4e\");\nprint(\"ha\");\ntune(\"T120 E4h\");\nprint(\"ve an \");\ntune(\"T120 D4e\"); \nprint(\"ide\");\ntune(\"T120 E4e G4q\");\nprint(\"a?\\n\");\ntune(\"T120 A4h\");\ntune(\"T120 Rq\");\nprint(\"I\");\ntune(\"T120 E4h\");\nprint(\"t i\");\ntune(\"T120 G4h\");\nprint(\"s a \");\ntune(\"T120 A4q\");\nprint(\"spa\");\ntune(\"T120 C5w\");\nprint(\"rk!\\n\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 Rq G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Is \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 Rq F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion?\\n\");\ntune(\"T120 G4q\");\nprint(\"Le\");\ntune(\"T120 A4h\");\nprint(\"t it \");\ntune(\"T120 C5w Rq\");\nprint(\"be \");\ntune(\"T120 C5h\");\nprint(\"do\");\ntune(\"T120 B4h\");\nprint(\"ne!\\n\");\ntune(\"T120 A4w\");\n\ntune(\"T120 Rq\");\n\nprint(\"Make \");\ntune(\"T120 E4e\");\nprint(\"it \");\ntune(\"T120 F4e\");\nprint(\"re\");\ntune(\"T120 G4q\"); \nprint(\"ady \");\ntune(\"T120 A4h\");\nprint(\"for \");\ntune(\"T120 G4e\");\nprint(\"cre\");\ntune(\"T120 F4e\");\nprint(\"a\");\ntune(\"T120 E4q\");\nprint(\"tion.\\n\");\ntune(\"T120 G4q Rq\");\nprint(\"It \");\ntune(\"T120 A4h\");\nprint(\"is \");\ntune(\"T120 C5w Rq\");\nprint(\"a \");\ntune(\"T120 A4h\");\nprint(\"spa\");\ntune(\"T120 B4h\");\nprint(\"r\");\ntune(\"T120 C5h\");\nprint(\"k!\\n\\n\");\ntune(\"T120 C5w\");\n\n\n\n\n");'
++ read f
+++ basename Root/Everist/Music/2_Spoken
++ name=2_Spoken
+++ esc_name 2_Spoken
+++ printf %s 2_Spoken
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=2_Spoken
+++ esc_file Root/Everist/Music/2_Spoken
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Music/2_Spoken
++ text='run(\"Parts/2_Spoken_1.AC\");\nrun(\"Parts/2_Spoken_2.AC\");'
++ echo '	as_touch("2_Spoken");'
++ echo '	as_write("2_Spoken", "run(\"Parts/2_Spoken_1.AC\");\nrun(\"Parts/2_Spoken_2.AC\");");'
++ read f
++ echo '	as_cd("..");'
++ read d
+++ basename Root/Everist/Scripts
++ name=Scripts
+++ esc_name Scripts
+++ printf %s Scripts
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Scripts
++ echo '	as_mkdir("Scripts");'
++ echo '	as_cd("Scripts");'
++ gen_dir Root/Everist/Scripts
++ dir=Root/Everist/Scripts
++ find Root/Everist/Scripts -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
+++ basename Root/Everist/Scripts/EntropyTest
++ name=EntropyTest
+++ esc_name EntropyTest
+++ printf %s EntropyTest
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=EntropyTest
++ echo '	as_mkdir("EntropyTest");'
++ echo '	as_cd("EntropyTest");'
++ gen_dir Root/Everist/Scripts/EntropyTest
++ dir=Root/Everist/Scripts/EntropyTest
++ find Root/Everist/Scripts/EntropyTest -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
++ find Root/Everist/Scripts/EntropyTest -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Everist/Scripts/EntropyTest/Fall.AC
++ name=Fall.AC
+++ esc_name Fall.AC
+++ printf %s Fall.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Fall.AC
+++ esc_file Root/Everist/Scripts/EntropyTest/Fall.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Scripts/EntropyTest/Fall.AC
++ text='n;\nr/Everist/Scripts/EntropyTest/Fall.AC'
++ echo '	as_touch("Fall.AC");'
++ echo '	as_write("Fall.AC", "n;\nr/Everist/Scripts/EntropyTest/Fall.AC");'
++ read f
+++ basename Root/Everist/Scripts/EntropyTest/Main.AC
++ name=Main.AC
+++ esc_name Main.AC
+++ printf %s Main.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Main.AC
+++ esc_file Root/Everist/Scripts/EntropyTest/Main.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Everist/Scripts/EntropyTest/Main.AC
++ text='print(\"\\n\\nTHIS WILL PRINT AN INFINITE FALL OF RANDOMNESS!!!\");\nprint(\"\\n\\nPRESS <Shift> + <Ctrl> + <Q> TO QUIT WINDOW.\\n\");\nprint(\"\\nRunning in 3...\");\nsleep(1000);\nprint(\"2...\");\nsleep(1000);\nprint(\"1...\");\nsleep(1000);\nr/Everist/Scripts/EntropyTest/Fall.AC'
++ echo '	as_touch("Main.AC");'
++ echo '	as_write("Main.AC", "print(\"\\n\\nTHIS WILL PRINT AN INFINITE FALL OF RANDOMNESS!!!\");\nprint(\"\\n\\nPRESS <Shift> + <Ctrl> + <Q> TO QUIT WINDOW.\\n\");\nprint(\"\\nRunning in 3...\");\nsleep(1000);\nprint(\"2...\");\nsleep(1000);\nprint(\"1...\");\nsleep(1000);\nr/Everist/Scripts/EntropyTest/Fall.AC");'
++ read f
++ echo '	as_cd("..");'
++ read d
++ find Root/Everist/Scripts -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
++ echo '	as_cd("..");'
++ read d
++ find Root/Everist -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
++ echo '	as_cd("..");'
++ read d
+++ basename Root/Help
++ name=Help
+++ esc_name Help
+++ printf %s Help
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Help
++ echo '	as_mkdir("Help");'
++ echo '	as_cd("Help");'
++ gen_dir Root/Help
++ dir=Root/Help
++ find Root/Help -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
++ find Root/Help -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Help/AboutAneoEngine.TXT
++ name=AboutAneoEngine.TXT
+++ esc_name AboutAneoEngine.TXT
+++ printf %s AboutAneoEngine.TXT
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=AboutAneoEngine.TXT
+++ esc_file Root/Help/AboutAneoEngine.TXT
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Help/AboutAneoEngine.TXT
++ text='Official Website: https://roccohimel.github.io/AneoEngine\n\nCreator: Rocco Himel\n\nThe first language I ever learned was BASH. I was very young when my mom gave\nme her 2015 MacBook Pro running MacOS Mojave. I was very curious when I\nopened the terminal and I wanted to learn how to use what I didn'\''t know was,\na shell. I then taught my self how to use it.\n\nThe first PROGRAMMING language I ever learned was C++. I was also younger at\nthe time, when I became a small indie developer making random games in Unity.\nI of course, only made them to mess around and just to have fun.\n\nI then of course learned C, standalone C, and x86 Assembly. I taught my self\nwith the OS Dev Wiki and other online forums\n\nI skipped 7th grade math and Pre-Algebra. Right now, I currently study Algebra\n1 and Physical Science. In my free time, I study electronics, more x86\nAssembly, and more C. Soon, I will study Geometry 1 and Biology.'
++ echo '	as_touch("AboutAneoEngine.TXT");'
++ echo '	as_write("AboutAneoEngine.TXT", "Official Website: https://roccohimel.github.io/AneoEngine\n\nCreator: Rocco Himel\n\nThe first language I ever learned was BASH. I was very young when my mom gave\nme her 2015 MacBook Pro running MacOS Mojave. I was very curious when I\nopened the terminal and I wanted to learn how to use what I didn'\''t know was,\na shell. I then taught my self how to use it.\n\nThe first PROGRAMMING language I ever learned was C++. I was also younger at\nthe time, when I became a small indie developer making random games in Unity.\nI of course, only made them to mess around and just to have fun.\n\nI then of course learned C, standalone C, and x86 Assembly. I taught my self\nwith the OS Dev Wiki and other online forums\n\nI skipped 7th grade math and Pre-Algebra. Right now, I currently study Algebra\n1 and Physical Science. In my free time, I study electronics, more x86\nAssembly, and more C. Soon, I will study Geometry 1 and Biology.");'
++ read f
+++ basename Root/Help/CommandHelp.TXT
++ name=CommandHelp.TXT
+++ esc_name CommandHelp.TXT
+++ printf %s CommandHelp.TXT
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=CommandHelp.TXT
+++ esc_file Root/Help/CommandHelp.TXT
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Help/CommandHelp.TXT
++ text='help;                         Open/activate the one help window\ncls;                          Clear the active window\nreboot;                       Triple-fault reboot\nfault;                        Trigger test fault\naddr;                         List memory addresses\nmemstat;                      Show memory used by window tasks\nls;                           List current directory\nls(\"/Directory\");             List a directory\ncd(\"/Directory\");             Change directory\nmkdir(\"/Directory/Name\");     Create a directory\ntouch(\"/Directory/File\");     Create a file\ncat(\"/Directory/File\");       Print a file\nedit(\"/Directory/File\");      Edit a file in the active window\nrun(\"/Directory/File\");       Run a script in the active window\ntune(\"T120 C4q D4q\");         Play notes without blocking the window\nbeep(440);                    Start tone with PC speaker / HDA beep fallback\nnosound;                      Stop tone\nsleep(1000);                  Non-blocking sleep for window scripts\nrm(\"/Path\");                  Remove a file or directory\ncp(\"/Src /Dst\");              Copy a file\nmv(\"/Src /Dst\");              Move/rename a file\nsave;                         Save AnchorSand to disk\nload;                         Load AnchorSand from disk\ncpdrive;                      Copy the whole current disk to another drive'
++ echo '	as_touch("CommandHelp.TXT");'
++ echo '	as_write("CommandHelp.TXT", "help;                         Open/activate the one help window\ncls;                          Clear the active window\nreboot;                       Triple-fault reboot\nfault;                        Trigger test fault\naddr;                         List memory addresses\nmemstat;                      Show memory used by window tasks\nls;                           List current directory\nls(\"/Directory\");             List a directory\ncd(\"/Directory\");             Change directory\nmkdir(\"/Directory/Name\");     Create a directory\ntouch(\"/Directory/File\");     Create a file\ncat(\"/Directory/File\");       Print a file\nedit(\"/Directory/File\");      Edit a file in the active window\nrun(\"/Directory/File\");       Run a script in the active window\ntune(\"T120 C4q D4q\");         Play notes without blocking the window\nbeep(440);                    Start tone with PC speaker / HDA beep fallback\nnosound;                      Stop tone\nsleep(1000);                  Non-blocking sleep for window scripts\nrm(\"/Path\");                  Remove a file or directory\ncp(\"/Src /Dst\");              Copy a file\nmv(\"/Src /Dst\");              Move/rename a file\nsave;                         Save AnchorSand to disk\nload;                         Load AnchorSand from disk\ncpdrive;                      Copy the whole current disk to another drive");'
++ read f
+++ basename Root/Help/Controls.TXT
++ name=Controls.TXT
+++ esc_name Controls.TXT
+++ printf %s Controls.TXT
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Controls.TXT
+++ esc_file Root/Help/Controls.TXT
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Help/Controls.TXT
++ text='F1              Open/activate the one help window\nTAB             Switch windows\nShift+Ctrl+C    New card window\nShift+Ctrl+N    New side window\nShift+Ctrl+Q    Close active window\nCtrl+F          Fullscreen active window\nCtrl+C          Card/uncard active window\nCtrl+L          Clear active window\nArrow keys      Move the window cursor\nShift+Arrows    Highlight a range\nEnter           Run the highlighted line/range, or run the shell line'
++ echo '	as_touch("Controls.TXT");'
++ echo '	as_write("Controls.TXT", "F1              Open/activate the one help window\nTAB             Switch windows\nShift+Ctrl+C    New card window\nShift+Ctrl+N    New side window\nShift+Ctrl+Q    Close active window\nCtrl+F          Fullscreen active window\nCtrl+C          Card/uncard active window\nCtrl+L          Clear active window\nArrow keys      Move the window cursor\nShift+Arrows    Highlight a range\nEnter           Run the highlighted line/range, or run the shell line");'
++ read f
++ echo '	as_cd("..");'
++ read d
+++ basename Root/Home
++ name=Home
+++ esc_name Home
+++ printf %s Home
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Home
++ echo '	as_mkdir("Home");'
++ echo '	as_cd("Home");'
++ gen_dir Root/Home
++ dir=Root/Home
++ sort
++ find Root/Home -mindepth 1 -maxdepth 1 -type d
++ read d
++ find Root/Home -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Home/CHANGELOG
++ name=CHANGELOG
+++ esc_name CHANGELOG
+++ printf %s CHANGELOG
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=CHANGELOG
+++ esc_file Root/Home/CHANGELOG
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Home/CHANGELOG
++ text='AneoEngine V0.2.2 Change log\n- Added exception handling'
++ echo '	as_touch("CHANGELOG");'
++ echo '	as_write("CHANGELOG", "AneoEngine V0.2.2 Change log\n- Added exception handling");'
++ read f
+++ basename Root/Home/README
++ name=README
+++ esc_name README
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
+++ printf %s README
++ cname=README
+++ esc_file Root/Home/README
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Home/README
++ text='                   The AneoEngine Operating System\n\nPlease read the LICENSE before software redistribution.\n\nYou can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.\nYou can also boot it via virtual machine as long as yours supports\nfloppy disc drives, which most of them do. I recommend QEMU since you\nare not installing anything, AneoEngine is a live image.\n\nAneoEngine is supported by any 32-bit CPU, any 64-bit CPU that supports\nLegacy BIOS boot will also run AneoEngine. ARM-64 and RISC-V are not\nsupported.\n\nAneoEngine requires ar least 512 megabytes of RAM.\n\nAneoEngine files are initialized via the official shell script which\nscans files from the \"Root\" folder in the AneoEngine source code,\nand makes AnchorSand commands of them and puts them into kmain. I know\nthis sounds inefficient, but it happens VERY fast. AnchorSand is a\ncustom filesystem that is used exclusively in AneoEngine and doesn'\''t\nsupport FAT12 or FAT32, but is 100% open-source.'
++ echo '	as_touch("README");'
++ echo '	as_write("README", "                   The AneoEngine Operating System\n\nPlease read the LICENSE before software redistribution.\n\nYou can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.\nYou can also boot it via virtual machine as long as yours supports\nfloppy disc drives, which most of them do. I recommend QEMU since you\nare not installing anything, AneoEngine is a live image.\n\nAneoEngine is supported by any 32-bit CPU, any 64-bit CPU that supports\nLegacy BIOS boot will also run AneoEngine. ARM-64 and RISC-V are not\nsupported.\n\nAneoEngine requires ar least 512 megabytes of RAM.\n\nAneoEngine files are initialized via the official shell script which\nscans files from the \"Root\" folder in the AneoEngine source code,\nand makes AnchorSand commands of them and puts them into kmain. I know\nthis sounds inefficient, but it happens VERY fast. AnchorSand is a\ncustom filesystem that is used exclusively in AneoEngine and doesn'\''t\nsupport FAT12 or FAT32, but is 100% open-source.");'
++ read f
+++ basename Root/Home/Welcome.TXT
++ name=Welcome.TXT
+++ esc_name Welcome.TXT
+++ printf %s Welcome.TXT
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Welcome.TXT
+++ esc_file Root/Home/Welcome.TXT
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Home/Welcome.TXT
++ text='\nTo get started with AneoEngine, press F1.\n'
++ echo '	as_touch("Welcome.TXT");'
++ echo '	as_write("Welcome.TXT", "\nTo get started with AneoEngine, press F1.\n");'
++ read f
++ echo '	as_cd("..");'
++ read d
+++ basename Root/Misc
++ name=Misc
+++ esc_name Misc
+++ printf %s Misc
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Misc
++ echo '	as_mkdir("Misc");'
++ echo '	as_cd("Misc");'
++ gen_dir Root/Misc
++ dir=Root/Misc
++ find Root/Misc -mindepth 1 -maxdepth 1 -type d
++ sort
++ read d
++ find Root/Misc -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/Misc/Keymap.AC
++ name=Keymap.AC
+++ esc_name Keymap.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
+++ printf %s Keymap.AC
++ cname=Keymap.AC
+++ esc_file Root/Misc/Keymap.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Misc/Keymap.AC
++ text='static const char keymap[128] =\n{//allowed chars\n        0, 27, '\''1'\'', '\''2'\'', '\''3'\'', '\''4'\'', '\''5'\'', '\''6'\'',\n        '\''7'\'', '\''8'\'', '\''9'\'', '\''0'\'', '\''-'\'', '\''='\'', '\''\\b'\'', '\''\\t'\'',\n        '\''q'\'', '\''w'\'', '\''e'\'', '\''r'\'', '\''t'\'', '\''y'\'', '\''u'\'', '\''i'\'',\n        '\''o'\'', '\''p'\'', '\''['\'', '\'']'\'', '\''\\n'\'', 0, '\''a'\'', '\''s'\'',\n        '\''d'\'', '\''f'\'', '\''g'\'', '\''h'\'', '\''j'\'', '\''k'\'', '\''l'\'', '\'';'\'',\n        '\''\\'\'''\'', '\''`'\'', 0, '\''\\\\'\'', '\''z'\'', '\''x'\'', '\''c'\'', '\''v'\'',\n        '\''b'\'', '\''n'\'', '\''m'\'', '\'','\'', '\''.'\'', '\''/'\'', 0, '\''*'\'',\n        0, '\'' '\'', 0\n};\n\nstatic const char shiftmap[128] =\n{//allowed chars when shift is pressed\n        0, 27, '\''!'\'', '\''@'\'', '\''#'\'', '\''$'\'', '\''%'\'', '\''^'\'',\n        '\''&'\'', '\''*'\'', '\''('\'', '\'')'\'', '\''_'\'', '\''+'\'', '\''\\b'\'', '\''\\t'\'',\n        '\''Q'\'', '\''W'\'', '\''E'\'', '\''R'\'', '\''T'\'', '\''Y'\'', '\''U'\'', '\''I'\'',\n        '\''O'\'', '\''P'\'', '\''{'\'', '\''}'\'', '\''\\n'\'', 0, '\''A'\'', '\''S'\'',\n        '\''D'\'', '\''F'\'', '\''G'\'', '\''H'\'', '\''J'\'', '\''K'\'', '\''L'\'', '\'':'\'',\n        '\''\"'\'', '\''~'\'', 0, '\''|'\'', '\''Z'\'', '\''X'\'', '\''C'\'', '\''V'\'',\n        '\''B'\'', '\''N'\'', '\''M'\'', '\''<'\'', '\''>'\'', '\''?'\'', 0, '\''*'\'',\n        0, '\'' '\'', 0\n};'
++ echo '	as_touch("Keymap.AC");'
++ echo '	as_write("Keymap.AC", "static const char keymap[128] =\n{//allowed chars\n        0, 27, '\''1'\'', '\''2'\'', '\''3'\'', '\''4'\'', '\''5'\'', '\''6'\'',\n        '\''7'\'', '\''8'\'', '\''9'\'', '\''0'\'', '\''-'\'', '\''='\'', '\''\\b'\'', '\''\\t'\'',\n        '\''q'\'', '\''w'\'', '\''e'\'', '\''r'\'', '\''t'\'', '\''y'\'', '\''u'\'', '\''i'\'',\n        '\''o'\'', '\''p'\'', '\''['\'', '\'']'\'', '\''\\n'\'', 0, '\''a'\'', '\''s'\'',\n        '\''d'\'', '\''f'\'', '\''g'\'', '\''h'\'', '\''j'\'', '\''k'\'', '\''l'\'', '\'';'\'',\n        '\''\\'\'''\'', '\''`'\'', 0, '\''\\\\'\'', '\''z'\'', '\''x'\'', '\''c'\'', '\''v'\'',\n        '\''b'\'', '\''n'\'', '\''m'\'', '\'','\'', '\''.'\'', '\''/'\'', 0, '\''*'\'',\n        0, '\'' '\'', 0\n};\n\nstatic const char shiftmap[128] =\n{//allowed chars when shift is pressed\n        0, 27, '\''!'\'', '\''@'\'', '\''#'\'', '\''$'\'', '\''%'\'', '\''^'\'',\n        '\''&'\'', '\''*'\'', '\''('\'', '\'')'\'', '\''_'\'', '\''+'\'', '\''\\b'\'', '\''\\t'\'',\n        '\''Q'\'', '\''W'\'', '\''E'\'', '\''R'\'', '\''T'\'', '\''Y'\'', '\''U'\'', '\''I'\'',\n        '\''O'\'', '\''P'\'', '\''{'\'', '\''}'\'', '\''\\n'\'', 0, '\''A'\'', '\''S'\'',\n        '\''D'\'', '\''F'\'', '\''G'\'', '\''H'\'', '\''J'\'', '\''K'\'', '\''L'\'', '\'':'\'',\n        '\''\"'\'', '\''~'\'', 0, '\''|'\'', '\''Z'\'', '\''X'\'', '\''C'\'', '\''V'\'',\n        '\''B'\'', '\''N'\'', '\''M'\'', '\''<'\'', '\''>'\'', '\''?'\'', 0, '\''*'\'',\n        0, '\'' '\'', 0\n};");'
++ read f
+++ basename Root/Misc/Logo.TXT
++ name=Logo.TXT
+++ esc_name Logo.TXT
+++ printf %s Logo.TXT
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=Logo.TXT
+++ esc_file Root/Misc/Logo.TXT
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/Misc/Logo.TXT
++ text='---------------------\n---------------------\n---------------------\n---------------------\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------'
++ echo '	as_touch("Logo.TXT");'
++ echo '	as_write("Logo.TXT", "---------------------\n---------------------\n---------------------\n---------------------\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");'
++ read f
++ echo '	as_cd("..");'
++ read d
++ find Root -mindepth 1 -maxdepth 1 -type f
++ sort
++ read f
+++ basename Root/RunCmds.AC
++ name=RunCmds.AC
+++ esc_name RunCmds.AC
+++ printf %s RunCmds.AC
+++ sed 's/\\/\\\\/g; s/"/\\"/g'
++ cname=RunCmds.AC
+++ esc_file Root/RunCmds.AC
+++ awk '
+	{
+		gsub(/\\/, "\\\\")
+		gsub(/"/, "\\\"")
+		gsub(/\t/, "\\t")
+
+		if(NR > 1)
+			printf "\\n"
+
+		printf "%s", $0
+	}
+	' Root/RunCmds.AC
++ text='//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\n\nls;\ncomment(\"Run '\''cpdrive;'\'' to install AneoEngine.\");'
++ echo '	as_touch("RunCmds.AC");'
++ echo '	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\n\nls;\ncomment(\"Run '\''cpdrive;'\'' to install AneoEngine.\");");'
++ read f
++ echo '	/* ANCHORSAND SEED END */'
++ echo '[*] Building image to calculate kernel LBA...'
+[*] Building image to calculate kernel LBA...
++ build
++ echo '[*] Rebuiling AnchorSand seed...'
+[*] Rebuiling AnchorSand seed...
++ awk -v 'start=/* ANCHORSAND SEED START */' -v seed=/tmp/as_seed.txt '
+		index($0, start) {
+			wipe = 1
+			next
+		}
+
+		wipe && index($0, "print(\"*AnchorSand seed end*\\n\");") {
+			while((getline line < seed) > 0)
+				print line
+			close(seed)
+
+			print $0
+			wipe = 0
+			next
+		}
+
+		wipe {
+			next
+		}
+
+		index($0, "print(\"*AnchorSand seed end*\\n\");") {
+			while((getline line < seed) > 0)
+				print line
+			close(seed)
+
+			print $0
+			next
+		}
+
+		{
+			print
+		}
+	' Kernel/Startup.AC
++ mv /tmp/Startup.AC.as Kernel/Startup.AC
++ echo '[+] AnchorSand seed rebuilt cleanly'
+[+] AnchorSand seed rebuilt cleanly
++ CC='gcc -m32 -ffreestanding -fno-pie -fno-pic -fno-stack-protector -nostdlib'
++ AC=AneoC/AneoC
++ echo '[ASM] Assembling CD-ROM bootloader...'
+[ASM] Assembling CD-ROM bootloader...
++ nasm -f bin Boot/Boot.ASM -o Boot/AEBOOT.BIN
++ echo '[ASM] Assembling floppy disk/USB bootloader...'
+[ASM] Assembling floppy disk/USB bootloader...
++ nasm -f bin Boot/FIBoot.ASM -o Boot/FIAEBOOT.BIN
++ echo '[ASM] Assembling kernel entry point...'
+[ASM] Assembling kernel entry point...
++ nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
++ echo '[CC] Compiling kernel...'
+[CC] Compiling kernel...
++ AneoC/AneoC Kernel/Kernel.AC -o Kernel.o
++ echo '[AC] Compiling AnchorSand...'
+[AC] Compiling AnchorSand...
++ AneoC/AneoC Kernel/AnchorSand.c -o AnchorSand.o
++ echo '[ASM] Assembling AnchorSand disk drivers...'
+[ASM] Assembling AnchorSand disk drivers...
++ nasm -f elf32 Kernel/DiskThunk.ASM -o DiskThunk.o
++ echo '[CC] Compiling AnchorSand disk save funtions...'
+[CC] Compiling AnchorSand disk save funtions...
++ gcc -m32 -ffreestanding -fno-pie -fno-pic -fno-stack-protector -nostdlib -c Kernel/FSSave.c -o FSSave.o
++ echo '[AC] Compiling PIT functions...'
+[AC] Compiling PIT functions...
++ AneoC/AneoC Kernel/PIT.AC -o PIT.o
++ echo '[AC] Compiling keyboard drivers...'
+[AC] Compiling keyboard drivers...
++ AneoC/AneoC Kernel/Keyboard.AC -o Keyboard.o
++ echo '[AC] Compiling haltage funtions...'
+[AC] Compiling haltage funtions...
++ AneoC/AneoC Kernel/Haltage.AC -o Haltage.o
++ echo '[AC] Compiling startup funtions...'
+[AC] Compiling startup funtions...
++ AneoC/AneoC Kernel/Startup.AC -o Startup.o
++ echo '[ASM/AC] Compiling IDT funtions...'
+[ASM/AC] Compiling IDT funtions...
++ nasm -f elf32 Kernel/Fault.ASM -o Fault.o
++ nasm -f elf32 Kernel/ISR.ASM -o ISR.o
++ AneoC/AneoC Kernel/IDT.AC -o IDT.o
++ echo '[AC] Compiling help menu...'
+[AC] Compiling help menu...
++ AneoC/AneoC Cmds/Help/Menu.AC -o HelpMenu.o
++ echo '[AC] Compiling '\''addr'\'' command...'
+[AC] Compiling 'addr' command...
++ AneoC/AneoC Cmds/Addr.AC -o Addr.o
++ echo '[AC] Compiling tune function...'
+[AC] Compiling tune function...
++ AneoC/AneoC Cmds/Tune.AC -o Tune.o
++ echo '[AC] Compiling entropy function...'
+[AC] Compiling entropy function...
++ AneoC/AneoC Cmds/Entropy.AC -o Entropy.o
++ echo '[LD] Creating kernel binary...'
+[LD] Creating kernel binary...
++ ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary KEntry.o Kernel.o DiskThunk.o AnchorSand.o FSSave.o PIT.o Haltage.o Keyboard.o Startup.o Fault.o IDT.o ISR.o HelpMenu.o Addr.o Tune.o Entropy.o -o Boot/KERNEL.BIN
+ld: Kernel.o: in function `gfx_set_start':
+(.text+0x349): undefined reference to `outb'
+ld: (.text+0x374): undefined reference to `outb'
+ld: (.text+0x38b): undefined reference to `outb'
+ld: (.text+0x3a7): undefined reference to `outb'
+ld: Kernel.o: in function `gfx_ready':
+(.text+0x3c5): undefined reference to `outb'
+ld: Kernel.o:(.text+0x3dc): more undefined references to `outb' follow
+ld: Kernel.o: in function `ps2_wait_input_clear':
+(.text+0xca5a): undefined reference to `inb'
+ld: Kernel.o: in function `ps2_wait_output_full':
+(.text+0xcaf9): undefined reference to `inb'
+ld: Kernel.o: in function `mouse_write':
+(.text+0xcb62): undefined reference to `outb'
+ld: (.text+0xcb80): undefined reference to `outb'
+ld: (.text+0xcb96): undefined reference to `inb'
+ld: Kernel.o: in function `mouse_flush_aux':
+(.text+0xcbe7): undefined reference to `inb'
+ld: (.text+0xcc53): undefined reference to `inb'
+ld: Kernel.o: in function `ps2_flush_output':
+(.text+0xccb9): undefined reference to `inb'
+ld: (.text+0xccef): undefined reference to `inb'
+ld: Kernel.o:(.text+0xcd5c): more undefined references to `inb' follow
+ld: Kernel.o: in function `mouse_init':
+(.text+0xce29): undefined reference to `outb'
+ld: (.text+0xce4a): undefined reference to `outb'
+ld: (.text+0xce6f): undefined reference to `inb'
+ld: (.text+0xcf08): undefined reference to `outb'
+ld: (.text+0xcf26): undefined reference to `outb'
+ld: Kernel.o: in function `wm_mouse_poll':
+(.text+0xd7e4): undefined reference to `inb'
+ld: (.text+0xd83c): undefined reference to `inb'
+ld: (.text+0xd881): undefined reference to `inb'
+ld: Kernel.o: in function `cmos_read':
+(.text+0xdd4b): undefined reference to `outb'
+ld: (.text+0xdd5c): undefined reference to `inb'
+ld: Kernel.o: in function `poutw':
+(.text+0xf9a6): undefined reference to `outw'
+ld: Kernel.o: in function `poutb':
+(.text+0xfa21): undefined reference to `outb'
+ld: Kernel.o: in function `ata_debug':
+(.text+0xfba4): undefined reference to `inb'
+ld: Kernel.o: in function `rtc_get_second':
+(.text+0xfc86): undefined reference to `outb'
+ld: (.text+0xfc97): undefined reference to `inb'
+ld: Kernel.o: in function `cp_inb':
+(.text+0x11d46): undefined reference to `inb'
+ld: Kernel.o: in function `cp_inw':
+(.text+0x11d65): undefined reference to `inw'
+ld: Kernel.o: in function `cp_outb':
+(.text+0x11d8c): undefined reference to `outb'
+ld: Kernel.o: in function `cp_outw':
+(.text+0x11dae): undefined reference to `outw'
+ld: AnchorSand.o: in function `as_init':
+(.text+0x4a6): undefined reference to `printint'
+ld: (.text+0x4c8): undefined reference to `printint'
+ld: (.text+0x4ea): undefined reference to `printint'
+ld: PIT.o: in function `pit_read_counter':
+(.text+0xbb): undefined reference to `outb'
+ld: (.text+0xd3): undefined reference to `inb'
+ld: (.text+0xee): undefined reference to `inb'
+ld: PIT.o: in function `beep':
+(.text+0x220): undefined reference to `outb'
+ld: (.text+0x246): undefined reference to `outb'
+ld: (.text+0x27b): undefined reference to `outb'
+ld: (.text+0x293): undefined reference to `inb'
+ld: (.text+0x2e1): undefined reference to `outb'
+ld: PIT.o: in function `nosound':
+(.text+0x30b): undefined reference to `inb'
+ld: (.text+0x330): undefined reference to `outb'
+ld: Keyboard.o: in function `getkey':
+(.text+0x17d): undefined reference to `inb'
+ld: (.text+0x1f4): undefined reference to `inb'
+ld: (.text+0x21b): undefined reference to `inb'
+ld: IDT.o: in function `waitkey':
+(.text+0x10): undefined reference to `inb'
+ld: (.text+0x32): undefined reference to `inb'
+ld: IDT.o:(.text+0x48): more undefined references to `inb' follow
+ld: Entropy.o: in function `entropy':
+(.text+0x22e): undefined reference to `printint'

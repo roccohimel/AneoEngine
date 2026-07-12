@@ -129,8 +129,11 @@ build()
 	echo "[ASM] Assembling kernel entry point..."
 	nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
 
+	echo "[ASM] Assembling kernel port IO functions..."
+        nasm -f elf32 Kernel/PortIO.ASM -o PortIO.o
+
 	echo "[CC] Compiling kernel..."
-	$CC -c Kernel/Kernel.c -o Kernel.o
+	$AC Kernel/Kernel.AC -o Kernel.o
 
 	echo "[AC] Compiling AnchorSand..."
 	$AC Kernel/AnchorSand.c -o AnchorSand.o
@@ -173,6 +176,7 @@ build()
 	echo "[LD] Creating kernel binary..."
 	ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary \
 		KEntry.o \
+		PortIO.o \
 		Kernel.o \
 		DiskThunk.o \
 		AnchorSand.o \
