@@ -9,7 +9,6 @@ extern VD printint(U INT n);
 extern u8 color;
 extern VD print(CC *s);
 extern VD putc(C c);
-extern VD beep(u32 freq);
 extern VD nosound(VD);
 extern VD sleep(U INT ms);
 
@@ -38,9 +37,7 @@ VD entropy(VD)
 		u8 oldcolor = color;
 		color = 0x1A;
 		printint(n);
-		beep(n / 100);
 		color = oldcolor;
-		sleep(100);
 		nosound();
 	}
 	putc(' ');

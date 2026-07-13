@@ -1,2 +1,159 @@
-AneoEngine V0.2.2 Change log
-- Added exception handling
+[07/13/26 00:14:50]
+- Added new "Demo Videos" link in the website.
+
+[07/13/26 00:08:04]
+- Updated CHANGELOG heavily.
+
+[07/12/26 23:50:12]
+- Improved the AneoEngine installation documentation.
+- Added reference links for x86, x86_64, BIOS boot, QEMU, VMware Workstation, VirtualBox, and Bochs.
+- Improved the physical-drive and QEMU installation instructions.
+- Updated the trademark notices.
+
+[07/12/26 21:52:07]
+- Saved progress before debugging cpdrive.
+
+[07/12/26 19:11:09]
+- Updated the source-code line count.
+
+[07/12/26 19:10:11]
+- Fixed the printx hexadecimal-printing bug.
+- Replaced compiler-sensitive printx logic with helper functions.
+
+[07/12/26 19:07:07]
+- Updated the source-code line count.
+
+[07/12/26 18:42:33]
+- Converted Kernel/Kernel.c into Kernel/Kernel.AC.
+- Made the base kernel compatible with the AneoC compiler.
+- Moved hardware-level port I/O functions into Kernel/PortIO.ASM.
+
+[07/12/26 16:47:06]
+- Saved progress before converting the kernel from C to AneoC.
+
+[07/12/26 15:47:21]
+- Fixed the build.sh QEMU command information bug.
+- Corrected the swapped CD-ROM and disk run commands.
+
+[07/11/26 21:19:29]
+- Improved the memstat display.
+
+[07/11/26 14:17:47]
+- Added the AneoEngine 1.0 window manager.
+
+[07/11/26 14:17:03]
+- Added updatex.sh.
+
+[07/11/26 00:37:47]
+- Updated the website color scheme.
+- Removed obsolete website content.
+
+[06/28/26 23:20:53]
+- Updated the downloads page.
+
+[06/28/26 23:17:33]
+- Added the CD-ROM installer.
+
+[06/28/26 21:46:59]
+- Saved progress before creating the cpdrive function.
+
+[06/28/26 17:55:59]
+- Added an AC.nanorc configuration for AneoC source files.
+
+[06/28/26 17:29:51]
+- Committed a test snapshot.
+
+[06/28/26 17:21:35]
+- Saved project progress.
+
+[06/12/26 08:23:13]
+- Saved a just-in-case project snapshot.
+
+[06/09/26 16:45:14]
+- Saved development progress.
+
+[06/08/26 16:40:34]
+- Added ISO9660 support.
+
+[06/08/26 08:31:05]
+- Restored the project to its previous working state.
+
+[06/07/26 22:41:04]
+- Reverted the previous wc-related change.
+
+[06/07/26 22:29:34]
+- Reverted ISO9660 and hybrid ISO support.
+
+[06/07/26 21:54:21]
+- Changed the wc-based line-counting logic.
+
+[06/07/26 21:50:39]
+- Added ISO9660 and hybrid ISO support.
+- Enabled the ISO to boot from CD-RW and CD-ROM devices.
+- Enabled the same image to boot from floppy-disk and USB devices.
+
+[06/03/26 15:17:10]
+- Added an F4 function-key action.
+
+[06/01/26 17:57:20]
+- Added plain raw-text printing mode.
+- Made F2 enable raw printing.
+- Made F3 restore normal printing.
+
+[06/01/26 16:58:22]
+- Saved progress before creating raw-text mode.
+
+[06/01/26 16:50:38]
+- Updated the Daily Entry.
+
+[05/31/26 17:29:42]
+- Added A20-line initialization.
+
+[05/31/26 17:20:50]
+- Added shell-script execution from AnchorSand files.
+- Added the run and comment commands.
+- Added the /RunCmds.c startup script.
+- Refactored command processing into shell_exec().
+- Added as_get_file_data().
+
+[05/31/26 15:16:36]
+- Fixed a keyboard-state bug on physical PCs.
+- Reset the Ctrl and extended-key states at every shell prompt.
+
+[05/31/26 13:20:24]
+- Added the AneoEngine text editor.
+
+[05/31/26 10:49:51]
+- Continued development of the AneoEngine editor.
+
+[05/30/26 15:07:40]
+- Added the initial edit command and editor implementation.
+
+[05/29/26 18:01:51]
+- Added the Interrupt Descriptor Table.
+- Added handlers for CPU exceptions.
+- Added ISR assembly stubs.
+- Added a kernel fault-report screen.
+- Updated the V0.2.2 changelog with exception handling.
+
+[05/28/26 22:12:47]
+- Fixed a spelling error in the README.
+
+[05/28/26 22:01:23]
+- Updated the AneoEngine License from V1.0 to V1.1.
+- Expanded the rules for website files, unofficial copies, search-engine indexing, and relicensing.
+- Added a license notice to the README.
+
+[05/28/26 17:38:54]
+- Updated the AneoEngine website.
+- Updated the stable and unstable download links.
+- Replaced the old source-file listing with a repository link.
+- Updated the displayed project line count from 654 to approximately 2,274.
+- Updated the YouTube and project-information links.
+
+[05/28/26 17:29:33]
+- Rebuilt AneoEngine.ISO.
+- Rebuilt Boot/KERNEL.BIN.
+
+[05/28/26 17:29:14]
+- Changed the kernel version from V0.2 to V0.2.1.
