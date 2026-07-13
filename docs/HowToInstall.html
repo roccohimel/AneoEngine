@@ -15,22 +15,21 @@
 <div style="margin:auto; background:#DDDDDD; border:2px solid #000000; padding:12px; width:850px; font-size:14px; color:#000000;">
 <pre style="font-family:monospace; font-size:14px;">
 <center>
-<img src="Demo.PNG" width="640" height="480" alt="AneoEngine Demo">
 Installing AneoEngine
 </center>
 =====================================================================================================
 
 You might not get AneoEngine running properly on real hardware. It might work on any PC from around
 2000 - 2013, or any PC that:
-- Has an x86 based CPU
-- Has an x86_64 based CPU but has BIOS boot
+- Has an <a href="https://en.wikipedia.org/wiki/X86" style="color:#0000AA;">x86</a> based CPU
+- Has an <a href="https://en.wikipedia.org/wiki/X86-64" style="color:#0000AA;">x86_64</a> based CPU but has <a href="https://support.hpe.com/hpesc/public/docDisplay?docId=a00112595en_us&page=v34107435.html&docLocale=en_US" style="color:#0000AA;">BIOS boot</a>
 - Supports BIOS boot
 - Has a CD/DVD-ROM drive
 - Supports USB
 - Has an IDE drive
 - Has at least 50 KB of memory
 
-I recommend a virtual machine such as QEMU, VMware Workstation, or Oracle VirtualBox. Bachs will
+I recommend a virtual machine such as <a href="https://en.wikipedia.org/wiki/QEMU" style="color:#0000AA;">QEMU</a>, <a href="https://en.wikipedia.org/wiki/VMware_Workstation" style="color:#0000AA;">VMware Workstation</a>, or <a href="https://en.wikipedia.org/wiki/VirtualBox" style="color:#0000AA;">Oracle VirtualBox</a>. <a href="https://en.wikipedia.org/wiki/Bochs" style="color:#0000AA;">Bochs</a> will
 NOT work with AneoEngine.
 
 <center>The Installation Process</center>
@@ -44,9 +43,9 @@ command, you should see:
 
 Scanning drives...
 
-Source: Current disk - <manufacturer> <drive name> <X MiB> <order>
+Source: Current disk - manufacturer drive name X MiB order
 
-Device 1: <manufacturer> <drive name> <X MiB> <order>
+Device 1: manufacturer drive name X MiB order
 
 If you only see "Scanning drives..." and no devices, that means you do not have any IDE drives.
 Next, enter your device number.
@@ -55,12 +54,15 @@ Next, enter your device number.
 
 It should then install.
 
-Step 2: Reboot the machine. Once rebooted, run:
+Step 2: Reboot the machine. Find the way you did before to make the boot order, this time
+put the IDE drive first. Once rebooted, run:
 
->run("/Everist/MInstall/Main.AC");
+>run("<a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/Root/Everist/MInstall/Main.AC" style="color:#0000AA;">/Everist/MInstall/Main.AC</a>");
 
-Which will change your RunCmds.AC to make it so AneoEngine saves the filesystem to the disk
-every time you make changes to the file system.
+Which will change your <a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/Root/RunCmds.AC" style="color:#0000AA;">/RunCmds.AC</a> to make it so AneoEngine saves the filesystem to the disk
+every time you make changes to the filesystem.
+
+Reboot
 
 You are done!
 
@@ -84,41 +86,36 @@ Step 2: Initialize the VM's disk.
 
 You can replace "10M" with any size above 5 MB.
 
-Step 3: How to run the VM.
+Step 3: Install to drive.
 
-> qemu-system-x86_64 -cdrom ~/Downloads/AneoEngine.ISO -drive file=AneoEngine-HDD.img,format=raw \
+> qemu-system-x86_64 -cdrom ~/Downloads/AneoEngine.ISO -hda HDD.img \
 > -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0  
 
-Thats it.
+Then refer to "The Installation Process" section. Only follow the directions until you need to
+reboot the machine. For QEMU, there is a different way.
 
+Step 4: Once rebooted, run 
 
+> qemu-system-x86_64 -hda HDD.img -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
 
-<a href="Downloads.html" style="color:#0000AA;">Downloading AneoEngine</a>
-<a href="HowToInstall.html" style="color:#0000AA;">Installing AneoEngine</a>
-How to install AneoEngine properly.
+Then run:
 
-<a href="AneoC.html" style="color:#0000AA;">The AneoC Programming Language</a>
-<a href="Downloads.html" style="color:#0000AA;">Downloads</a>
-<a href="FAQ.html" style="color:#0000AA;">F.A.Q.</a>
-<a href="Videos.html" style="color:#0000AA;">YouTube Videos</a>
-<a href="SRC.html" style="color:#0000AA;">Source Code</a>
-<a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/CHANGELOG" style="color:#0000AA;">Change Log</a>
-<a href="AboutAE.html" style="color:#0000AA;">About AneoEngine</a>
-<a href="AboutRH/AboutRH.html" style="color:#0000AA;">About Rocco Himel</a>
+>run("<a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/Root/Everist/MInstall/Main.AC" style="color:#0000AA;">/Everist/MInstall/Main.AC</a>");
 
+Reboot
 
+And you are done.
+
+=====================================================================================================
 
 - AneoEngine is a trademark of Rocco Jose Himel.
 - The AneoEngine Logo is a trademark of Rocco Jose Himel.
 - AneoC is a trademark of Rocco Jose Himel.
-- The Free Disk Operating System (FreeDOS) and the FreeDOS logo are trademarks of Jim Hall.
-- The Portable Operating System Interface (POSIX) is a trademark of the Institute of Electrical and
-Electronics Engineers.
-- The GNU Compiler Collection (GCC) and the GCC logo are trademarks of the Free Software Foundation,
-Inc.
-- Linux and Tux the Penguin (the Linux logo) are trademarks of Linus Torvalds.
-- Debian and the Debian logo are trademarks of Software in Public Interest, Inc.
-- AaronOS and the AaronOS logo are trademarks of Aaron Adams. 
+- The x86_64 architecture is a trademark of Advanced Micro Devices, Inc.
+- The Quick Emulator (QEMU) and the QEMU logo are trademarks of Fabrice Ballard.
+- VMware, VMware Workstation, and the VMware logo, are trademarks of VMWare, Inc.
+- VirtualBox and the VirtualBox logo are trademarks of Oracle Corporation.
+- Bochs and the Bochs logo are trademarks of The Bochs Project.
 </p>
 </div>
 
