@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AneoEngine</title>
+<link rel="icon" href="Image.PNG">
+<meta name="description" content="AneoEngine x86 Operating System">
+<meta name="keywords" content="AneoEngine, aneoengine, Rocco Himel, roccohimel">
+<meta property="og:title" content="AneoEngine">
+<meta property="og:description" content="AneoEngine x86 Operating System">
+<meta property="og:image" content="Image.PNG">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<div style="margin:auto; background:#DDDDDD; border:2px solid #000000; padding:12px; width:850px; font-size:14px; color:#000000;">
+<pre style="font-family:monospace; font-size:14px;">
+<center>
+<img src="Demo.PNG" width="640" height="480" alt="AneoEngine Demo">
+Installing AneoEngine
+</center>
+=====================================================================================================
+
+You might not get AneoEngine running properly on real hardware. It might work on any PC from around
+2000 - 2013, or any PC that:
+- Has an x86 based CPU
+- Has an x86_64 based CPU but has BIOS boot
+- Supports BIOS boot
+- Has a CD/DVD-ROM drive
+- Supports USB
+- Has an IDE drive
+- Has at least 50 KB of memory
+
+I recommend a virtual machine such as QEMU, VMware Workstation, or Oracle VirtualBox. Bachs will
+NOT work with AneoEngine.
+
+<center>The Installation Process</center>
+First boot up the machine. Virtual machine users will automatically boot into the CD-ROM. If you
+are not on a virtual machine, then boot into the BIOS. Once you're there, find a way to customize
+the boot order. Most BIOS menus will have a "Boot" section or similar. If you are booting from a
+USB, put the USB first. If you are booting from a CD-ROM, but your CD/DVD-R/RW drive first.
+
+Step 1: Run `cpdrive;` which will search for IDE devices to install AneoEngine too. Once you ran the
+command, you should see:
+
+Scanning drives...
+
+Source: Current disk - <manufacturer> <drive name> <X MiB> <order>
+
+Device 1: <manufacturer> <drive name> <X MiB> <order>
+
+If you only see "Scanning drives..." and no devices, that means you do not have any IDE drives.
+Next, enter your device number.
+
+>1
+
+It should then install.
+
+Step 2: Reboot the machine. Once rebooted, run:
+
+>run("/Everist/MInstall/Main.AC");
+
+Which will change your RunCmds.AC to make it so AneoEngine saves the filesystem to the disk
+every time you make changes to the file system.
+
+You are done!
+
+<center>Setting up a virtual machine that isn't QEMU</center>
+On your virtual machine manager, create a new VM. You can make it either 32-bit or 64-bit.
+AneoEngine supports both. For the VM's memory, make sure you have at least 50 KB of memory. For
+reference, 1 MB is larger than 1 KB. If your VM defaults the VM's memory to at least 1 MB, you are
+already good. For the VM's drives, make sure you have a CD-ROM drive with the AneoEngine.ISO
+selected, and an IDE drive that is at least 5 MB. Once you have setup the VM, make sure the
+boot order is the CD-ROM with everything else disabled for now. Once you are done, refer to the
+previous "The Installation Process" section.
+
+<center>Setting up a virtual machine with QEMU</center>
+Even though QEMU has a tiny bit of a learning curve, I highly recommend QEMU for AneoEngine.
+Step 1: Make sure you have qemu-system-x86 and qemu-img installed.
+Step 2: Initialize the VM's disk.
+
+> mkdir ~/AneoEngine-VM
+> cd ~/AneoEngine-VM
+> qemu-img create -f raw HDD.img 10M
+
+You can replace "10M" with any size above 5 MB.
+
+Step 3: How to run the VM.
+
+> qemu-system-x86_64 -cdrom ~/Downloads/AneoEngine.ISO -drive file=AneoEngine-HDD.img,format=raw \
+> -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0  
+
+Thats it.
+
+
+
+<a href="Downloads.html" style="color:#0000AA;">Downloading AneoEngine</a>
+<a href="HowToInstall.html" style="color:#0000AA;">Installing AneoEngine</a>
+How to install AneoEngine properly.
+
+<a href="AneoC.html" style="color:#0000AA;">The AneoC Programming Language</a>
+<a href="Downloads.html" style="color:#0000AA;">Downloads</a>
+<a href="FAQ.html" style="color:#0000AA;">F.A.Q.</a>
+<a href="Videos.html" style="color:#0000AA;">YouTube Videos</a>
+<a href="SRC.html" style="color:#0000AA;">Source Code</a>
+<a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/CHANGELOG" style="color:#0000AA;">Change Log</a>
+<a href="AboutAE.html" style="color:#0000AA;">About AneoEngine</a>
+<a href="AboutRH/AboutRH.html" style="color:#0000AA;">About Rocco Himel</a>
+
+
+
+- AneoEngine is a trademark of Rocco Jose Himel.
+- The AneoEngine Logo is a trademark of Rocco Jose Himel.
+- AneoC is a trademark of Rocco Jose Himel.
+- The Free Disk Operating System (FreeDOS) and the FreeDOS logo are trademarks of Jim Hall.
+- The Portable Operating System Interface (POSIX) is a trademark of the Institute of Electrical and
+Electronics Engineers.
+- The GNU Compiler Collection (GCC) and the GCC logo are trademarks of the Free Software Foundation,
+Inc.
+- Linux and Tux the Penguin (the Linux logo) are trademarks of Linus Torvalds.
+- Debian and the Debian logo are trademarks of Software in Public Interest, Inc.
+- AaronOS and the AaronOS logo are trademarks of Aaron Adams. 
+</p>
+</div>
+
+</body>
+</html>
