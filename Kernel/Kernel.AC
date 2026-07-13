@@ -4145,7 +4145,10 @@ u32 parsex(CC *s)
 	return atoi(s);
 }
 
+// CPDRIVE U32 ABI FIX - ACTUAL MODIFIED FILE
 #define CP_MAX_DRIVES 4
+#define CP_BOOT_KERNEL_LBA 105
+#define CP_BOOT_KERNEL_SECTORS 512
 #define CP_NONE 0
 #define CP_ATA 1
 #define CP_ATAPI 2
@@ -4153,7 +4156,6 @@ u32 parsex(CC *s)
 TD U C CP_U8;
 TD U S CP_U16;
 TD U INT CP_U32;
-TD ULL CP_U64;
 
 TD ST {
 	CP_U16 io;
@@ -4161,13 +4163,15 @@ TD ST {
 	CP_U8 slave;
 	CP_U8 type;
 	CP_U8 lba48;
-	CP_U64 sectors;
+	CP_U32 sectors;
 	CP_U32 block_size;
 	C model[41];
 } CPDrive;
 
 SC CPDrive cp_drives[CP_MAX_DRIVES];
 SC CP_U16 cp_buffer[1024];
+SC CP_U16 cp_sector_buffer[256];
+SC CP_U16 cp_verify_buffer[256];
 SC CP_U16 cp_scan_ios[4] = {0x1F0, 0x1F0, 0x170, 0x170};
 SC CP_U16 cp_scan_ctrls[4] = {0x3F6, 0x3F6, 0x376, 0x376};
 SC CP_U8 cp_scan_slaves[4] = {0, 1, 0, 1};
@@ -4378,7 +4382,7 @@ SC INT cp_atapi_capacity(CPDrive *drive)
 		((CP_U32)data[6] << 8) |
 		(CP_U32)data[7];
 
-	drive->sectors = (CP_U64)last_lba + 1;
+	drive->sectors = last_lba + 1;
 	drive->block_size = block_size;
 
 	return 1;
@@ -4452,15 +4456,16 @@ SC INT cp_identify(CPDrive *drive)
 		    identify[103])) {
 			drive->lba48 = 1;
 
-			drive->sectors =
-				(CP_U64)identify[100] |
-				((CP_U64)identify[101] << 16) |
-				((CP_U64)identify[102] << 32) |
-				((CP_U64)identify[103] << 48);
+			if(identify[102] || identify[103])
+				drive->sectors = 0xFFFFFFFFU;
+			else
+				drive->sectors =
+					(CP_U32)identify[100] |
+					((CP_U32)identify[101] << 16);
 		} else {
 			drive->sectors =
-				(CP_U64)identify[60] |
-				((CP_U64)identify[61] << 16);
+				(CP_U32)identify[60] |
+				((CP_U32)identify[61] << 16);
 		}
 
 		if(!drive->model[0])
@@ -4550,7 +4555,7 @@ SC INT cp_find_source(VD)
 }
 
 SC INT cp_ata_read(CPDrive *drive,
-		       CP_U64 lba,
+		       CP_U32 lba,
 		       CP_U16 *buffer)
 {
 	CP_U32 i;
@@ -4558,19 +4563,17 @@ SC INT cp_ata_read(CPDrive *drive,
 	if(!cp_wait_not_busy(drive))
 		return 0;
 
-	if(drive->lba48) {
+	if(drive->lba48 && lba > 0x0FFFFFFFU) {
 		cp_outb(drive->io + 6,
-			0x40 | (drive->slave << 4));
+			0xE0 | (drive->slave << 4));
 
 		cp_delay(drive);
 
 		cp_outb(drive->io + 2, 0);
 		cp_outb(drive->io + 3,
 			(CP_U8)(lba >> 24));
-		cp_outb(drive->io + 4,
-			(CP_U8)(lba >> 32));
-		cp_outb(drive->io + 5,
-			(CP_U8)(lba >> 40));
+		cp_outb(drive->io + 4, 0);
+		cp_outb(drive->io + 5, 0);
 
 		cp_outb(drive->io + 2, 1);
 		cp_outb(drive->io + 3,
@@ -4582,7 +4585,7 @@ SC INT cp_ata_read(CPDrive *drive,
 
 		cp_outb(drive->io + 7, 0x24);
 	} else {
-		if(lba > 0x0FFFFFFFULL)
+		if(lba > 0x0FFFFFFFU)
 			return 0;
 
 		cp_outb(drive->io + 6,
@@ -4613,7 +4616,7 @@ SC INT cp_ata_read(CPDrive *drive,
 }
 
 SC INT cp_ata_write(CPDrive *drive,
-			CP_U64 lba,
+			CP_U32 lba,
 			CP_U16 *buffer)
 {
 	CP_U32 i;
@@ -4621,19 +4624,17 @@ SC INT cp_ata_write(CPDrive *drive,
 	if(!cp_wait_not_busy(drive))
 		return 0;
 
-	if(drive->lba48) {
+	if(drive->lba48 && lba > 0x0FFFFFFFU) {
 		cp_outb(drive->io + 6,
-			0x40 | (drive->slave << 4));
+			0xE0 | (drive->slave << 4));
 
 		cp_delay(drive);
 
 		cp_outb(drive->io + 2, 0);
 		cp_outb(drive->io + 3,
 			(CP_U8)(lba >> 24));
-		cp_outb(drive->io + 4,
-			(CP_U8)(lba >> 32));
-		cp_outb(drive->io + 5,
-			(CP_U8)(lba >> 40));
+		cp_outb(drive->io + 4, 0);
+		cp_outb(drive->io + 5, 0);
 
 		cp_outb(drive->io + 2, 1);
 		cp_outb(drive->io + 3,
@@ -4645,7 +4646,7 @@ SC INT cp_ata_write(CPDrive *drive,
 
 		cp_outb(drive->io + 7, 0x34);
 	} else {
-		if(lba > 0x0FFFFFFFULL)
+		if(lba > 0x0FFFFFFFU)
 			return 0;
 
 		cp_outb(drive->io + 6,
@@ -4683,10 +4684,7 @@ SC INT cp_ata_flush(CPDrive *drive)
 	cp_outb(drive->io + 6,
 		0xE0 | (drive->slave << 4));
 
-	if(drive->lba48)
-		cp_outb(drive->io + 7, 0xEA);
-	else
-		cp_outb(drive->io + 7, 0xE7);
+	cp_outb(drive->io + 7, 0xE7);
 
 	return cp_wait_done(drive);
 }
@@ -4736,10 +4734,12 @@ SC VD cp_print_u32(CP_U32 value)
 
 SC CP_U32 cp_mib(CPDrive *drive)
 {
-	if(drive->block_size == 2048)
-		return (CP_U32)(drive->sectors >> 9);
+	CP_U32 sectors = (CP_U32)drive->sectors;
 
-	return (CP_U32)(drive->sectors >> 11);
+	if(drive->block_size == 2048)
+		return sectors / 512;
+
+	return sectors / 2048;
 }
 
 SC VD cp_print_location(CPDrive *drive)
@@ -4829,10 +4829,160 @@ SC VD cp_progress(CP_U32 mib)
 	print(" MiB\n");
 }
 
+SC INT cp_matches_running_kernel(CP_U16 *buffer)
+{
+	CP_U16 *kernel = (CP_U16 *)0x10000;
+	CP_U32 word;
+
+	for(word = 0; word < 256; word++) {
+		if(buffer[word] != kernel[word])
+			return 0;
+	}
+
+	return 1;
+}
+
+SC INT cp_find_copied_kernel(CPDrive *target,
+			     CP_U32 image_sectors,
+			     CP_U32 *kernel_lba)
+{
+	CP_U32 lba;
+
+	for(lba = 1; lba < image_sectors; lba++) {
+		if(!cp_ata_read(target,
+				 lba,
+				 cp_verify_buffer)) {
+			print("\nKernel scan read failed at disk sector ");
+			cp_print_u32(lba);
+			putc('\n');
+			return 0;
+		}
+
+		if(cp_matches_running_kernel(cp_verify_buffer)) {
+			*kernel_lba = lba;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+SC INT cp_copy_kernel_sector(CPDrive *target,
+			     CP_U32 source_lba,
+			     CP_U32 target_lba)
+{
+	CP_U32 word;
+
+	if(!cp_ata_read(target,
+			 source_lba,
+			 cp_sector_buffer))
+		return 0;
+
+	if(!cp_ata_write(target,
+			  target_lba,
+			  cp_sector_buffer))
+		return 0;
+
+	if(!cp_ata_read(target,
+			 target_lba,
+			 cp_verify_buffer))
+		return 0;
+
+	for(word = 0; word < 256; word++) {
+		if(cp_verify_buffer[word] !=
+		   cp_sector_buffer[word])
+			return 0;
+	}
+
+	return 1;
+}
+
+SC INT cp_place_kernel_for_hdd_boot(CPDrive *target,
+				    CP_U32 image_sectors)
+{
+	CP_U32 found_lba;
+	CP_U32 i;
+	CP_U32 source_lba;
+	CP_U32 target_lba;
+
+	if(!cp_find_copied_kernel(target,
+				 image_sectors,
+				 &found_lba)) {
+		print("\nCould not find the copied kernel image.\n");
+		return 0;
+	}
+
+	print("Kernel image found at disk sector ");
+	cp_print_u32(found_lba);
+	putc('\n');
+
+	if(found_lba == CP_BOOT_KERNEL_LBA)
+		return 1;
+
+	if(found_lba + CP_BOOT_KERNEL_SECTORS >
+	   image_sectors) {
+		print("Copied kernel image is incomplete.\n");
+		return 0;
+	}
+
+	print("Placing kernel at boot sector ");
+	cp_print_u32(CP_BOOT_KERNEL_LBA);
+	print("...\n");
+
+	if(found_lba > CP_BOOT_KERNEL_LBA) {
+		for(i = 0; i < CP_BOOT_KERNEL_SECTORS; i++) {
+			source_lba = found_lba + i;
+			target_lba = CP_BOOT_KERNEL_LBA + i;
+
+			if(!cp_copy_kernel_sector(target,
+						 source_lba,
+						 target_lba)) {
+				print("Kernel placement failed at sector ");
+				cp_print_u32(target_lba);
+				putc('\n');
+				return 0;
+			}
+		}
+	} else {
+		i = CP_BOOT_KERNEL_SECTORS;
+
+		while(i) {
+			i--;
+			source_lba = found_lba + i;
+			target_lba = CP_BOOT_KERNEL_LBA + i;
+
+			if(!cp_copy_kernel_sector(target,
+						 source_lba,
+						 target_lba)) {
+				print("Kernel placement failed at sector ");
+				cp_print_u32(target_lba);
+				putc('\n');
+				return 0;
+			}
+		}
+	}
+
+	if(!cp_ata_flush(target))
+		return 0;
+
+	if(!cp_ata_read(target,
+			 CP_BOOT_KERNEL_LBA,
+			 cp_verify_buffer))
+		return 0;
+
+	if(!cp_matches_running_kernel(cp_verify_buffer)) {
+		print("Installed kernel entry verification failed.\n");
+		return 0;
+	}
+
+	print("Installed kernel entry verified.\n");
+	return 1;
+}
+
 SC INT cp_copy_ata(CPDrive *source,
 		       CPDrive *target)
 {
-	CP_U64 lba;
+	CP_U32 lba;
 
 	for(lba = 0;
 	    lba < source->sectors;
@@ -4859,7 +5009,7 @@ SC INT cp_copy_ata(CPDrive *source,
 
 		if(!(lba & 0x7FFF))
 			cp_progress(
-				(CP_U32)(lba >> 11));
+				((CP_U32)lba) / 2048);
 	}
 
 	return cp_ata_flush(target);
@@ -4868,47 +5018,73 @@ SC INT cp_copy_ata(CPDrive *source,
 SC INT cp_copy_atapi(CPDrive *source,
 			 CPDrive *target)
 {
-	CP_U64 lba;
-	CP_U64 target_lba;
+	CP_U32 lba;
+	CP_U32 target_lba;
+	CP_U32 source_sectors;
 	CP_U32 part;
+	CP_U32 word;
+
+	source_sectors = (CP_U32)source->sectors;
 
 	for(lba = 0;
-	    lba < source->sectors;
+	    lba < source_sectors;
 	    lba++) {
 		if(!cp_atapi_read(source,
-				  (CP_U32)lba,
+				  lba,
 				  cp_buffer)) {
 			print("\nRead failed at CD sector ");
-			cp_print_u32((CP_U32)lba);
+			cp_print_u32(lba);
 			putc('\n');
 
 			return 0;
 		}
 
-		target_lba = lba << 2;
+		target_lba = lba * 4;
 
 		for(part = 0; part < 4; part++) {
+			for(word = 0; word < 256; word++)
+				cp_sector_buffer[word] =
+					cp_buffer[part * 256 + word];
+
 			if(!cp_ata_write(
 				   target,
-				   target_lba + part,
-				   cp_buffer + part * 256)) {
+				   (target_lba + part),
+				   cp_sector_buffer)) {
 				print(
 					"\nWrite failed at disk sector ");
-
-				cp_print_u32(
-					(CP_U32)(
-						target_lba +
-						part));
-
+				cp_print_u32(target_lba + part);
 				putc('\n');
 
 				return 0;
 			}
+
+			if(!cp_ata_read(
+				   target,
+				   (target_lba + part),
+				   cp_verify_buffer)) {
+				print(
+					"\nVerify read failed at disk sector ");
+				cp_print_u32(target_lba + part);
+				putc('\n');
+
+				return 0;
+			}
+
+			for(word = 0; word < 256; word++) {
+				if(cp_verify_buffer[word] !=
+				   cp_sector_buffer[word]) {
+					print(
+						"\nVerify failed at disk sector ");
+					cp_print_u32(target_lba + part);
+					putc('\n');
+
+					return 0;
+				}
+			}
 		}
 
 		if(!(lba & 0x1FFF))
-			cp_progress(
-				(CP_U32)(lba >> 9));
+			cp_progress(lba / 512);
 	}
 
 	return cp_ata_flush(target);
@@ -4922,7 +5098,9 @@ VD cpdrive(VD)
 	INT target_index;
 	CP_U32 i;
 	CP_U32 choice;
-	CP_U64 required_sectors;
+	CP_U32 source_mib;
+	CP_U32 source_image_sectors;
+	CP_U32 required_sectors;
 	C input[16];
 	CPDrive *source;
 	CPDrive *target;
@@ -4955,10 +5133,19 @@ VD cpdrive(VD)
 		return;
 	}
 
+	source_mib = cp_mib(source);
+
+	if(source->type == CP_ATAPI)
+		source_image_sectors =
+			(CP_U32)source->sectors * 4;
+	else
+		source_image_sectors =
+			(CP_U32)source->sectors;
+
 	print("\nSource: Current disk - ");
 	print(source->model);
 	print(" ");
-	cp_print_u32(cp_mib(source));
+	cp_print_u32(source_mib);
 	print(" MiB (");
 	cp_print_location(source);
 	print(")\n\n");
@@ -5009,7 +5196,7 @@ VD cpdrive(VD)
 
 	if(source->type == CP_ATAPI)
 		required_sectors =
-			source->sectors << 2;
+			source_image_sectors;
 	else
 		required_sectors =
 			source->sectors;
@@ -5040,6 +5227,13 @@ VD cpdrive(VD)
 			print("Copy failed.\n");
 			return;
 		}
+
+		if(!cp_place_kernel_for_hdd_boot(
+			   target,
+			   source_image_sectors)) {
+			print("Kernel installation failed.\n");
+			return;
+		}
 	} else {
 		if(!cp_copy_ata(source, target)) {
 			print("Copy failed.\n");
@@ -5047,7 +5241,7 @@ VD cpdrive(VD)
 		}
 	}
 
-	cp_progress(cp_mib(source));
+	cp_progress(source_mib);
 	print("\nAneoEngine media copy complete.\n");
 }
 
