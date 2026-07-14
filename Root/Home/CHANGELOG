@@ -1,3 +1,8 @@
+[07/14/26 17:12:19]
+- Added new songs.
+- Added RandNote.sh, a random melody generator.
+- Added dynamic kernel sector calculation.
+
 [07/13/26 10:31:08]
 - Removed beep command from Cmds/Entropy.AC.
 
