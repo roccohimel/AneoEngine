@@ -3,7 +3,7 @@
 
 KERNEL_OFFSET  EQU 0x10000
 KERNEL_SEGMENT EQU 0x1000
-KERNEL_SECTORS EQU 512
+KERNEL_SECTORS EQU 411
 
 start:
 	CLI
@@ -177,7 +177,7 @@ init_pm:
 	MOV GS, AX
 	MOV SS, AX
 
-	MOV ESP, 0x90000
+	MOV ESP, 0x200000
 
 	JMP CODE_SEG:KERNEL_OFFSET
 
@@ -223,7 +223,7 @@ msg_boot:
 	DB "AneoEngine Boot Loader",13,10,0
 
 msg_type:
-	DB "Reading 512 kernel sectors from CD-ROM...",13,10,0
+	DB "Reading kernel from CD-ROM...",13,10,0
 
 msg_loaded:
 	DB "Kernel found...",13,10,0

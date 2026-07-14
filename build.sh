@@ -120,12 +120,6 @@ build()
 	CC="gcc -m32 -ffreestanding -fno-pie -fno-pic -fno-stack-protector -nostdlib"
 	AC="AneoC/AneoC"
 
-	echo "[ASM] Assembling CD-ROM bootloader..."
-	nasm -f bin Boot/Boot.ASM -o Boot/AEBOOT.BIN
-
-	echo "[ASM] Assembling floppy disk/USB bootloader..."
-	nasm -f bin Boot/FIBoot.ASM -o Boot/FIAEBOOT.BIN
-
 	echo "[ASM] Assembling kernel entry point..."
 	nasm -f elf32 Kernel/KEntry.ASM -o KEntry.o
 
@@ -173,8 +167,8 @@ build()
 	echo "[AC] Compiling entropy function..."
 	$AC Cmds/Entropy.AC -o Entropy.o
 
-	echo "[LD] Creating kernel binary..."
-	ld -m elf_i386 -Ttext 0x10000 -e _start --oformat binary \
+	echo "[LD] Creating kernel ELF..."
+	ld -m elf_i386 -Ttext 0x10000 --section-start=.bss=0x100000 -e _start \
 		KEntry.o \
 		PortIO.o \
 		Kernel.o \
@@ -192,7 +186,41 @@ build()
 		Addr.o \
 		Tune.o \
 		Entropy.o \
-		-o Boot/KERNEL.BIN
+		-o Kernel.ELF
+
+	BSS_END_HEX=$(nm -n Kernel.ELF | awk '$3 == "_end" { print $1; exit }')
+	if [ -z "$BSS_END_HEX" ]; then
+		echo "[ERROR] Could not find the kernel .bss end address."
+		exit 1
+	fi
+
+	BSS_END=$((16#$BSS_END_HEX))
+	if [ "$BSS_END" -ge $((0x1F0000)) ]; then
+		echo "[ERROR] Kernel .bss is too close to the 0x200000 stack."
+		echo "[ERROR] .bss ends at 0x$BSS_END_HEX."
+		exit 1
+	fi
+
+	echo "[OBJCOPY] Creating kernel binary..."
+	objcopy -O binary Kernel.ELF Boot/KERNEL.BIN
+
+	KERNEL_BYTES=$(stat -c %s Boot/KERNEL.BIN)
+	KERNEL_SECTORS=$(((KERNEL_BYTES + 511) / 512))
+
+	if [ "$KERNEL_SECTORS" -gt 2879 ]; then
+		echo "[ERROR] Kernel no longer fits in the floppy image."
+		exit 1
+	fi
+
+	echo "[BOOT] Kernel size: $KERNEL_BYTES bytes ($KERNEL_SECTORS sectors)"
+	sed -Ei "s/^KERNEL_SECTORS[[:space:]]+EQU[[:space:]]+[0-9]+/KERNEL_SECTORS EQU $KERNEL_SECTORS/" \
+		Boot/Boot.ASM Boot/FIBoot.ASM
+
+	echo "[ASM] Assembling CD-ROM bootloader..."
+	nasm -f bin Boot/Boot.ASM -o Boot/AEBOOT.BIN
+
+	echo "[ASM] Assembling floppy disk/USB bootloader..."
+	nasm -f bin Boot/FIBoot.ASM -o Boot/FIAEBOOT.BIN
 
 	echo "[*] Removing existing disk images..."
 	touch Fallback.IMG
@@ -220,7 +248,7 @@ build()
 	dd if=Boot/FIAEBOOT.BIN of=AneoEngine.ISO bs=512 count=1 conv=notrunc
 
 	echo "[*] Removing trash..."
-	rm *.o
+	rm *.o Kernel.ELF
 
 	echo "[+] Done!"
 }
@@ -250,7 +278,7 @@ echo "[ISO] FLOPPY_KERNEL_LBA = $FLOPPY_KERNEL_LBA"
 
 echo "[ISO] Patching FIBoot.ASM..."
 
-sed -i "s/^FLOPPY_KERNEL_LBA equ .*/FLOPPY_KERNEL_LBA equ $FLOPPY_KERNEL_LBA/" Boot/FIBoot.ASM
+sed -Ei "s/^FLOPPY_KERNEL_LBA[[:space:]]+EQU[[:space:]]+[0-9]+/FLOPPY_KERNEL_LBA EQU $FLOPPY_KERNEL_LBA/" Boot/FIBoot.ASM
 
 echo "[ASM] Assembling floppy disk/USB bootloader..."
 nasm -f bin Boot/FIBoot.ASM -o Boot/FIAEBOOT.BIN
