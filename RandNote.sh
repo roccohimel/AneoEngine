@@ -56,21 +56,22 @@ random_note()
 	local lowest=$1
 	local highest=$2
 	local allow_rests=$3
-	local nibble
 	local index
 	local note
 	local octave
 	local octave_count
 
-	next_byte
-	nibble=$((RANDOM_VALUE & 15))
+	if is_yes "$allow_rests"; then
+		rand_mod 6
 
-	if ((nibble == 0)) && is_yes "$allow_rests"; then
-		NOTE_RESULT="R"
-		return
+		if ((RANDOM_VALUE == 0)); then
+			NOTE_RESULT="R"
+			return
+		fi
 	fi
 
-	index=$((nibble / 2))
+	rand_mod 8
+	index=$RANDOM_VALUE
 
 	case $index in
 		0)
