@@ -421,8 +421,8 @@ VD fast_memset8(VD *dst, u8 val, U INT bytes)
 	U INT rem;
 
 	fill = (u32)val;
-	fill |= fill << 8;
-	fill |= fill << 16;
+	fill = fill + fill * 256;
+	fill = fill + fill * 65536;
 
 	vga_stosl(dst, fill, bytes / 4);
 	tail = (u8*)dst + (bytes & ~3U);
@@ -551,8 +551,8 @@ VD gfx_fill_linear(U INT off, U INT bytes, u8 col)
 	off &= 0xFFFF;
 	gfx_mode2();
 	val = (u32)(col & 0x0F);
-	val |= val << 8;
-	val |= val << 16;
+	val = val + val * 256;
+	val = val + val * 65536;
 	vga_stosl((VD*)(GFX + off), val, bytes / 4);
 	tail = GFX + off + (bytes & ~3U);
 	rem = bytes & 3U;
@@ -610,8 +610,8 @@ VD gfx_clear_text_rect(INT x, INT y, INT w, INT h, u8 col)
 
 	gfx_mode2();
 	val = (u32)(col & 0x0F);
-	val |= val << 8;
-	val |= val << 16;
+	val = val + val * 256;
+	val = val + val * 65536;
 
 	lines = h * 8;
 	for(py = 0; py < lines; py++)
@@ -3694,6 +3694,7 @@ INT readline(C *buf, INT max)
         INT sec;
         INT maxx;
         INT maxy;
+        INT spaces;
 
         for(;;)
         {//while waiting, update the RTC from the top bar
@@ -3711,10 +3712,16 @@ INT readline(C *buf, INT max)
                 if(!c)
                         continue;
 
-		if(wm_on && c == '\t')
+		if(c == '\t')
 		{
-			buf[i] = 0;
-			return 1;
+			spaces = 0;
+			while(spaces < 8 && i < max - 1)
+			{
+				buf[i++] = ' ';
+				putc(' ');
+				spaces++;
+			}
+			continue;
 		}
 
 		if(wm_on && c == 6)
@@ -5295,6 +5302,16 @@ VD shell_exec(C *line)
 	}
 	else if(strcmp(line, "cls;") == 0)
 		clear();
+	else if(strcmp(line, "mm;") == 0)
+        {
+		wid = wm_shell_target_window();
+
+                if(wid >= 0)
+                        wm_task_start_script(wid, "/Everist/Music/Menu/Main.AC.S");
+                else
+                        run_script("/Everist/Music/Menu/Main.AC.S");
+		as_cd("/Everist/Music/Menu");
+	}
 	else if(strcmp(line, "reboot;") == 0)
 		triple_fault();
 	else if(strcmp(line, "n;") == 0)
@@ -5541,13 +5558,1787 @@ VD shell_exec(C *line)
 		perror(line);
 	}
 }
+#define ACRI_MAX_VARS 64
+#define ACRI_MAX_LOCAL_VARS 32
+#define ACRI_MAX_FUNCS 24
+#define ACRI_MAX_PARAMS 8
+#define ACRI_MAX_CALLS 12
+#define ACRI_MAX_RUNTIMES 4
+#define ACRI_NAME_MAX 32
+#define ACRI_LINE_MAX 256
+#define ACRI_LOOP_LIMIT 100000
+
+TD ST {
+	C name[ACRI_NAME_MAX];
+	INT value;
+	INT used;
+} AcriVar;
+
+TD ST {
+	AcriVar vars[ACRI_MAX_LOCAL_VARS];
+} AcriFrame;
+
+TD ST {
+	C name[ACRI_NAME_MAX];
+	C params[ACRI_MAX_PARAMS * ACRI_NAME_MAX];
+	INT param_count;
+	INT body_start;
+	INT body_end;
+	INT used;
+} AcriFunc;
+
+TD ST {
+	C *data;
+	INT size;
+	AcriVar globals[ACRI_MAX_VARS];
+	AcriFrame frames[ACRI_MAX_CALLS];
+	AcriFunc funcs[ACRI_MAX_FUNCS];
+	INT func_count;
+	INT frame_depth;
+	INT returned;
+	INT return_value;
+	INT breaking;
+	INT continuing;
+	INT error;
+	INT error_pos;
+	CC *error_text;
+	INT top_statements;
+} AcriRuntime;
+
+TD ST {
+	AcriRuntime *rt;
+	INT pos;
+	INT end;
+} AcriExpr;
+
+SC AcriRuntime acri_runtimes[ACRI_MAX_RUNTIMES];
+SC INT acri_runtime_depth = 0;
+
+INT acri_eval_slice(AcriRuntime *rt, INT start, INT end);
+VD acri_exec_range(AcriRuntime *rt, INT start, INT end);
+INT acri_call(AcriRuntime *rt, CC *name, INT *args, INT argc, INT call_pos);
+INT acri_statement_end(AcriRuntime *rt, INT start, INT limit);
+VD acri_exec_simple(AcriRuntime *rt, INT start, INT end);
+VD acri_wait_for_wm(INT id);
+
+INT acri_is_name_start(C c)
+{
+	return (c >= 'a' && c <= 'z') ||
+	       (c >= 'A' && c <= 'Z') || c == '_';
+}
+
+INT acri_is_name_C(C c)
+{
+	return acri_is_name_start(c) || (c >= '0' && c <= '9');
+}
+
+C acri_ch(AcriRuntime *rt, INT pos)
+{
+	if(pos < 0 || pos >= rt->size)
+		return 0;
+	return rt->data[pos];
+}
+
+VD acri_copy_name(C *dst, CC *src)
+{
+	INT i;
+
+	i = 0;
+	while(src[i] && i < ACRI_NAME_MAX - 1)
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	dst[i] = 0;
+}
+
+VD acri_fail(AcriRuntime *rt, CC *text, INT pos)
+{
+	if(rt->error)
+		return;
+	rt->error = 1;
+	rt->error_pos = pos;
+	rt->error_text = text;
+}
+
+INT acri_skip(AcriRuntime *rt, INT pos, INT end)
+{
+	for(;;)
+	{
+		while(pos < end &&
+		     (acri_ch(rt, pos) == ' ' || acri_ch(rt, pos) == '\t' ||
+		      acri_ch(rt, pos) == '\r' || acri_ch(rt, pos) == '\n'))
+			pos++;
+
+		if(pos + 1 < end && acri_ch(rt, pos) == '/' && acri_ch(rt, pos + 1) == '/')
+		{
+			pos += 2;
+			while(pos < end && acri_ch(rt, pos) != '\n')
+				pos++;
+			continue;
+		}
+
+		if(pos + 1 < end && acri_ch(rt, pos) == '/' && acri_ch(rt, pos + 1) == '*')
+		{
+			pos += 2;
+			while(pos + 1 < end &&
+			     !(acri_ch(rt, pos) == '*' && acri_ch(rt, pos + 1) == '/'))
+				pos++;
+			if(pos + 1 < end)
+				pos += 2;
+			continue;
+		}
+		break;
+	}
+	return pos;
+}
+
+INT acri_word_at(AcriRuntime *rt, INT pos, INT end, CC *word)
+{
+	INT i;
+
+	i = 0;
+	while(word[i])
+	{
+		if(pos + i >= end || acri_ch(rt, pos + i) != word[i])
+			return 0;
+		i++;
+	}
+	if(pos > 0 && acri_is_name_C(acri_ch(rt, pos - 1)))
+		return 0;
+	if(pos + i < end && acri_is_name_C(acri_ch(rt, pos + i)))
+		return 0;
+	return 1;
+}
+
+INT acri_read_name(AcriRuntime *rt, INT pos, INT end, C *out)
+{
+	INT i;
+
+	pos = acri_skip(rt, pos, end);
+	if(!acri_is_name_start(acri_ch(rt, pos)))
+	{
+		out[0] = 0;
+		return -1;
+	}
+
+	i = 0;
+	while(pos < end && acri_is_name_C(acri_ch(rt, pos)))
+	{
+		if(i < ACRI_NAME_MAX - 1)
+			out[i++] = acri_ch(rt, pos);
+		pos++;
+	}
+	out[i] = 0;
+	return pos;
+}
+
+INT acri_find_match(AcriRuntime *rt, INT open_pos, INT end, C open_C, C close_C)
+{
+	INT pos;
+	INT depth;
+	C quote;
+	C c;
+
+	pos = open_pos;
+	depth = 0;
+	quote = 0;
+	while(pos < end)
+	{
+		c = acri_ch(rt, pos);
+		if(quote)
+		{
+			if(c == '\\')
+			{
+				pos += 2;
+				continue;
+			}
+			if(c == quote)
+				quote = 0;
+			pos++;
+			continue;
+		}
+
+		if(c == '"' || c == '\'')
+		{
+			quote = c;
+			pos++;
+			continue;
+		}
+		if(c == '/' && pos + 1 < end && acri_ch(rt, pos + 1) == '/')
+		{
+			pos += 2;
+			while(pos < end && acri_ch(rt, pos) != '\n')
+				pos++;
+			continue;
+		}
+		if(c == '/' && pos + 1 < end && acri_ch(rt, pos + 1) == '*')
+		{
+			pos += 2;
+			while(pos + 1 < end &&
+			     !(acri_ch(rt, pos) == '*' && acri_ch(rt, pos + 1) == '/'))
+				pos++;
+			if(pos + 1 < end)
+				pos += 2;
+			continue;
+		}
+		if(c == open_C)
+			depth++;
+		else if(c == close_C)
+		{
+			depth--;
+			if(depth == 0)
+				return pos;
+		}
+		pos++;
+	}
+	return -1;
+}
+
+INT acri_parse_type(AcriRuntime *rt, INT pos, INT end, INT *after)
+{
+	C word[ACRI_NAME_MAX];
+	INT p;
+
+	p = acri_skip(rt, pos, end);
+	if(acri_word_at(rt, p, end, "SC"))
+	{
+		p += 2;
+		p = acri_skip(rt, p, end);
+	}
+
+	p = acri_read_name(rt, p, end, word);
+	if(p < 0)
+		return 0;
+
+	if(strcmp(word, "U") == 0 || strcmp(word, "S") == 0)
+	{
+		p = acri_read_name(rt, p, end, word);
+		if(p < 0)
+			return 0;
+		if(strcmp(word, "INT") != 0 && strcmp(word, "C") != 0 && strcmp(word, "S") != 0)
+			return 0;
+		*after = p;
+		return 1;
+	}
+
+	if(strcmp(word, "INT") == 0 || strcmp(word, "C") == 0 ||
+	   strcmp(word, "VD") == 0 || strcmp(word, "u8") == 0 ||
+	   strcmp(word, "u16") == 0 || strcmp(word, "u32") == 0 ||
+	   strcmp(word, "u64") == 0)
+	{
+		*after = p;
+		return 1;
+	}
+	return 0;
+}
+
+INT acri_detect_function(AcriRuntime *rt, INT pos, INT end,
+	C *name, INT *params_start, INT *params_end,
+	INT *body_start, INT *body_end, INT *next)
+{
+	INT p;
+	INT close;
+
+	pos = acri_skip(rt, pos, end);
+	if(!acri_parse_type(rt, pos, end, &p))
+		return 0;
+	p = acri_read_name(rt, p, end, name);
+	if(p < 0)
+		return 0;
+	p = acri_skip(rt, p, end);
+	if(acri_ch(rt, p) != '(')
+		return 0;
+	close = acri_find_match(rt, p, end, '(', ')');
+	if(close < 0)
+		return 0;
+	*params_start = p + 1;
+	*params_end = close;
+	p = acri_skip(rt, close + 1, end);
+	if(acri_ch(rt, p) != '{')
+		return 0;
+	close = acri_find_match(rt, p, end, '{', '}');
+	if(close < 0)
+		return 0;
+	*body_start = p + 1;
+	*body_end = close;
+	*next = close + 1;
+	return 1;
+}
+
+C *acri_param_slot(AcriFunc *fn, INT index)
+{
+	return fn->params + index * ACRI_NAME_MAX;
+}
+
+VD acri_parse_params(AcriRuntime *rt, AcriFunc *fn, INT start, INT end)
+{
+	INT pos;
+	INT after_type;
+	C name[ACRI_NAME_MAX];
+
+	fn->param_count = 0;
+	pos = acri_skip(rt, start, end);
+	if(acri_word_at(rt, pos, end, "VD"))
+		return;
+
+	while(pos < end && fn->param_count < ACRI_MAX_PARAMS)
+	{
+		if(!acri_parse_type(rt, pos, end, &after_type))
+		{
+			acri_fail(rt, "bad function parameter", pos);
+			return;
+		}
+		pos = acri_read_name(rt, after_type, end, name);
+		if(pos < 0)
+		{
+			acri_fail(rt, "missing parameter name", after_type);
+			return;
+		}
+		acri_copy_name(acri_param_slot(fn, fn->param_count), name);
+		fn->param_count++;
+		pos = acri_skip(rt, pos, end);
+		if(acri_ch(rt, pos) == ',')
+		{
+			pos++;
+			continue;
+		}
+		break;
+	}
+}
+
+VD acri_collect_functions(AcriRuntime *rt)
+{
+	INT pos;
+	INT ps;
+	INT pe;
+	INT bs;
+	INT be;
+	INT next;
+	C name[ACRI_NAME_MAX];
+	AcriFunc *fn;
+
+	pos = 0;
+	while(pos < rt->size && !rt->error)
+	{
+		pos = acri_skip(rt, pos, rt->size);
+		if(pos >= rt->size)
+			break;
+		if(acri_detect_function(rt, pos, rt->size, name, &ps, &pe, &bs, &be, &next))
+		{
+			if(rt->func_count >= ACRI_MAX_FUNCS)
+			{
+				acri_fail(rt, "too many functions", pos);
+				return;
+			}
+			fn = &rt->funcs[rt->func_count++];
+			fn->used = 1;
+			acri_copy_name(fn->name, name);
+			fn->body_start = bs;
+			fn->body_end = be;
+			acri_parse_params(rt, fn, ps, pe);
+			pos = next;
+			continue;
+		}
+		pos = acri_statement_end(rt, pos, rt->size);
+		if(pos <= 0)
+			break;
+	}
+}
+
+AcriVar *acri_find_in(AcriVar *vars, INT count, CC *name)
+{
+	INT i;
+
+	for(i = 0; i < count; i++)
+		if(vars[i].used && strcmp(vars[i].name, name) == 0)
+			return &vars[i];
+	return 0;
+}
+
+AcriVar *acri_find_var(AcriRuntime *rt, CC *name)
+{
+	AcriVar *v;
+
+	if(rt->frame_depth > 0)
+	{
+		v = acri_find_in(rt->frames[rt->frame_depth - 1].vars,
+			ACRI_MAX_LOCAL_VARS, name);
+		if(v)
+			return v;
+	}
+	return acri_find_in(rt->globals, ACRI_MAX_VARS, name);
+}
+
+AcriVar *acri_make_in(AcriRuntime *rt, AcriVar *vars, INT count,
+	CC *name, INT pos)
+{
+	INT i;
+	AcriVar *v;
+
+	v = acri_find_in(vars, count, name);
+	if(v)
+		return v;
+	for(i = 0; i < count; i++)
+	{
+		if(!vars[i].used)
+		{
+			vars[i].used = 1;
+			vars[i].value = 0;
+			acri_copy_name(vars[i].name, name);
+			return &vars[i];
+		}
+	}
+	acri_fail(rt, "too many variables", pos);
+	return 0;
+}
+
+AcriVar *acri_make_var(AcriRuntime *rt, CC *name, INT pos)
+{
+	if(rt->frame_depth > 0)
+		return acri_make_in(rt,
+			rt->frames[rt->frame_depth - 1].vars,
+			ACRI_MAX_LOCAL_VARS, name, pos);
+	return acri_make_in(rt, rt->globals, ACRI_MAX_VARS, name, pos);
+}
+
+VD acri_expr_skip(AcriExpr *ep)
+{
+	ep->pos = acri_skip(ep->rt, ep->pos, ep->end);
+}
+
+INT acri_expr_or(AcriExpr *ep);
+
+INT acri_expr_primary(AcriExpr *ep)
+{
+	AcriRuntime *rt;
+	INT pos;
+	INT value;
+	INT argc;
+	INT args[ACRI_MAX_PARAMS];
+	C name[ACRI_NAME_MAX];
+	AcriVar *v;
+	C c;
+
+	rt = ep->rt;
+	acri_expr_skip(ep);
+	pos = ep->pos;
+	c = acri_ch(rt, pos);
+
+	if(c == '(')
+	{
+		ep->pos++;
+		value = acri_expr_or(ep);
+		acri_expr_skip(ep);
+		if(acri_ch(rt, ep->pos) != ')')
+			acri_fail(rt, "missing )", ep->pos);
+		else
+			ep->pos++;
+		return value;
+	}
+
+	if(c == '\'')
+	{
+		ep->pos++;
+		c = acri_ch(rt, ep->pos++);
+		if(c == '\\')
+		{
+			c = acri_ch(rt, ep->pos++);
+			if(c == 'n') c = '\n';
+			else if(c == 't') c = '\t';
+			else if(c == 'r') c = '\r';
+			else if(c == '0') c = 0;
+		}
+		if(acri_ch(rt, ep->pos) == '\'')
+			ep->pos++;
+		else
+			acri_fail(rt, "bad character literal", pos);
+		return (INT)c;
+	}
+
+	if(c >= '0' && c <= '9')
+	{
+		value = 0;
+		if(c == '0' && (acri_ch(rt, pos + 1) == 'x' || acri_ch(rt, pos + 1) == 'X'))
+		{
+			ep->pos += 2;
+			while(ep->pos < ep->end)
+			{
+				c = acri_ch(rt, ep->pos);
+				if(c >= '0' && c <= '9') c -= '0';
+				else if(c >= 'a' && c <= 'f') c = c - 'a' + 10;
+				else if(c >= 'A' && c <= 'F') c = c - 'A' + 10;
+				else break;
+				value = value * 16 + c;
+				ep->pos++;
+			}
+			return value;
+		}
+		while(ep->pos < ep->end && acri_ch(rt, ep->pos) >= '0' && acri_ch(rt, ep->pos) <= '9')
+		{
+			value = value * 10 + acri_ch(rt, ep->pos) - '0';
+			ep->pos++;
+		}
+		return value;
+	}
+
+	if(acri_is_name_start(c))
+	{
+		ep->pos = acri_read_name(rt, ep->pos, ep->end, name);
+		acri_expr_skip(ep);
+		if(acri_ch(rt, ep->pos) == '(')
+		{
+			ep->pos++;
+			argc = 0;
+			acri_expr_skip(ep);
+			if(acri_ch(rt, ep->pos) != ')')
+			{
+				while(ep->pos < ep->end)
+				{
+					if(argc >= ACRI_MAX_PARAMS)
+					{
+						acri_fail(rt, "too many arguments", ep->pos);
+						break;
+					}
+					args[argc++] = acri_expr_or(ep);
+					acri_expr_skip(ep);
+					if(acri_ch(rt, ep->pos) == ',')
+					{
+						ep->pos++;
+						continue;
+					}
+					break;
+				}
+			}
+			acri_expr_skip(ep);
+			if(acri_ch(rt, ep->pos) != ')')
+				acri_fail(rt, "missing ) after arguments", ep->pos);
+			else
+				ep->pos++;
+			return acri_call(rt, name, args, argc, pos);
+		}
+
+		if(strcmp(name, "true") == 0)
+			return 1;
+		if(strcmp(name, "false") == 0)
+			return 0;
+		v = acri_find_var(rt, name);
+		if(!v)
+		{
+			acri_fail(rt, "unknown variable", pos);
+			return 0;
+		}
+		return v->value;
+	}
+
+	acri_fail(rt, "expected expression", pos);
+	return 0;
+}
+
+INT acri_expr_unary(AcriExpr *ep)
+{
+	C c;
+	INT value;
+
+	acri_expr_skip(ep);
+	c = acri_ch(ep->rt, ep->pos);
+	if(c == '!' || c == '-' || c == '+' || c == '~')
+	{
+		ep->pos++;
+		value = acri_expr_unary(ep);
+		if(c == '!') return !value;
+		if(c == '-') return -value;
+		if(c == '~') return ~value;
+		return value;
+	}
+	return acri_expr_primary(ep);
+}
+
+INT acri_expr_mul(AcriExpr *ep)
+{
+	INT value;
+	INT right;
+	C op;
+
+	value = acri_expr_unary(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		op = acri_ch(ep->rt, ep->pos);
+		if(op != '*' && op != '/' && op != '%')
+			break;
+		ep->pos++;
+		right = acri_expr_unary(ep);
+		if((op == '/' || op == '%') && right == 0)
+		{
+			acri_fail(ep->rt, "division by zero", ep->pos);
+			return 0;
+		}
+		if(op == '*') value *= right;
+		else if(op == '/') value /= right;
+		else value %= right;
+	}
+	return value;
+}
+
+INT acri_expr_add(AcriExpr *ep)
+{
+	INT value;
+	INT right;
+	C op;
+
+	value = acri_expr_mul(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		op = acri_ch(ep->rt, ep->pos);
+		if(op != '+' && op != '-')
+			break;
+		ep->pos++;
+		right = acri_expr_mul(ep);
+		if(op == '+') value += right;
+		else value -= right;
+	}
+	return value;
+}
+
+INT acri_shift_left_value(INT value, INT count)
+{
+	INT next;
+
+	while(count > 0)
+	{
+		next = value * 2;
+		value = next;
+		count--;
+	}
+	return value;
+}
+
+INT acri_shift_right_value(INT value, INT count)
+{
+	INT next;
+
+	while(count > 0)
+	{
+		if(value < 0 && value % 2 != 0)
+			next = value / 2 - 1;
+		else
+			next = value / 2;
+		value = next;
+		count--;
+	}
+	return value;
+}
+
+INT acri_expr_shift(AcriExpr *ep)
+{
+	INT value;
+	INT right;
+
+	value = acri_expr_add(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		if(acri_ch(ep->rt, ep->pos) == '<' && acri_ch(ep->rt, ep->pos + 1) == '<')
+		{
+			ep->pos += 2;
+			right = acri_expr_add(ep);
+			if(right < 0 || right > 31)
+			{
+				acri_fail(ep->rt, "invalid shift count", ep->pos);
+				return 0;
+			}
+			value = acri_shift_left_value(value, right);
+		}
+		else if(acri_ch(ep->rt, ep->pos) == '>' && acri_ch(ep->rt, ep->pos + 1) == '>')
+		{
+			ep->pos += 2;
+			right = acri_expr_add(ep);
+			if(right < 0 || right > 31)
+			{
+				acri_fail(ep->rt, "invalid shift count", ep->pos);
+				return 0;
+			}
+			value = acri_shift_right_value(value, right);
+		}
+		else break;
+	}
+	return value;
+}
+
+INT acri_expr_rel(AcriExpr *ep)
+{
+	INT value;
+	INT right;
+	INT op;
+
+	value = acri_expr_shift(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		op = 0;
+		if(acri_ch(ep->rt, ep->pos) == '<' && acri_ch(ep->rt, ep->pos + 1) == '=') op = 1;
+		else if(acri_ch(ep->rt, ep->pos) == '>' && acri_ch(ep->rt, ep->pos + 1) == '=') op = 2;
+		else if(acri_ch(ep->rt, ep->pos) == '<' && acri_ch(ep->rt, ep->pos + 1) != '<') op = 3;
+		else if(acri_ch(ep->rt, ep->pos) == '>' && acri_ch(ep->rt, ep->pos + 1) != '>') op = 4;
+		if(!op) break;
+		if(op <= 2)
+			ep->pos += 2;
+		else
+			ep->pos++;
+		right = acri_expr_shift(ep);
+		if(op == 1) value = value <= right;
+		else if(op == 2) value = value >= right;
+		else if(op == 3) value = value < right;
+		else value = value > right;
+	}
+	return value;
+}
+
+INT acri_expr_eq(AcriExpr *ep)
+{
+	INT value;
+	INT right;
+	INT equal;
+
+	value = acri_expr_rel(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		if(acri_ch(ep->rt, ep->pos) == '=' && acri_ch(ep->rt, ep->pos + 1) == '=')
+			equal = 1;
+		else if(acri_ch(ep->rt, ep->pos) == '!' && acri_ch(ep->rt, ep->pos + 1) == '=')
+			equal = 0;
+		else break;
+		ep->pos += 2;
+		right = acri_expr_rel(ep);
+		if(equal)
+			value = value == right;
+		else
+			value = value != right;
+	}
+	return value;
+}
+
+INT acri_expr_band(AcriExpr *ep)
+{
+	INT value;
+
+	value = acri_expr_eq(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		if(acri_ch(ep->rt, ep->pos) != '&' || acri_ch(ep->rt, ep->pos + 1) == '&')
+			break;
+		ep->pos++;
+		value &= acri_expr_eq(ep);
+	}
+	return value;
+}
+
+INT acri_expr_bxor(AcriExpr *ep)
+{
+	INT value;
+
+	value = acri_expr_band(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		if(acri_ch(ep->rt, ep->pos) != '^')
+			break;
+		ep->pos++;
+		value ^= acri_expr_band(ep);
+	}
+	return value;
+}
+
+INT acri_expr_bor(AcriExpr *ep)
+{
+	INT value;
+
+	value = acri_expr_bxor(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		if(acri_ch(ep->rt, ep->pos) != '|' || acri_ch(ep->rt, ep->pos + 1) == '|')
+			break;
+		ep->pos++;
+		value |= acri_expr_bxor(ep);
+	}
+	return value;
+}
+
+INT acri_expr_and(AcriExpr *ep)
+{
+	INT value;
+	INT right;
+
+	value = acri_expr_bor(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		if(acri_ch(ep->rt, ep->pos) != '&' || acri_ch(ep->rt, ep->pos + 1) != '&')
+			break;
+		ep->pos += 2;
+		right = acri_expr_bor(ep);
+		value = value && right;
+	}
+	return value;
+}
+
+INT acri_expr_or(AcriExpr *ep)
+{
+	INT value;
+	INT right;
+
+	value = acri_expr_and(ep);
+	for(;;)
+	{
+		acri_expr_skip(ep);
+		if(acri_ch(ep->rt, ep->pos) != '|' || acri_ch(ep->rt, ep->pos + 1) != '|')
+			break;
+		ep->pos += 2;
+		right = acri_expr_and(ep);
+		value = value || right;
+	}
+	return value;
+}
+
+INT acri_eval_slice(AcriRuntime *rt, INT start, INT end)
+{
+	AcriExpr ep;
+	INT value;
+
+	ep.rt = rt;
+	ep.pos = start;
+	ep.end = end;
+	value = acri_expr_or(&ep);
+	acri_expr_skip(&ep);
+	if(!rt->error && ep.pos < end)
+		acri_fail(rt, "unexpected expression text", ep.pos);
+	return value;
+}
+
+AcriFunc *acri_find_func(AcriRuntime *rt, CC *name)
+{
+	INT i;
+
+	for(i = 0; i < rt->func_count; i++)
+		if(rt->funcs[i].used && strcmp(rt->funcs[i].name, name) == 0)
+			return &rt->funcs[i];
+	return 0;
+}
+
+VD acri_wait_for_wm(INT id)
+{
+	INT c;
+	INT n;
+	INT sec;
+	INT last_sec;
+
+	if(id < 0 || id >= WM_WINDOWS || !wm_windows[id].alive)
+		return;
+
+	last_sec = -1;
+	while(wm_windows[id].alive &&
+	      (wm_windows[id].task_wake != 0 ||
+	       wm_windows[id].tune_running))
+	{
+		ticks_poll();
+
+		if(wm_windows[id].task_wake != 0 &&
+		   total_ticks >= wm_windows[id].task_wake)
+			wm_windows[id].task_wake = 0;
+
+		if(wm_windows[id].tune_running)
+			wm_tune_step(id);
+
+		sec = rtc_get_second();
+		if(sec != last_sec)
+		{
+			update_rtc_only();
+			memstat_overlay_refresh(1);
+			last_sec = sec;
+		}
+
+		wm_flash_poll();
+		wm_mouse_poll();
+
+		for(n = 0; n < WM_WINDOWS; n++)
+		{
+			if(n == id || !wm_windows[n].alive)
+				continue;
+
+			if(!wm_windows[n].task_pending &&
+			   !wm_windows[n].task_running &&
+			   wm_windows[n].task_wake == 0 &&
+			   !wm_windows[n].tune_running)
+				continue;
+
+			wm_task_step(n);
+		}
+
+		c = getkey();
+		if(c)
+			wm_handle_key(c);
+	}
+}
+
+
+INT acri_builtin(AcriRuntime *rt, CC *name, INT *args, INT argc, INT *handled, INT pos)
+{
+	*handled = 1;
+	if(strcmp(name, "printINT") == 0 || strcmp(name, "printint") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "printINT needs 1 argument", pos);
+		else printINT(args[0]);
+		return 0;
+	}
+	if(strcmp(name, "printx") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "printx needs 1 argument", pos);
+		else printx(args[0]);
+		return 0;
+	}
+	if(strcmp(name, "putc") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "putc needs 1 argument", pos);
+		else putc((C)args[0]);
+		return 0;
+	}
+	if(strcmp(name, "beep") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "beep needs 1 argument", pos);
+		else beep(args[0]);
+		return 0;
+	}
+	if(strcmp(name, "sleep") == 0)
+	{
+		if(argc != 1)
+			acri_fail(rt, "sleep needs 1 argument", pos);
+		else if(wm_on &&
+		        wm_task_exec_win >= 0 &&
+		        wm_task_exec_win < WM_WINDOWS &&
+		        wm_windows[wm_task_exec_win].alive)
+		{
+			if(args[0] < 0)
+				args[0] = 0;
+
+			wm_windows[wm_task_exec_win].task_wake =
+				total_ticks + args[0];
+
+			acri_wait_for_wm(wm_task_exec_win);
+		}
+		else
+			sleep(args[0]);
+
+		return 0;
+	}
+	if(strcmp(name, "color") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "color needs 1 argument", pos);
+		else color = args[0];
+		return color;
+	}
+	if(strcmp(name, "outb") == 0)
+	{
+		if(argc != 2) acri_fail(rt, "outb needs 2 arguments", pos);
+		else outb(args[0], args[1]);
+		return 0;
+	}
+	if(strcmp(name, "outw") == 0)
+	{
+		if(argc != 2) acri_fail(rt, "outw needs 2 arguments", pos);
+		else outw(args[0], args[1]);
+		return 0;
+	}
+	if(strcmp(name, "outl") == 0)
+	{
+		if(argc != 2) acri_fail(rt, "outl needs 2 arguments", pos);
+		else outl(args[0], args[1]);
+		return 0;
+	}
+	if(strcmp(name, "inb") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "inb needs 1 argument", pos);
+		else return inb(args[0]);
+		return 0;
+	}
+	if(strcmp(name, "inw") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "inw needs 1 argument", pos);
+		else return inw(args[0]);
+		return 0;
+	}
+	if(strcmp(name, "inl") == 0)
+	{
+		if(argc != 1) acri_fail(rt, "inl needs 1 argument", pos);
+		else return inl(args[0]);
+		return 0;
+	}
+	if(strcmp(name, "clear") == 0)
+	{
+		if(argc != 0) acri_fail(rt, "clear needs no arguments", pos);
+		else clear();
+		return 0;
+	}
+	if(strcmp(name, "nosound") == 0)
+	{
+		if(argc != 0) acri_fail(rt, "nosound needs no arguments", pos);
+		else nosound();
+		return 0;
+	}
+	if(strcmp(name, "entropy") == 0)
+	{
+		if(argc != 0) acri_fail(rt, "entropy needs no arguments", pos);
+		else entropy();
+		return 0;
+	}
+	if(strcmp(name, "save") == 0)
+	{
+		if(argc != 0) acri_fail(rt, "save needs no arguments", pos);
+		else return as_save_to_disk();
+		return 0;
+	}
+	if(strcmp(name, "load") == 0)
+	{
+		if(argc != 0) acri_fail(rt, "load needs no arguments", pos);
+		else return as_load_from_disk();
+		return 0;
+	}
+	*handled = 0;
+	return 0;
+}
+
+INT acri_call(AcriRuntime *rt, CC *name, INT *args, INT argc, INT call_pos)
+{
+	AcriFunc *fn;
+	AcriFrame *frame;
+	AcriVar *v;
+	INT i;
+	INT value;
+	INT handled;
+	INT old_returned;
+	INT old_return_value;
+	INT old_breaking;
+	INT old_continuing;
+
+	value = acri_builtin(rt, name, args, argc, &handled, call_pos);
+	if(handled || rt->error)
+		return value;
+
+	fn = acri_find_func(rt, name);
+	if(!fn)
+	{
+		acri_fail(rt, "unknown function", call_pos);
+		return 0;
+	}
+	if(argc != fn->param_count)
+	{
+		acri_fail(rt, "wrong argument count", call_pos);
+		return 0;
+	}
+	if(rt->frame_depth >= ACRI_MAX_CALLS)
+	{
+		acri_fail(rt, "function call stack full", call_pos);
+		return 0;
+	}
+
+	frame = &rt->frames[rt->frame_depth];
+	for(i = 0; i < ACRI_MAX_LOCAL_VARS; i++)
+		frame->vars[i].used = 0;
+	rt->frame_depth++;
+	for(i = 0; i < argc; i++)
+	{
+		v = acri_make_var(rt, acri_param_slot(fn, i), call_pos);
+		if(v)
+			v->value = args[i];
+	}
+
+	old_returned = rt->returned;
+	old_return_value = rt->return_value;
+	old_breaking = rt->breaking;
+	old_continuing = rt->continuing;
+	rt->returned = 0;
+	rt->return_value = 0;
+	rt->breaking = 0;
+	rt->continuing = 0;
+	acri_exec_range(rt, fn->body_start, fn->body_end);
+	value = rt->return_value;
+	rt->returned = old_returned;
+	rt->return_value = old_return_value;
+	rt->breaking = old_breaking;
+	rt->continuing = old_continuing;
+	rt->frame_depth--;
+	return value;
+}
+
+INT acri_find_top_semicolon(AcriRuntime *rt, INT start, INT end)
+{
+	INT pos;
+	INT paren;
+	C quote;
+	C c;
+
+	pos = start;
+	paren = 0;
+	quote = 0;
+	while(pos < end)
+	{
+		c = acri_ch(rt, pos);
+		if(quote)
+		{
+			if(c == '\\') pos++;
+			else if(c == quote) quote = 0;
+			pos++;
+			continue;
+		}
+		if(c == '"' || c == '\'')
+		{
+			quote = c;
+			pos++;
+			continue;
+		}
+		if(c == '(') paren++;
+		else if(c == ')') paren--;
+		else if(c == ';' && paren == 0) return pos;
+		pos++;
+	}
+	return end;
+}
+
+INT acri_statement_end(AcriRuntime *rt, INT start, INT limit)
+{
+	INT pos;
+	INT close;
+	INT end1;
+
+	pos = acri_skip(rt, start, limit);
+	if(pos >= limit)
+		return limit;
+	if(acri_ch(rt, pos) == '{')
+	{
+		close = acri_find_match(rt, pos, limit, '{', '}');
+		if(close < 0)
+			return limit;
+		return close + 1;
+	}
+	if(acri_word_at(rt, pos, limit, "if"))
+	{
+		pos = acri_skip(rt, pos + 2, limit);
+		if(acri_ch(rt, pos) != '(') return acri_find_top_semicolon(rt, pos, limit) + 1;
+		close = acri_find_match(rt, pos, limit, '(', ')');
+		if(close < 0) return limit;
+		end1 = acri_statement_end(rt, close + 1, limit);
+		pos = acri_skip(rt, end1, limit);
+		if(acri_word_at(rt, pos, limit, "else"))
+			return acri_statement_end(rt, pos + 4, limit);
+		return end1;
+	}
+	if(acri_word_at(rt, pos, limit, "while"))
+	{
+		pos = acri_skip(rt, pos + 5, limit);
+		if(acri_ch(rt, pos) != '(') return limit;
+		close = acri_find_match(rt, pos, limit, '(', ')');
+		if(close < 0) return limit;
+		return acri_statement_end(rt, close + 1, limit);
+	}
+	if(acri_word_at(rt, pos, limit, "for"))
+	{
+		pos = acri_skip(rt, pos + 3, limit);
+		if(acri_ch(rt, pos) != '(') return limit;
+		close = acri_find_match(rt, pos, limit, '(', ')');
+		if(close < 0) return limit;
+		return acri_statement_end(rt, close + 1, limit);
+	}
+	pos = acri_find_top_semicolon(rt, pos, limit);
+	if(pos < limit)
+		return pos + 1;
+	return limit;
+}
+
+INT acri_top_operator(AcriRuntime *rt, INT start, INT end, INT *op_len, INT *op_kind)
+{
+	INT pos;
+	INT paren;
+	C quote;
+	C c;
+
+	paren = 0;
+	quote = 0;
+	for(pos = start; pos < end; pos++)
+	{
+		c = acri_ch(rt, pos);
+		if(quote)
+		{
+			if(c == '\\') pos++;
+			else if(c == quote) quote = 0;
+			continue;
+		}
+		if(c == '"' || c == '\'')
+		{
+			quote = c;
+			continue;
+		}
+		if(c == '(') { paren++; continue; }
+		if(c == ')') { paren--; continue; }
+		if(paren != 0) continue;
+		if((c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
+		    c == '&' || c == '|' || c == '^') && acri_ch(rt, pos + 1) == '=')
+		{
+			*op_len = 2;
+			*op_kind = c;
+			return pos;
+		}
+		if(c == '=' && acri_ch(rt, pos + 1) != '=')
+		{
+			*op_len = 1;
+			*op_kind = '=';
+			return pos;
+		}
+	}
+	return -1;
+}
+
+VD acri_copy_statement(AcriRuntime *rt, INT start, INT end, C *line)
+{
+	INT i;
+	INT j;
+
+	start = acri_skip(rt, start, end);
+	while(end > start &&
+	     (acri_ch(rt, end - 1) == ' ' || acri_ch(rt, end - 1) == '\t' ||
+	      acri_ch(rt, end - 1) == '\r' || acri_ch(rt, end - 1) == '\n'))
+		end--;
+	j = 0;
+	for(i = start; i < end && j < ACRI_LINE_MAX - 1; i++)
+		line[j++] = acri_ch(rt, i);
+	line[j] = 0;
+}
+
+INT acri_shell_statement(CC *line)
+{
+	if(starts(line, "print(\"") || starts(line, "tune(\"") ||
+	   starts(line, "run(\"") || starts(line, "ls(\"") ||
+	   starts(line, "mkdir(\"") || starts(line, "touch(\"") ||
+	   starts(line, "cat(\"") || starts(line, "cd(\"") ||
+	   starts(line, "edit(\"") || starts(line, "rm(\"") ||
+	   starts(line, "cp(\"") || starts(line, "mv(\"") ||
+	   starts(line, "comment(\""))
+		return 1;
+	if(strcmp(line, "cls;") == 0 || strcmp(line, "help;") == 0 ||
+	   strcmp(line, "__help;") == 0 || strcmp(line, "vmoff;") == 0 ||
+	   strcmp(line, "halt;") == 0 || strcmp(line, "addr;") == 0 ||
+	   strcmp(line, "memstat;") == 0 || strcmp(line, "ls;") == 0 ||
+	   strcmp(line, "nosound;") == 0 || strcmp(line, "save;") == 0 ||
+	   strcmp(line, "load;") == 0 || strcmp(line, "n;") == 0 ||
+	   strcmp(line, "atadbg;") == 0 || strcmp(line, "saveity;") == 0 ||
+	   strcmp(line, "saveitn;") == 0 || strcmp(line, "fault;") == 0 ||
+	   strcmp(line, "reboot;") == 0 || strcmp(line, "cpdrive;") == 0 ||
+	   strcmp(line, "mm;") == 0)
+		return 1;
+	return 0;
+}
+
+VD acri_apply_assignment(AcriRuntime *rt, AcriVar *v, INT op, INT value, INT pos)
+{
+	if(!v)
+		return;
+	if(op == '=') v->value = value;
+	else if(op == '+') v->value += value;
+	else if(op == '-') v->value -= value;
+	else if(op == '*') v->value *= value;
+	else if(op == '/')
+	{
+		if(value == 0) acri_fail(rt, "division by zero", pos);
+		else v->value /= value;
+	}
+	else if(op == '%')
+	{
+		if(value == 0) acri_fail(rt, "division by zero", pos);
+		else v->value %= value;
+	}
+	else if(op == '&') v->value &= value;
+	else if(op == '|') v->value |= value;
+	else if(op == '^') v->value ^= value;
+}
+
+VD acri_exec_simple(AcriRuntime *rt, INT start, INT end)
+{
+	INT pos;
+	INT type_end;
+	INT name_end;
+	INT op_pos;
+	INT op_len;
+	INT op_kind;
+	INT value;
+	C name[ACRI_NAME_MAX];
+	C line[ACRI_LINE_MAX];
+	AcriVar *v;
+
+	pos = acri_skip(rt, start, end);
+	while(end > pos &&
+	     (acri_ch(rt, end - 1) == ' ' || acri_ch(rt, end - 1) == '\t' ||
+	      acri_ch(rt, end - 1) == '\r' || acri_ch(rt, end - 1) == '\n' ||
+	      acri_ch(rt, end - 1) == ';'))
+		end--;
+	if(pos >= end)
+		return;
+
+	if(acri_parse_type(rt, pos, end, &type_end))
+	{
+		pos = type_end;
+		for(;;)
+		{
+			name_end = acri_read_name(rt, pos, end, name);
+			if(name_end < 0)
+			{
+				acri_fail(rt, "missing variable name", pos);
+				return;
+			}
+			v = acri_make_var(rt, name, pos);
+			pos = acri_skip(rt, name_end, end);
+			if(acri_ch(rt, pos) == '=')
+			{
+				pos++;
+				op_pos = pos;
+				while(op_pos < end && acri_ch(rt, op_pos) != ',')
+					op_pos++;
+				value = acri_eval_slice(rt, pos, op_pos);
+				if(v) v->value = value;
+				pos = op_pos;
+			}
+			if(acri_ch(rt, pos) != ',')
+				break;
+			pos++;
+		}
+		return;
+	}
+
+	if(acri_ch(rt, pos) == '+' && acri_ch(rt, pos + 1) == '+')
+	{
+		name_end = acri_read_name(rt, pos + 2, end, name);
+		v = acri_find_var(rt, name);
+		if(!v) acri_fail(rt, "unknown variable", pos);
+		else v->value++;
+		return;
+	}
+	if(acri_ch(rt, pos) == '-' && acri_ch(rt, pos + 1) == '-')
+	{
+		name_end = acri_read_name(rt, pos + 2, end, name);
+		v = acri_find_var(rt, name);
+		if(!v) acri_fail(rt, "unknown variable", pos);
+		else v->value--;
+		return;
+	}
+
+	name_end = acri_read_name(rt, pos, end, name);
+	if(name_end >= 0)
+	{
+		name_end = acri_skip(rt, name_end, end);
+		if(name_end + 1 < end && acri_ch(rt, name_end) == '+' && acri_ch(rt, name_end + 1) == '+')
+		{
+			v = acri_find_var(rt, name);
+			if(!v) acri_fail(rt, "unknown variable", pos);
+			else v->value++;
+			return;
+		}
+		if(name_end + 1 < end && acri_ch(rt, name_end) == '-' && acri_ch(rt, name_end + 1) == '-')
+		{
+			v = acri_find_var(rt, name);
+			if(!v) acri_fail(rt, "unknown variable", pos);
+			else v->value--;
+			return;
+		}
+	}
+
+	op_pos = acri_top_operator(rt, pos, end, &op_len, &op_kind);
+	if(op_pos >= 0)
+	{
+		name_end = acri_read_name(rt, pos, op_pos, name);
+		if(name_end < 0 || acri_skip(rt, name_end, op_pos) != op_pos)
+		{
+			acri_fail(rt, "assignment needs a variable", pos);
+			return;
+		}
+		v = acri_find_var(rt, name);
+		if(!v)
+		{
+			acri_fail(rt, "unknown variable", pos);
+			return;
+		}
+		value = acri_eval_slice(rt, op_pos + op_len, end);
+		acri_apply_assignment(rt, v, op_kind, value, op_pos);
+		return;
+	}
+
+	acri_copy_statement(rt, start, end, line);
+	if(line[0] && line[strlen(line) - 1] != ';' && strlen(line) < ACRI_LINE_MAX - 1)
+	{
+		line[strlen(line) + 1] = 0;
+		line[strlen(line)] = ';';
+	}
+	if(acri_shell_statement(line))
+	{
+		if(wm_on &&
+		   wm_task_exec_win >= 0 &&
+		   wm_task_exec_win < WM_WINDOWS &&
+		   wm_windows[wm_task_exec_win].alive &&
+		   !starts(line, "run(\""))
+		{
+			wm_task_run_line(wm_task_exec_win, line);
+
+			if(wm_windows[wm_task_exec_win].task_wake != 0 ||
+			   wm_windows[wm_task_exec_win].tune_running)
+				acri_wait_for_wm(wm_task_exec_win);
+		}
+		else
+			shell_exec(line);
+
+		return;
+	}
+
+	acri_eval_slice(rt, pos, end);
+}
+
+VD acri_exec_if(AcriRuntime *rt, INT *cursor, INT limit)
+{
+	INT pos;
+	INT close;
+	INT body_start;
+	INT body_end;
+	INT after;
+	INT else_start;
+	INT else_end;
+	INT condition;
+
+	pos = acri_skip(rt, *cursor + 2, limit);
+	if(acri_ch(rt, pos) != '(')
+	{
+		acri_fail(rt, "if needs (condition)", pos);
+		return;
+	}
+	close = acri_find_match(rt, pos, limit, '(', ')');
+	if(close < 0)
+	{
+		acri_fail(rt, "unclosed if condition", pos);
+		return;
+	}
+	condition = acri_eval_slice(rt, pos + 1, close);
+	body_start = acri_skip(rt, close + 1, limit);
+	body_end = acri_statement_end(rt, body_start, limit);
+	after = acri_skip(rt, body_end, limit);
+	else_start = -1;
+	else_end = after;
+	if(acri_word_at(rt, after, limit, "else"))
+	{
+		else_start = acri_skip(rt, after + 4, limit);
+		else_end = acri_statement_end(rt, else_start, limit);
+	}
+	if(condition)
+		acri_exec_range(rt, body_start, body_end);
+	else if(else_start >= 0)
+		acri_exec_range(rt, else_start, else_end);
+	if(else_start >= 0)
+		*cursor = else_end;
+	else
+		*cursor = body_end;
+}
+
+VD acri_exec_while(AcriRuntime *rt, INT *cursor, INT limit)
+{
+	INT pos;
+	INT close;
+	INT body_start;
+	INT body_end;
+	INT loops;
+
+	pos = acri_skip(rt, *cursor + 5, limit);
+	if(acri_ch(rt, pos) != '(')
+	{
+		acri_fail(rt, "while needs (condition)", pos);
+		return;
+	}
+	close = acri_find_match(rt, pos, limit, '(', ')');
+	if(close < 0)
+	{
+		acri_fail(rt, "unclosed while condition", pos);
+		return;
+	}
+	body_start = acri_skip(rt, close + 1, limit);
+	body_end = acri_statement_end(rt, body_start, limit);
+	loops = 0;
+	while(!rt->error && !rt->returned && acri_eval_slice(rt, pos + 1, close))
+	{
+		acri_exec_range(rt, body_start, body_end);
+		if(rt->breaking)
+		{
+			rt->breaking = 0;
+			break;
+		}
+		if(rt->continuing)
+			rt->continuing = 0;
+		loops++;
+		if(loops >= ACRI_LOOP_LIMIT)
+		{
+			acri_fail(rt, "loop limit reached", pos);
+			break;
+		}
+	}
+	*cursor = body_end;
+}
+
+VD acri_for_parts(AcriRuntime *rt, INT start, INT end,
+	INT *semi1, INT *semi2)
+{
+	INT pos;
+	INT paren;
+	C quote;
+	C c;
+
+	*semi1 = -1;
+	*semi2 = -1;
+	paren = 0;
+	quote = 0;
+	for(pos = start; pos < end; pos++)
+	{
+		c = acri_ch(rt, pos);
+		if(quote)
+		{
+			if(c == '\\') pos++;
+			else if(c == quote) quote = 0;
+			continue;
+		}
+		if(c == '"' || c == '\'') { quote = c; continue; }
+		if(c == '(') { paren++; continue; }
+		if(c == ')') { paren--; continue; }
+		if(c == ';' && paren == 0)
+		{
+			if(*semi1 < 0) *semi1 = pos;
+			else { *semi2 = pos; return; }
+		}
+	}
+}
+
+VD acri_exec_for(AcriRuntime *rt, INT *cursor, INT limit)
+{
+	INT pos;
+	INT close;
+	INT semi1;
+	INT semi2;
+	INT body_start;
+	INT body_end;
+	INT loops;
+	INT condition;
+
+	pos = acri_skip(rt, *cursor + 3, limit);
+	if(acri_ch(rt, pos) != '(')
+	{
+		acri_fail(rt, "for needs (...) ", pos);
+		return;
+	}
+	close = acri_find_match(rt, pos, limit, '(', ')');
+	if(close < 0)
+	{
+		acri_fail(rt, "unclosed for header", pos);
+		return;
+	}
+	acri_for_parts(rt, pos + 1, close, &semi1, &semi2);
+	if(semi1 < 0 || semi2 < 0)
+	{
+		acri_fail(rt, "for needs init; condition; step", pos);
+		return;
+	}
+	body_start = acri_skip(rt, close + 1, limit);
+	body_end = acri_statement_end(rt, body_start, limit);
+	acri_exec_simple(rt, pos + 1, semi1);
+	loops = 0;
+	while(!rt->error && !rt->returned)
+	{
+		condition = 1;
+		if(acri_skip(rt, semi1 + 1, semi2) < semi2)
+			condition = acri_eval_slice(rt, semi1 + 1, semi2);
+		if(!condition)
+			break;
+		acri_exec_range(rt, body_start, body_end);
+		if(rt->breaking)
+		{
+			rt->breaking = 0;
+			break;
+		}
+		if(rt->continuing)
+			rt->continuing = 0;
+		acri_exec_simple(rt, semi2 + 1, close);
+		loops++;
+		if(loops >= ACRI_LOOP_LIMIT)
+		{
+			acri_fail(rt, "loop limit reached", pos);
+			break;
+		}
+	}
+	*cursor = body_end;
+}
+
+VD acri_exec_range(AcriRuntime *rt, INT start, INT end)
+{
+	INT pos;
+	INT stmt_end;
+	INT semicolon;
+	INT ps;
+	INT pe;
+	INT bs;
+	INT be;
+	INT next;
+	C name[ACRI_NAME_MAX];
+
+	pos = acri_skip(rt, start, end);
+	if(acri_ch(rt, pos) == '{')
+	{
+		next = acri_find_match(rt, pos, end, '{', '}');
+		if(next < 0)
+		{
+			acri_fail(rt, "unclosed block", pos);
+			return;
+		}
+		pos++;
+		end = next;
+	}
+
+	while(pos < end && !rt->error && !rt->returned &&
+	      !rt->breaking && !rt->continuing)
+	{
+		pos = acri_skip(rt, pos, end);
+		if(pos >= end || acri_ch(rt, pos) == '}')
+			break;
+
+		if(acri_detect_function(rt, pos, end, name, &ps, &pe, &bs, &be, &next))
+		{
+			pos = next;
+			continue;
+		}
+		if(acri_word_at(rt, pos, end, "if"))
+		{
+			acri_exec_if(rt, &pos, end);
+			continue;
+		}
+		if(acri_word_at(rt, pos, end, "while"))
+		{
+			acri_exec_while(rt, &pos, end);
+			continue;
+		}
+		if(acri_word_at(rt, pos, end, "for"))
+		{
+			acri_exec_for(rt, &pos, end);
+			continue;
+		}
+		if(acri_word_at(rt, pos, end, "return"))
+		{
+			semicolon = acri_find_top_semicolon(rt, pos + 6, end);
+			if(acri_skip(rt, pos + 6, semicolon) < semicolon)
+				rt->return_value = acri_eval_slice(rt, pos + 6, semicolon);
+			else
+				rt->return_value = 0;
+			rt->returned = 1;
+			if(semicolon < end)
+				pos = semicolon + 1;
+			else
+				pos = end;
+			continue;
+		}
+		if(acri_word_at(rt, pos, end, "break"))
+		{
+			rt->breaking = 1;
+			pos = acri_statement_end(rt, pos, end);
+			continue;
+		}
+		if(acri_word_at(rt, pos, end, "continue"))
+		{
+			rt->continuing = 1;
+			pos = acri_statement_end(rt, pos, end);
+			continue;
+		}
+		if(acri_ch(rt, pos) == '{')
+		{
+			stmt_end = acri_statement_end(rt, pos, end);
+			acri_exec_range(rt, pos, stmt_end);
+			pos = stmt_end;
+			continue;
+		}
+
+		stmt_end = acri_statement_end(rt, pos, end);
+		acri_exec_simple(rt, pos, stmt_end);
+		rt->top_statements++;
+		pos = stmt_end;
+	}
+}
+
+VD acri_reset(AcriRuntime *rt, C *data, INT size)
+{
+	INT i;
+	INT j;
+
+	rt->data = data;
+	rt->size = size;
+	rt->func_count = 0;
+	rt->frame_depth = 0;
+	rt->returned = 0;
+	rt->return_value = 0;
+	rt->breaking = 0;
+	rt->continuing = 0;
+	rt->error = 0;
+	rt->error_pos = 0;
+	rt->error_text = 0;
+	rt->top_statements = 0;
+	for(i = 0; i < ACRI_MAX_VARS; i++)
+		rt->globals[i].used = 0;
+	for(i = 0; i < ACRI_MAX_FUNCS; i++)
+		rt->funcs[i].used = 0;
+	for(i = 0; i < ACRI_MAX_CALLS; i++)
+		for(j = 0; j < ACRI_MAX_LOCAL_VARS; j++)
+			rt->frames[i].vars[j].used = 0;
+}
+
+VD acri_report(AcriRuntime *rt)
+{
+	if(!rt->error)
+		return;
+	pred("Script error: ");
+	if(rt->error_text)
+		pred(rt->error_text);
+	pred(" at byte ");
+	printINT(rt->error_pos);
+	pred("\n");
+}
+
+VD acri_run_data(C *data, INT size)
+{
+	AcriRuntime *rt;
+	AcriFunc *main_fn;
+	INT args[1];
+
+	if(acri_runtime_depth >= ACRI_MAX_RUNTIMES)
+	{
+		pred("Script runtime stack full\n");
+		return;
+	}
+	rt = &acri_runtimes[acri_runtime_depth++];
+	acri_reset(rt, data, size);
+	acri_collect_functions(rt);
+	if(!rt->error)
+		acri_exec_range(rt, 0, size);
+	main_fn = acri_find_func(rt, "main");
+	if(!rt->error && main_fn)
+		acri_call(rt, "main", args, 0, 0);
+	acri_report(rt);
+	acri_runtime_depth--;
+}
+
+
 VD run_script(CC *path)
 {
 	C *data;
 	INT size;
-	INT i;
-	INT j;
-	C line[128];
 
 	if(as_get_file_data(path, &data, &size) != 0)
 	{
@@ -5555,29 +7346,7 @@ VD run_script(CC *path)
 		return;
 	}
 
-	i = 0;
-	while(i < size)
-	{
-		j = 0;
-
-		while(i < size && data[i] != '\n' && j < 127)
-			line[j++] = data[i++];
-
-		line[j] = 0;
-
-		if(data[i] == '\n')
-			i++;
-
-		trim_end(line);
-
-		if(line[0] == 0)
-			continue;
-
-		if(line[0] == '/' && line[1] == '/')
-			continue;
-
-		shell_exec(line);
-	}
+	acri_run_data(data, size);
 }
 
 VD wm_setup(VD)
@@ -5701,12 +7470,12 @@ INT wm_tune_freq(C note, INT accidental, INT octave)
 	f = wm_tune_table[idx];
 	while(octave > 4)
 	{
-		f = f << 1;
+		f *= 2;
 		octave--;
 	}
 	while(octave < 4)
 	{
-		f = f >> 1;
+		f /= 2;
 		octave++;
 	}
 	if(f < 1)
@@ -6015,7 +7784,7 @@ VD memstat_window_state(INT id, CC **name, u8 *col)
 		*name = "TUNE";
 		*col = 0x1D;
 	}
-	else if(win->task_wake)
+	else if(win->task_wake != 0)
 	{
 		*name = "SLEEP";
 		*col = 0x1D;
@@ -6336,27 +8105,26 @@ VD wm_task_start_script(INT id, CC *path)
 	con_load(&wm_windows[id]);
 	wm_task_clean_path(path, clean);
 
-	if(as_get_file_data(clean, &data, &size) != 0)
-	{
-		pred("File not found\n");
-		con_save(&wm_windows[id]);
-		wm_task_exec_win = old_exec;
-		wm_active = old_active;
-		if(wm_active_ok())
-			con_load(&wm_windows[wm_active]);
-		wm_windows[id].task_running = 0;
-		wm_windows[id].task_sp = 0;
-		return;
-	}
+	wm_windows[id].task_running = 0;
+	wm_windows[id].task_pending = 0;
+	wm_windows[id].task_wake = 0;
+	wm_windows[id].task_sp = 0;
 
-	con_save(&wm_windows[id]);
+	if(as_get_file_data(clean, &data, &size) != 0)
+		pred("File not found\n");
+	else
+		acri_run_data(data, size);
+
+	if(wm_windows[id].alive && wm_active == id)
+		con_save(&wm_windows[id]);
+
 	wm_task_exec_win = old_exec;
-	wm_active = old_active;
+
+	if(wm_active == id)
+		wm_active = old_active;
+
 	if(wm_active_ok())
 		con_load(&wm_windows[wm_active]);
-
-	wm_windows[id].task_sp = 0;
-	wm_task_begin_script_data(id, data, size);
 }
 
 VD wm_task_chain_script(INT id, CC *path)
@@ -6533,7 +8301,10 @@ INT wm_task_run_line(INT id, C *line)
 	else if(starts(line, "run(\"") && ends(line, "\");"))
 	{
 		wm_extract_quoted_arg(line, arg);
-		wm_task_chain_script(id, arg);
+		if(wm_windows[id].task_running)
+			wm_task_chain_script(id, arg);
+		else
+			wm_task_start_script(id, arg);
 	}
 	else
 	{
@@ -6589,16 +8360,16 @@ VD wm_task_step(INT id)
 		return;
 
 	win = &wm_windows[id];
-	had_wait = win->tune_running || win->task_wake;
+	had_wait = win->tune_running || win->task_wake != 0;
 	if(wm_tune_step(id))
 		return;
-	if(win->task_wake)
+	if(win->task_wake != 0)
 	{
 		if(total_ticks < win->task_wake)
 			return;
 		win->task_wake = 0;
 	}
-	if(had_wait && !win->task_running && !win->task_pending && !win->task_wake && !win->tune_running)
+	if(had_wait && !win->task_running && !win->task_pending && win->task_wake == 0 && !win->tune_running)
 	{
 		wm_task_prompt_if_idle(id);
 		return;
@@ -6610,7 +8381,7 @@ VD wm_task_step(INT id)
 		win->task_pending = 0;
 		if(wm_task_run_line(id, line))
 			return;
-		if(wm_windows[id].alive && !wm_windows[id].task_running && !wm_windows[id].task_pending && !wm_windows[id].task_wake && !wm_windows[id].tune_running)
+		if(wm_windows[id].alive && !wm_windows[id].task_running && !wm_windows[id].task_pending && wm_windows[id].task_wake == 0 && !wm_windows[id].tune_running)
 		{
 			wm_task_prompt_if_idle(id);
 			return;
@@ -6744,7 +8515,7 @@ VD wm_tasks_step(VD)
 			continue;
 		if(!wm_windows[id].task_pending &&
 		   !wm_windows[id].task_running &&
-		   !wm_windows[id].task_wake &&
+		   wm_windows[id].task_wake == 0 &&
 		   !wm_windows[id].tune_running)
 			continue;
 
@@ -6769,9 +8540,10 @@ VD wm_handle_key(INT c)
 	WMWindow *win;
 	INT maxx;
 	INT maxy;
+	INT n;
 	C line[WM_INPUT_MAX];
 
-	if(c == '\t')
+	if(c == '\t' && ctrl)
 	{
 		wm_switch();
 		return;
@@ -6808,6 +8580,14 @@ VD wm_handle_key(INT c)
 	{
 		color = 0x1F;
 
+		if(c == '\t')
+		{
+			for(n = 0; n < 8; n++)
+				as_edit_key_win(wm_active, ' ');
+			con_save(win);
+			return;
+		}
+
 		if(c == 6 || c == 3)
 		{
 			con_save(win);
@@ -6836,6 +8616,14 @@ VD wm_handle_key(INT c)
 	}
 
 	color = 0x1A;
+
+	if(c == '\t')
+	{
+		for(n = 0; n < 8; n++)
+			wm_insert_C_here(wm_active, ' ');
+		con_save(win);
+		return;
+	}
 
 	if(c == 6)
 	{
