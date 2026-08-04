@@ -371,7 +371,7 @@ print_lyrics()
 		if [[ $token == T* ]]; then
 			active_tempo=${token#T}
 		else
-			printf 'tune("T%s %s");\n' \
+			printf '        tune("T%s %s");\n' \
 				"$active_tempo" \
 				"$token"
 		fi

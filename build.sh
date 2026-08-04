@@ -248,7 +248,8 @@ build()
 	dd if=Boot/FIAEBOOT.BIN of=AneoEngine.ISO bs=512 count=1 conv=notrunc
 
 	echo "[*] Removing trash..."
-	rm *.o Kernel.ELF
+	mv Kernel.ELF Boot
+	rm *.o
 
 	echo "[+] Done!"
 }

@@ -5316,6 +5316,8 @@ VD shell_exec(C *line)
 		triple_fault();
 	else if(strcmp(line, "n;") == 0)
 		entropy();
+	else if(strcmp(line, "test;") == 0)
+                printx((u32)clear);
 	else if(strcmp(line, "cpdrive;") == 0)
 	{
 		clear();
