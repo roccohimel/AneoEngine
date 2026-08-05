@@ -1,10 +1,11 @@
 #include <stdint.h>
+
 TD U C u8;
 TD U S u16;
 TD U INT u32;
-TD U INT u32;
 TD ULL u64;
 
+extern VD printx(u32 x);
 extern VD printint(U INT n);
 extern u8 color;
 extern VD print(CC *s);
@@ -18,27 +19,37 @@ SC inline u64 rdtsc()
 	__asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
 	return ((u64)hi << 32) | lo;
 }
-u32 rand5()
+
+SC inline u32 rand32()
 {
-	u64 t = rdtsc();
-	t ^= t >> 33;
-	t *= 0xff51afd7ed558ccdULL;
-	t ^= t >> 33;
-	t *= 0xc4ceb9fe1a85ec53ULL;
-	t ^= t >> 33;
-	return ((u32)t % 90000) + 10000;
+	u32 x = (u32)rdtsc();
+
+	x ^= x << 13;
+	x ^= x >> 17;
+	x ^= x << 5;
+
+	x ^= (u32)rdtsc();
+	x += 0x9E3779B9;
+
+	return x;
 }
+
 
 VD entropy(VD)
 {
-	for(INT i = 0; i < 3; i++)
-	{
-		u32 n = rand5();
-		u8 oldcolor = color;
-		color = 0x1A;
-		printint(n);
-		color = oldcolor;
-		nosound();
-	}
-	putc(' ');
+        U i;
+        u32 hi = rand32();
+
+        for(i = 0; i < 1000; i++);
+
+        u32 lo = rand32();
+
+        u8 oldcolor = color;
+        color = 0x1A;
+
+        printx(hi);
+        printx(lo);
+
+        color = oldcolor;
+        putc(' ');
 }
