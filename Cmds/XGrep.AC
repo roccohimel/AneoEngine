@@ -57,6 +57,12 @@ vmoff
 wm
 */
 
+TD ST {
+	CC *name;
+	CC *alias;
+	VD *addr;
+} func_entry;
+
 INT xgrep(CC *func)
 {
 	u32 addr_ADDR = (u32)addr;
@@ -108,11 +114,4 @@ INT xgrep(CC *func)
 	u32 vmoff_ADDR = (u32)vmoff;
 	u32 wm_ADDR = (u32)wm;
 
-	if(strcmp(func, "addr") == 0) printad("addr", addr_ADDR);
-	if(strcmp(func, "as_cat") == 0 || strcmp(func, "cat") == 0) printad("as_cat", as_cat_ADDR);
-	if(strcmp(func, "as_cd") == 0 || strcmp(func, "cd") == 0) printad("as_cd", as_cd_ADDR);
-	if(strcmp(func, "as_cp") == 0 || strcmp(func, "cp") == 0) printad("as_cp", as_cp_ADDR);
-	if(strcmp(func, "as_edit") == 0 || strcmp(func, "edit") == 0) printad("as_edit", as_edit_ADDR);
-	if(strcmp(func, "as_ls") == 0 || strcmp(func, "ls") == 0) printad("as_ls", as_ls_ADDR);
-	if(strcmp(func, "as_mkdir") == 0 || strcmp(func, "mkdir") == 0) printad("as_mkdir", as_mkdir_ADDR);
-
+	SC 
