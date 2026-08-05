@@ -4,14 +4,24 @@ Please read the LICENSE before software redistribution.
 
 You can either burn a CD/DVD or flash a USB with the AneoEngine.ISO file.
 You can also boot it via virtual machine as long as yours supports
-floppy disc drives, which most of them do. I recommend QEMU since you
-are not installing anything, AneoEngine is a live image.
+CD-ROM disc drives, which most of them do. I recommend QEMU because audio
+works and it's very fast. All operating system source code (excluding the
+compiler) can only be compiled using my AneoC compiler, which you can get
+by downloading the source code. To compile with my AneoC compile, make 
+sure the compiler itself is compiled (execute "./Compiler/CTC.sh"), and
+executing "./build.sh". That build script will assemble AneoEngine's
+bootloaders and compile the kernel's source code. The build script will
+create an "AneoEngine.ISO" file in the folder. You can also run the ISO
+(make sure you have QEMU installed) by adding the "-RC1" argument to the
+end of "./build.sh". Any errors that occur in the build process is entirely
+on you sense AneoEngine compilation requires minimal dependencies and
+everything has been tested perfectly on Debian stable. 
 
 AneoEngine is supported by any 32-bit CPU, any 64-bit CPU that supports
 Legacy BIOS boot will also run AneoEngine. ARM-64 and RISC-V are not
 supported.
 
-AneoEngine requires ar least 512 megabytes of RAM.
+AneoEngine requires at least 50 kB of RAM.
 
 AneoEngine files are initialized via the official shell script which
 scans files from the "Root" folder in the AneoEngine source code,
@@ -19,3 +29,7 @@ and makes AnchorSand commands of them and puts them into kmain. I know
 this sounds inefficient, but it happens VERY fast. AnchorSand is a
 custom filesystem that is used exclusively in AneoEngine and doesn't
 support FAT12 or FAT32, but is 100% open-source.
+
+All the source code, including the compiler, can be found at the
+AneoEngine official website, and the repository.
+https://roccohimel.github.io/AneoEngine/
