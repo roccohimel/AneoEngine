@@ -57,61 +57,86 @@ vmoff
 wm
 */
 
-TD ST {
-	CC *name;
-	CC *alias;
-	VD *addr;
-} func_entry;
+typedef struct
+{
+        CC *name;
+        u32 addr;
+} func_addr;
+
+VD xgrep_lister(CC *NAME, CC *FUNCTION, CC *COMMAND)
+{
+	print("%S
+
+VD xgrep_list(VD)
+{
+	print("AneoEngine Address Lookup\n");
+	print("Usage: xgrep(&<function>);\n");
+	print("NAME                   FUNCTION   COMMAND\n");
+	print("Boot address display   &addr      addr\n");
+	print("
 
 INT xgrep(CC *func)
 {
-	u32 addr_ADDR = (u32)addr;
-	u32 as_cat_ADDR = (u32)as_cat;
-	u32 as_cd_ADDR = (u32)as_cd;
-	u32 as_cp_ADDR = (u32)as_cp;
-	u32 as_edit_ADDR = (u32)as_edit;
-	u32 as_ls_ADDR = (u32)as_ls;
-	u32 as_mkdir_ADDR = (u32)as_mkdir;
-	u32 as_mv_ADDR = (u32)as_mv;
-	u32 as_nodes_ADDR = (u32)as_nodes;
-	u32 as_pwd_ADDR = (u32)as_pwd;
-	u32 as_cwd_ADDR = (u32)as_cwd;
-	u32 as_rm_ADDR = (u32)as_rm;
-	u32 as_save_to_disk_ADDR = (u32)as_save_to_disk;
-	u32 as_touch_ADDR = (u32)as_touch;
-	u32 as_write_ADDR = (u32)as_write;
-	u32 ata_debug_ADDR = (u32)ata_debug;
-	u32 beep_ADDR = (u32)beep;
-	u32 clear_ADDR = (u32)clear;
-	u32 color_ADDR = (u32)color;
-	u32 comment_ADDR = (u32)comment;
-	u32 cpdrive_ADDR = (u32)cpdrive;
-	u32 entropy_ADDR = (u32)entropy;
-	u32 halt_ADDR = (u32)halt;
-	u32 idt_ADDR = (u32)idt;
-	u32 inb_ADDR = (u32)inb;
-	u32 inl_ADDR = (u32)inl;
-	u32 inw_ADDR = (u32)inw;
-	u32 kmain_ADDR = (u32)kmain;
-	u32 memstat_ADDR = (u32)memstat;
-	u32 nosound_ADDR = (u32)nosound;
-	u32 outb_ADDR = (u32)outb;
-	u32 outl_ADDR = (u32)outl;
-	u32 outw_ADDR = (u32)outw;
-	u32 print_ADDR = (u32)print;
-	u32 printint_ADDR = (u32)printint;
-	u32 printx_ADDR = (u32)printx;
-	u32 putc_ADDR = (u32)putc;
-	u32 rand5_ADDR = (u32)rand5;
-	u32 readline_ADDR = (u32)readline;
-	u32 run_script_ADDR = (u32)run_script;
-	u32 scroll_ADDR = (u32)scroll;
-	u32 shell_ADDR = (u32)shell;
-	u32 shell_exec_ADDR = (u32)shell_exec;
-	u32 sleep_ADDR = (u32)sleep;
-	u32 tune_ADDR = (u32)tune;
-	u32 triple_fault_ADDR = (u32)triple_fault;
-	u32 vmoff_ADDR = (u32)vmoff;
-	u32 wm_ADDR = (u32)wm;
+        func_addr funcs[] =
+        {
+                { "&addr", (u32)addr },
+                { "&as_cat", (u32)as_cat },
+                { "&as_cd", (u32)as_cd },
+                { "&as_cp", (u32)as_cp },
+                { "&as_edit", (u32)as_edit },
+                { "&as_ls", (u32)as_ls },
+                { "&as_mkdir", (u32)as_mkdir },
+                { "&as_mv", (u32)as_mv },
+                { "&as_nodes", (u32)as_nodes },
+                { "&as_pwd", (u32)as_pwd },
+                { "&as_cwd", (u32)as_cwd },
+                { "&as_rm", (u32)as_rm },
+                { "&as_save_to_disk", (u32)as_save_to_disk },
+                { "&as_touch", (u32)as_touch },
+                { "&as_write", (u32)as_write },
+                { "&ata_debug", (u32)ata_debug },
+                { "&beep", (u32)beep },
+                { "&clear", (u32)clear },
+                { "&color", (u32)color },
+                { "&comment", (u32)comment },
+                { "&cpdrive", (u32)cpdrive },
+                { "&entropy", (u32)entropy },
+                { "&halt", (u32)halt },
+                { "&idt", (u32)idt },
+                { "&inb", (u32)inb },
+                { "&inl", (u32)inl },
+                { "&inw", (u32)inw },
+                { "&kmain", (u32)kmain },
+                { "&memstat", (u32)memstat },
+                { "&nosound", (u32)nosound },
+                { "&outb", (u32)outb },
+                { "&outl", (u32)outl },
+                { "&outw", (u32)outw },
+                { "&print", (u32)print },
+                { "&printint", (u32)printint },
+                { "&printx", (u32)printx },
+                { "&putc", (u32)putc },
+                { "&rand5", (u32)rand5 },
+                { "&readline", (u32)readline },
+                { "&run_script", (u32)run_script },
+                { "&scroll", (u32)scroll },
+                { "&shell", (u32)shell },
+                { "&shell_exec", (u32)shell_exec },
+                { "&sleep", (u32)sleep },
+                { "&tune", (u32)tune },
+                { "&triple_fault", (u32)triple_fault },
+                { "&vmoff", (u32)vmoff },
+                { "&wm", (u32)wm }
+        };
 
-	SC 
+        u32 count = sizeof(funcs) / sizeof(funcs[0]);
+        for(u32 i = 0; i < count; i++)
+        {
+                if(strcmp(func, funcs[i].name) == 0)
+                {
+                        printx(funcs[i].addr);
+                        return 1;
+                }
+        }
+        return 0;
+}
