@@ -122,14 +122,14 @@ VD startupSeq(VD)
 	as_mkdir("Index");
 	as_cd("Index");
 	as_touch("Main.AC");
-	as_write("Main.AC", "//Index penalization\n\nprint(\"\\n\\c[dc* Useful files *\\n\");\nprint(\"Extras:\\n\");\nprint(\"\\c[0x1C/Docs/LICENSE\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Keymap.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Logo.TXT\\c[dc\\n\");\nprint(\"Everything:\\n\");\nprint(\"\\c[0x1C/RunCmds.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Home/CHANGELOG\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Index/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/MInstall/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Music/0_Note.TXT\\c[dc\\n\");\nprint(\"Help:\\n\");\nprint(\"\\c[0x1C/Help/AboutAneoEngine.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/CommandHelp.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/Controls.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Docs/FAQ.TXT\\c[dc\\n\");\ncd(\"/Home\");");
+	as_write("Main.AC", "//Index penalization\n\nprint(\"\\nThe AneoEngine Operating System\\n\");\nprint(\"Creator: Rocco Himel\\n\");\nprint(\"\\c[0x1Aroccohimel.github.io/AneoEngine\\n\\n\");\n\nprint(\"\\c[dc* Useful files *\\n\");\nprint(\"Extras:\\n\");\nprint(\"\\c[0x1C/Docs/LICENSE\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Keymap.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Misc/Logo.TXT\\c[dc\\n\");\nprint(\"Everything:\\n\");\nprint(\"\\c[0x1C/RunCmds.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Home/CHANGELOG\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Index/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/MInstall/Main.AC\\c[dc\\n\");\nprint(\"\\c[0x1C/Everist/Music/0_Note.TXT\\c[dc\\n\");\nprint(\"Help:\\n\");\nprint(\"\\c[0x1C/Help/AboutAneoEngine.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/CommandHelp.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Help/Controls.TXT\\c[dc\\n\");\nprint(\"\\c[0x1C/Docs/FAQ.TXT\\c[dc\\n\");\ncd(\"/Home\");");
 	as_cd("..");
 	as_mkdir("MInstall");
 	as_cd("MInstall");
 	as_touch("Main.AC");
 	as_write("Main.AC", "cd(\"/\");\nprint(\"[*] Removing /RunCmds.AC\\n\");\nrm(\"RunCmds.AC\");\nprint(\"[*] Copying /Everist/MInstall/RunCmds.AC to /RunCmds.AC\\n\");\ncp(\"/Everist/MInstall/RunCmds.AC /RunCmds.AC\");\nsave;\nprint(\"[!] Done!\\n\");\n");
 	as_touch("RunCmds.AC");
-	as_write("RunCmds.AC", "cd(\"/Home\");\nls;\nsaveity;");
+	as_write("RunCmds.AC", "print(\"\\nThe AneoEngine Operating System\\n\");\nprint(\"Creator: Rocco Himel\\n\");\nprint(\"\\c[0x1Aroccohimel.github.io/AneoEngine\\n\\n\");\ncd(\"/Home\");\nls;\nsaveity;");
 	as_cd("..");
 	as_mkdir("Music");
 	as_cd("Music");
@@ -222,7 +222,7 @@ VD startupSeq(VD)
 	as_write("Logo.TXT", "---------------------\n---------------------\n---------------------\n---------------------\n--------------@@-----\n-------------@-@@----\n------------@--@@----\n-----------@---@@----\n----------@@@@@@@@---\n---------@------@@---\n-------@@@-----@@@@@-\n---------------------");
 	as_cd("..");
 	as_touch("RunCmds.AC");
-	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\n\nls;\ncomment(\"Run 'cpdrive;' to install AneoEngine.\");");
+	as_write("RunCmds.AC", "//AneoEngine run commands (kind of like .bashrc on Linux)\n\nprint(\"\\nThe AneoEngine Operating System\\n\");\nprint(\"Creator: Rocco Himel\\n\");\nprint(\"\\c[0x1Aroccohimel.github.io/AneoEngine\\n\\n\");\n\ncat(\"/Misc/Logo.TXT\");\ncd(\"/Home\");\n\nls;\ncomment(\"Run 'cpdrive;' to install AneoEngine.\");");
 	/* ANCHORSAND SEED END */
 	print("*AnchorSand seed end*\n");
 	putc('\n');

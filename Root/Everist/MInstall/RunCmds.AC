@@ -1,3 +1,6 @@
+print("\nThe AneoEngine Operating System\n");
+print("Creator: Rocco Himel\n");
+print("\c[0x1Aroccohimel.github.io/AneoEngine\n\n");
 cd("/Home");
 ls;
 saveity;

@@ -1,6 +1,10 @@
 //Index penalization
 
-print("\n\c[dc* Useful files *\n");
+print("\nThe AneoEngine Operating System\n");
+print("Creator: Rocco Himel\n");
+print("\c[0x1Aroccohimel.github.io/AneoEngine\n\n");
+
+print("\c[dc* Useful files *\n");
 print("Extras:\n");
 print("\c[0x1C/Docs/LICENSE\c[dc\n");
 print("\c[0x1C/Misc/Keymap.AC\c[dc\n");
