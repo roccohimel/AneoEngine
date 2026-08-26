@@ -5400,6 +5400,12 @@ VD shell_exec(C *line)
 		rmsemi(line);
 		comment(line + 9);
 	}
+	else if(starts(line, "write(") && ends(line, ");"))
+	{
+		rmsemia(line);
+		as_two_args(line + 6, arg1, arg2);
+		as_write(arg1, arg2);
+	}	
 	else if(starts(line, "cp(\"") && ends(line, "\");"))
 	{
 		rmsemi(line);

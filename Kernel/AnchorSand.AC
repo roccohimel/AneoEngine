@@ -328,13 +328,6 @@ INT as_mkdir(CC *path)
 
 	if(parent == -1)
 		return -1;
-
-	if(as_nodes[parent].type != AS_DIR)
-		return -1;
-
-	return as_mkdir_at(parent, name);
-}
-
 INT as_touch(CC *path)
 {
 	C parent_path[AS_NAME_MAX * 4];
@@ -348,6 +341,13 @@ INT as_touch(CC *path)
 	if(parent == -1)
 		return -1;
 
+
+	if(as_nodes[parent].type != AS_DIR)
+		return -1;
+
+	return as_mkdir_at(parent, name);
+}
+
 	if(as_nodes[parent].type != AS_DIR)
 		return -1;
 
@@ -360,43 +360,38 @@ INT as_write(CC *path, CC *text)
 	C name[AS_NAME_MAX];
 	INT parent;
 	INT n;
+	INT len;
 	INT i;
-
 	as_split_path(path, parent_path, name);
-
 	parent = as_resolve(parent_path);
-
+	
 	if(parent == -1)
 		return -1;
-
+	
 	if(as_nodes[parent].type != AS_DIR)
 		return -1;
-
+	
 	n = as_find_child(parent, name);
-
+	
 	if(n == -1)
 	{
-		if(as_touch_at(parent, name) != 0)
-			return -1;
-
 		n = as_find_child(parent, name);
 	}
-
+	
 	if(as_nodes[n].type != AS_FILE)
 		return -1;
-
-	for(i = 0; text[i] && i < AS_DATA_MAX - 1; i++)
-		as_nodes[n].data[i] = text[i];
-
-	as_nodes[n].data[i] = 0;
-	as_nodes[n].size = i;
-
+	
+	len = as_nodes[n].size;
+	
+	for(i = 0; text[i] && len + i < AS_DATA_MAX - 1; i++)
+		as_nodes[n].data[len + i] = text[i];
+	
+	as_nodes[n].data[len + i] = 0;
+	as_nodes[n].size = len + i;
 	if(saveit == 1)
                 as_save_to_disk();
-
 	return 0;
 }
-
 VD as_cat(CC *path)
 {
 	INT n;
