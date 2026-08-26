@@ -8,6 +8,7 @@ TD U INT u32;
 TD ULL u64;
 
 //import all AneoEngine funtions
+extern VD convert(CC *strhex);
 extern VD entropy(VD);
 extern VD pit_init_1000hz(VD);
 extern u16 pit_read_counter(VD);
@@ -4087,15 +4088,13 @@ VD rmsemia(C *line)
 {
         if (!line)
                 return;
-
         INT i = 0;
         INT j = 0;
-
         while (line[i])
         {
                 if (line[i] == ')' && line[i + 1] == ';')
                 {
-                        i += 3;
+                        i += 2;
                 }
                 else
                 {
@@ -5298,6 +5297,8 @@ VD shell_exec(C *line)
 	{
 		triple_fault();
 	}
+	else if(strcmp(line, "index;") == 0)
+		run_script("/Everist/Index/Main.AC");
 	else if(strcmp(line, "cls;") == 0)
 		clear();
 	else if(strcmp(line, "mm;") == 0)
@@ -5359,6 +5360,11 @@ VD shell_exec(C *line)
 		memstat();
 	else if(strcmp(line, "ls;") == 0)
 		as_ls();
+        else if(starts(line, "convert(") && ends(line, ");"))
+        {
+                rmsemia(line);
+                convert(line + 8);
+        }
 	else if(starts(line, "ls(\"") && ends(line, "\");"))
 	{
 		rmsemi(line);

@@ -167,6 +167,9 @@ build()
 	echo "[AC] Compiling entropy function..."
 	$AC Cmds/Entropy.AC -o Entropy.o
 
+	echo "[AC] Compiling conversion function..."
+	$AC Cmds/Convert.AC -o Convert.o
+
 	echo "[LD] Creating kernel ELF..."
 	ld -m elf_i386 -Ttext 0x10000 --section-start=.bss=0x100000 -e _start \
 		KEntry.o \
@@ -186,6 +189,7 @@ build()
 		Addr.o \
 		Tune.o \
 		Entropy.o \
+		Convert.o \
 		-o Kernel.ELF
 
 	BSS_END_HEX=$(nm -n Kernel.ELF | awk '$3 == "_end" { print $1; exit }')
