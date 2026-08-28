@@ -9,57 +9,71 @@
 <meta property="og:description" content="AneoEngine x86 Operating System">
 <meta property="og:image" content="Image.PNG">
 </head>
-
-<body bgcolor="#FFFFFF">
-<div style="margin:auto; background:#DDDDDD; border:2px solid #000000; padding:12px; width:850px; font-size:14px; color:#000000;">
-
+<body bgcolor="#000000">
+<div style="margin:auto; background:#0000AA; border:2px solid #FFFFFF; padding:12px; width:850px; font-size:14px; color:#FFFFFF;">
 <center><h1>The AneoEngine Operating System</h1></center>
 <pre style="font-family:monospace; font-size:14px;">
-<center>
-<img src="Demo.PNG" width="640" height="480" alt="AneoEngine Demo">
-AneoEngine 1.0
-</center>
+
+<a href="Downloads.html" style="color:#FF7777;">Download AneoEngine</a>
+
+<a href="HowToInstall.html" style="color:#FF7777;">Installation Guide</a>
+
+<a href="Photos.html" style="color:#FF7777;">Photos</a>
+
+<a href="Intro.html" style="color:#FF7777;">Introduction</a>
+
+<a href="FAQ.html" style="color:#FF7777;">F.A.Q.</a>
+
+<a href="SRCT.html" style="color:#FF7777;">Source Code Tree</a>
+
+<a href="https://github.com/roccohimel/AneoEngine/archive/refs/heads/main.zip" style="color:#FF7777;">Source Code Download</a>
+
+<a href="https://github.com/roccohimel/AneoEngine" style="color:#FF7777;">Source Code Repository</a>
+
+<a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/CHANGELOG" style="color:#FF7777;">Change Log</a>
+
+<a href="AboutRH/AboutRH.html" style="color:#FF7777;">Rocco Himel</a>
 
 =====================================================================================================
-Blogs and entropic values can be found here: <a href="AboutRH/DailyEntry.html" style="color:#0000AA;">The Daily Entry</a>
+Blogs and entropic values can be found here: <a href="AboutRH/DailyEntry.html" style="color:#FF7777;">The Daily Entry</a>
 
-You should also see <a href="AneoC.html" style="color:#0000AA;">The AneoC Programming Language</a>
+You should also see <a href="AneoC.html" style="color:#FF7777;">The AneoC Programming Language</a>
 
-AneoEngine is a free, open-source, <a href="https://en.wikipedia.org/wiki/X86" style="color:#0000AA;">x86</a>, <a href="https://en.wikipedia.org/wiki/Kernel_(operating_system)" style="color:#0000AA;">kernel</a> based, <a href="https://en.wikipedia.org/wiki/Single_address_space_operating_system" style="color:#0000AA;">single-address</a> mapped, multi-task, multi-cored,
+AneoEngine is a free, open-source, <a href="https://en.wikipedia.org/wiki/X86" style="color:#FF7777;">x86</a>, <a href="https://en.wikipedia.org/wiki/Kernel_(operating_system)" style="color:#FF7777;">kernel</a> based, <a href="https://en.wikipedia.org/wiki/Single_address_space_operating_system" style="color:#FF7777;">single-address</a> mapped, multi-task, multi-cored,
 no internet operating system. Rust, and Java is 100% not included or welcomed in my source code.
 Especially not languages that require a VM to be compiled.)
 
-AneoEngine is heavily inspired by <a href="https://en.wikipedia.org/wiki/DOS" style="color:#0000AA;">DOS</a>, specificaly <a href="https://www.freedos.org/" style="color:#0000AA;">FreeDOS</a>. I was inspired by some of it's
+AneoEngine is heavily inspired by <a href="https://en.wikipedia.org/wiki/DOS" style="color:#FF7777;">DOS</a>, specificaly <a href="https://www.freedos.org/" style="color:#FF7777;">FreeDOS</a>. I was inspired by some of it's
 windowing systems for file managment. AneoEngine is written in AneoC, which is an improved version
-of C that I made just for OS-Dev. It can also be used to write <a href="https://en.wikipedia.org/wiki/POSIX" style="color:#0000AA;">POSIX</a> software. It is much more
-lightweight than <a href="https://en.wikipedia.org/wiki/GNU_Compiler_Collection" style="color:#0000AA;">GCC</a> or any other mainstream compiler, it is a self contained compiler,
+of C that I made just for OS-Dev. It can also be used to write <a href="https://en.wikipedia.org/wiki/POSIX" style="color:#FF7777;">POSIX</a> software. It is much more
+lightweight than <a href="https://en.wikipedia.org/wiki/GNU_Compiler_Collection" style="color:#FF7777;">GCC</a> or any other mainstream compiler, it is a self contained compiler,
 freestanding development is the primary target, the compiler can target hosted and freestanding
 software, it has domain-specific knowledge, It removes unnecessary historical baggage, the language
 and toolchain are built in to AneoC, and the syntax is a bit more simple.
 
 Nothing even makes sense anymore! Why have Java, Rust, and Python, when you have C? Java is the worst
-piece of software humanity has ever created. And why Rust? All Rust can do other than automatic <a href="https://en.wikipedia.org/wiki/Memory_management" style="color:#0000AA;">memory</a>
-<a href="https://en.wikipedia.org/wiki/Memory_management" style="color:#0000AA;">allocation</a> (also known as lazyness), is more work for your hands and more lines for your source files
+piece of software humanity has ever created. And why Rust? All Rust can do other than automatic <a href="https://en.wikipedia.org/wiki/Memory_management" style="color:#FF7777;">memory</a>
+<a href="https://en.wikipedia.org/wiki/Memory_management" style="color:#FF7777;">allocation</a> (also known as lazyness), is more work for your hands and more lines for your source files
 (same thing applies for Java).
 
-AneoEngine is obviously not trying to compete with modern operating systems. In fact, <a href="https://en.wikipedia.org/wiki/Linux" style="color:#0000AA;">Linux</a>
-(specificly <a href="https://en.wikipedia.org/wiki/Debian" style="color:#0000AA;">Debian</a>) is objectively better than all operating systems. The idea of inplementing modern
+AneoEngine is obviously not trying to compete with modern operating systems. In fact, <a href="https://en.wikipedia.org/wiki/Linux" style="color:#FF7777;">Linux</a>
+(specificly <a href="https://en.wikipedia.org/wiki/Debian" style="color:#FF7777;">Debian</a>) is objectively better than all operating systems. The idea of inplementing modern
 OS features, like a web browser, file browser, or even a GUI, AneoEngine will be console-only. The
 goal of AneoEngine is to remain small, understandable, and completely hackable (AneoEngine is meant
-to be crashed and tweaked.). Right now it boots from <a href="https://en.wikipedia.org/wiki/BIOS" style="color:#0000AA;">BIOS</a>, enters <a href="https://en.wikipedia.org/wiki/Protected_mode" style="color:#0000AA;">protected mode</a>, draws directly to
+to be crashed and tweaked.). Right now it boots from <a href="https://en.wikipedia.org/wiki/BIOS" style="color:#FF7777;">BIOS</a>, enters <a href="https://en.wikipedia.org/wiki/Protected_mode" style="color:#FF7777;">protected mode</a>, draws directly to
 VGA memory, handles keyboard input, runs a simple window manager, controls hardware like the
-<a href="https://en.wikipedia.org/wiki/Programmable_interval_timer" style="color:#0000AA;">PIT timer</a>, and executes entirely without another operating system underneath it.
+<a href="https://en.wikipedia.org/wiki/Programmable_interval_timer" style="color:#FF7777;">PIT timer</a>, and executes entirely without another operating system underneath it.
 
-Modern operating systems are built around networking, <a href="https://www.geeksforgeeks.org/ethical-hacking/7-layers-of-it-security/" style="color:#0000AA;">security layers</a>, <a href="https://en.wikipedia.org/wiki/File-system_permissions" style="color:#0000AA;">permissions</a>, background
+Modern operating systems are built around networking, <a href="https://www.geeksforgeeks.org/ethical-hacking/7-layers-of-it-security/" style="color:#FF7777;">security layers</a>, <a href="https://en.wikipedia.org/wiki/File-system_permissions" style="color:#FF7777;">permissions</a>, background
 services, and abstraction. AneoEngine instead focuses on exposing the machine itself. Every part of
-the system is visible, modifiable, and simple enough to understand from <a href="https://en.wikipedia.org/wiki/Boot_sector" style="color:#0000AA;">boot sector</a> to kernel. 
+the system is visible, modifiable, and simple enough to understand from <a href="https://en.wikipedia.org/wiki/Boot_sector" style="color:#FF7777;">boot sector</a> to kernel. 
 It is less about replacing Linux and more about exploring how a computer works at the lowest practical
 level while building a personal operating system from scratch.
 
 There is a huge problem in today's world! Search up 'kid made operating system' on Google. The
 reponses speak for themselves. Seems like the internet can't understand what the actual definition of
-an 'operating system' is. Lets take '<a href="https://github.com/MineAndCraft12/AaronOS" style="color:#0000AA;">AaronOS</a>' for example. A cloud based OS is NOT an OS. An OS is
-defined with a <a href="https://en.wikipedia.org/wiki/Booting" style="color:#0000AA;">bootable system</a> that runs on <a href="https://en.wikipedia.org/wiki/Bare_machine" style="color:#0000AA;">bare metal</a>. If you haven't written <a href="https://en.wikipedia.org/wiki/X86_assembly_language" style="color:#0000AA;">x86 Assembly</a> or a C
+an 'operating system' is. Lets take '<a href="https://github.com/MineAndCraft12/AaronOS" style="color:#FF7777;">AaronOS</a>' for example. A cloud based OS is NOT an OS. An OS is
+defined with a <a href="https://en.wikipedia.org/wiki/Booting" style="color:#FF7777;">bootable system</a> that runs on <a href="https://en.wikipedia.org/wiki/Bare_machine" style="color:#FF7777;">bare metal</a>. If you haven't written <a href="https://en.wikipedia.org/wiki/X86_assembly_language" style="color:#FF7777;">x86 Assembly</a> or a C
 kernel, thats not an OS. Using AI also doesn't count, it only proves how lazy you are.
 
 Some idiotic Redditors think there are certain thresholds that operating systems need to meet to 
@@ -81,35 +95,6 @@ longest lasting project.
 
 =====================================================================================================
 
-<a href="Downloads.html" style="color:#0000AA;">Downloading AneoEngine</a>
-<a href="HowToInstall.html" style="color:#0000AA;">Installing AneoEngine</a>
-How to install AneoEngine properly.
-
-=====================================================================================================
-
-<a href="Photos.html" style="color:#0000AA;">Photos</a>
-<a href="https://www.youtube.com/playlist?list=PLcHAiOIT4tPM" style="color:#0000AA;">Demo Videos</a>
-<a href="AneoC.html" style="color:#0000AA;">The AneoC Programming Language</a>
-<a href="Downloads.html" style="color:#0000AA;">Downloads</a>
-<a href="FAQ.html" style="color:#0000AA;">F.A.Q.</a>
-<a href="SRC.html" style="color:#0000AA;">Source Code</a>
-<a href="https://raw.githubusercontent.com/roccohimel/AneoEngine/refs/heads/main/CHANGELOG" style="color:#0000AA;">Change Log</a>
-<a href="AboutAE.html" style="color:#0000AA;">About AneoEngine</a>
-<a href="AboutRH/AboutRH.html" style="color:#0000AA;">About Rocco Himel</a>
-
-
-
-- AneoEngine is a trademark of Rocco Himel.
-- The AneoEngine Logo is a trademark of Rocco Himel.
-- AneoC is a trademark of Rocco Himel.
-- The Free Disk Operating System (FreeDOS) and the FreeDOS logo are trademarks of Jim Hall.
-- The Portable Operating System Interface (POSIX) is a trademark of the Institute of Electrical and
-Electronics Engineers.
-- The GNU Compiler Collection (GCC) and the GCC logo are trademarks of the Free Software Foundation,
-Inc.
-- Linux and Tux the Penguin (the Linux logo) are trademarks of Linus Torvalds.
-- Debian and the Debian logo are trademarks of Software in Public Interest, Inc.
-- AaronOS and the AaronOS logo are trademarks of Aaron Adams. 
 </pre>
 </div>
 
