@@ -10,9 +10,9 @@
 <meta property="og:image" content="Image.PNG">
 </head>
 
-<body bgcolor="#FFFFFF">
+<body bgcolor="#000000">
+<div style="margin:auto; background:#0000AA; border:2px solid #FFFFFF; padding:12px; width:850px; font-size:14px; color:#FFFFFF;">
 
-<div style="margin:auto; background:#DDDDDD; border:2px solid #000000; padding:12px; width:850px; font-size:14px; color:#000000;">
 <center><h1>The AneoC Programming Language</h1></center>
 <pre style="font-family:monospace; font-size:14px;">
 <center>
@@ -27,9 +27,9 @@ compiler designed for native software and AneoEngine development. While AneoC re
 low-level programming model that makes C useful, the language and its compiler are developed as one
 complete system. AneoC directly understands the machine code and binary formats it produces instead
 of relying on a large collection of separate development tools. The compiler can create native
-<a href="https://en.wikipedia.org/wiki/X86-64" style="color:#0000AA;">x86_64</a> <a href="https://en.wikipedia.org/wiki/Linux" style="color:#0000AA;">Linux</a> executables and <a href="https://en.wikipedia.org/wiki/Executable_and_Linkable_Format" style="color:#0000AA;">ELF32</a> <a href="https://en.wikipedia.org/wiki/I386" style="color:#0000AA;">i386</a> relocatable objects, allowing the same language to be used
+<a href="https://en.wikipedia.org/wiki/X86-64" style="color:#FF7777;">x86_64</a> <a href="https://en.wikipedia.org/wiki/Linux" style="color:#FF7777;">Linux</a> executables and <a href="https://en.wikipedia.org/wiki/Executable_and_Linkable_Format" style="color:#FF7777;">ELF32</a> <a href="https://en.wikipedia.org/wiki/I386" style="color:#FF7777;">i386</a> relocatable objects, allowing the same language to be used
 for ordinary programs and freestanding operating system components. AneoC does not need an external
-assembler such as <a href="https://en.wikipedia.org/wiki/Netwide_Assembler" style="color:#0000AA;">NASM</a> or <a href="https://en.wikipedia.org/wiki/GNU_Compiler_Collection" style="color:#0000AA;">GCC</a> as to process compiler-generated assembly because it encodes machine
+assembler such as <a href="https://en.wikipedia.org/wiki/Netwide_Assembler" style="color:#FF7777;">NASM</a> or <a href="https://en.wikipedia.org/wiki/GNU_Compiler_Collection" style="color:#FF7777;">GCC</a> as to process compiler-generated assembly because it encodes machine
 instructions internally. This gives the compiler direct control over the path from parsed source
 code to the resulting binary and removes an unnecessary tranformation between the language and the
 processor instructions that eventually execute.
@@ -39,7 +39,7 @@ added for unusual projects. AneoC was developed alongside AneoEngine, meaning th
 around requirements that come directly from a real operating system. It understands external
 functions, external global variables, symbols, strings, data layouts, and relocations required by
 AneoEngine components. The compiler can generate ELF32 i386 object files that are linked directly
-into the AneoEngine <a href="https://en.wikipedia.org/wiki/Kernel_(operating_system)" style="color:#0000AA;">kernel</a> without <a href="https://en.wikipedia.org/wiki/C_standard_library" style="color:#0000AA;">libc</a>, language runtimes, or compiler startup objects. Traditional
+into the AneoEngine <a href="https://en.wikipedia.org/wiki/Kernel_(operating_system)" style="color:#FF7777;">kernel</a> without <a href="https://en.wikipedia.org/wiki/C_standard_library" style="color:#FF7777;">libc</a>, language runtimes, or compiler startup objects. Traditional
 C compilers are capable of freestanding development, but they are general-purpose tools designed to
 support an enormous number of environments. AneoC can instead concentrate on the systems it is
 actually intended to build. When AneoEngine requires a compiler feature, that feature can be
@@ -48,7 +48,7 @@ to instruction encoding, symbol generation, and ELF relocation output.
 
 AneoC is also significantly more lightweight than most mainstream compilers. General-purpose
 compilers contain support for enormous collections of architectures, language standards, compiler
-extensions, optimization systems, debugging formats, operating systems, <a href="https://en.wikipedia.org/wiki/Application_binary_interface" style="color:#0000AA;">ABIs</a>, and platform-specific
+extensions, optimization systems, debugging formats, operating systems, <a href="https://en.wikipedia.org/wiki/Application_binary_interface" style="color:#FF7777;">ABIs</a>, and platform-specific
 behavior. Much of this functionality is necessary for compilers intended to work almost everywhere,
 but it is unnecessary for a compiler with a focused set of targets. AneoC does not carry large
 amounts of unrelated target support because it is designed around the environments it actually
@@ -80,10 +80,10 @@ When a structure member is accessed, the compiler determines the structure type,
 requested member, calculates its offset, and generates the machine operation required to access the
 correct data. This means structure behavior is understood across the parser, type system, and code
 generator. These features were implemented because AneoEngine uses structures extensively for
-systems such as the <a href="https://en.wikipedia.org/wiki/Interrupt_descriptor_table" style="color:#0000AA;">IDT</a>, filesystem nodes, hardware state, and other low-level data where exact
+systems such as the <a href="https://en.wikipedia.org/wiki/Interrupt_descriptor_table" style="color:#FF7777;">IDT</a>, filesystem nodes, hardware state, and other low-level data where exact
 memory layout is important.
 
-The complete AneoC compilation process is controlled as one project. Its <a href="https://en.wikipedia.org/wiki/Lexical_analysis" style="color:#0000AA;">lexer</a>, preprocessor,
+The complete AneoC compilation process is controlled as one project. Its <a href="https://en.wikipedia.org/wiki/Lexical_analysis" style="color:#FF7777;">lexer</a>, preprocessor,
 parser, type handling, structure layout system, machine code generator, symbol handling, relocation
 handling, and ELF generation are all parts of the same compiler. If an expression produces an
 incorrect instruction, the machine code generator can be inspected directly. If a structure member
@@ -94,12 +94,12 @@ control makes AneoC easier to adapt to AneoEngine and allows the language to evo
 programming requirements rather than attempting to maintain compatibility with every compiler,
 architecture, operating system, and historical language behavior.
 
-AneoC is intentionally targeted instead of universal. GCC and <a href="https://en.wikipedia.org/wiki/Clang" style="color:#0000AA;">Clang</a> support decades of C standards,
+AneoC is intentionally targeted instead of universal. GCC and <a href="https://en.wikipedia.org/wiki/Clang" style="color:#FF7777;">Clang</a> support decades of C standards,
 compiler extensions, processor architectures, operating systems, ABIs, optimization systems, and
 compatibility requirements. That makes them extremely powerful general-purpose compilers, but it
 also increases their size and complexity because their designs must account for environments
 completely unrelated to AneoEngine. AneoC has a different purpose. Its compiler can focus on native
-<a href="https://en.wikipedia.org/wiki/X86" style="color:#0000AA;">x86</a> software and the systems it is actually used to develop. Features can be designed around known
+<a href="https://en.wikipedia.org/wiki/X86" style="color:#FF7777;">x86</a> software and the systems it is actually used to develop. Features can be designed around known
 targets, known object formats, and real code written for AneoEngine. This smaller scope makes the
 compiler understandable as a complete program, keeps unnecessary complexity out of the toolchain,
 and gives its development a direct relationship with the software that depends on it.

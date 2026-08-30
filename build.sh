@@ -130,7 +130,7 @@ build()
 	$AC Kernel/Kernel.AC -o Kernel.o
 
 	echo "[AC] Compiling AnchorSand..."
-	$AC Kernel/AnchorSand.c -o AnchorSand.o
+	$AC Kernel/AnchorSand.AC -o AnchorSand.o
 
 	echo "[ASM] Assembling AnchorSand disk drivers..."
 	nasm -f elf32 Kernel/DiskThunk.ASM -o DiskThunk.o

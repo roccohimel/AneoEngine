@@ -5,7 +5,7 @@ TD U S u16;
 TD U INT u32;
 
 extern VD print(CC *s);
-extern VD printint(INT n);
+extern VD printINT(INT n);
 extern u8 color;
 extern INT getkey(VD);
 extern VD kb_drain_mouse(VD);
@@ -13,7 +13,6 @@ extern U INT cx;
 extern U INT cy;
 extern INT shift;
 extern VD cursor_update(VD);
-extern VD cursor_hide(VD);
 extern VD clear(VD);
 extern VD screen_get_cell(INT i, C *c, u8 *col);
 extern VD screen_set_cell(INT i, C c, u8 col);
@@ -23,11 +22,13 @@ extern INT con_y;
 extern INT con_w;
 extern INT con_h;
 extern INT as_save_to_disk(VD);
+
 U INT saveit = 0;
 
 #define AS_MAX_NODES	64
 #define AS_NAME_MAX	32
-#define AS_DATA_MAX	8192
+#define AS_DATA_MAX	4096
+
 #define AS_FILE		1
 #define AS_DIR		2
 
@@ -80,6 +81,7 @@ INT as_strlen(CC *s)
 
 	while(s[i])
 		i++;
+
 	return i;
 }
 
@@ -92,14 +94,19 @@ INT as_namecmp(CC *a, CC *b)
 	{
 		ca = *a;
 		cb = *b;
+
 		if(ca >= 'A' && ca <= 'Z')
 			ca += 32;
+
 		if(cb >= 'A' && cb <= 'Z')
 			cb += 32;
+
 		if(ca < cb)
 			return -1;
+
 		if(ca > cb)
 			return 1;
+
 		a++;
 		b++;
 	}
@@ -117,14 +124,12 @@ VD as_init()
 {
 	INT i;
 
-	print("Init AnchorSand Filesystem\n");
 	print("AS_MAX_NODES=");
-	printint(AS_MAX_NODES);
-	print(" AS_NAME_MAX=");
-	printint(AS_NAME_MAX);
-	print(" AS_DATA_MAX=");
-	printint(AS_DATA_MAX);
-	print("\n");
+	printINT(AS_MAX_NODES);
+	print("\nAS_NAME_MAX=");
+	printINT(AS_NAME_MAX);
+	print("\nAS_DATA_MAX=");
+	printINT(AS_DATA_MAX);
 	for(i = 0; i < AS_MAX_NODES; i++)
 		as_nodes[i].used = 0;
 
@@ -328,6 +333,13 @@ INT as_mkdir(CC *path)
 
 	if(parent == -1)
 		return -1;
+
+	if(as_nodes[parent].type != AS_DIR)
+		return -1;
+
+	return as_mkdir_at(parent, name);
+}
+
 INT as_touch(CC *path)
 {
 	C parent_path[AS_NAME_MAX * 4];
@@ -341,13 +353,6 @@ INT as_touch(CC *path)
 	if(parent == -1)
 		return -1;
 
-
-	if(as_nodes[parent].type != AS_DIR)
-		return -1;
-
-	return as_mkdir_at(parent, name);
-}
-
 	if(as_nodes[parent].type != AS_DIR)
 		return -1;
 
@@ -360,38 +365,43 @@ INT as_write(CC *path, CC *text)
 	C name[AS_NAME_MAX];
 	INT parent;
 	INT n;
-	INT len;
 	INT i;
+
 	as_split_path(path, parent_path, name);
+
 	parent = as_resolve(parent_path);
-	
+
 	if(parent == -1)
 		return -1;
-	
+
 	if(as_nodes[parent].type != AS_DIR)
 		return -1;
-	
+
 	n = as_find_child(parent, name);
-	
+
 	if(n == -1)
 	{
+		if(as_touch_at(parent, name) != 0)
+			return -1;
+
 		n = as_find_child(parent, name);
 	}
-	
+
 	if(as_nodes[n].type != AS_FILE)
 		return -1;
-	
-	len = as_nodes[n].size;
-	
-	for(i = 0; text[i] && len + i < AS_DATA_MAX - 1; i++)
-		as_nodes[n].data[len + i] = text[i];
-	
-	as_nodes[n].data[len + i] = 0;
-	as_nodes[n].size = len + i;
+
+	for(i = 0; text[i] && i < AS_DATA_MAX - 1; i++)
+		as_nodes[n].data[i] = text[i];
+
+	as_nodes[n].data[i] = 0;
+	as_nodes[n].size = i;
+
 	if(saveit == 1)
                 as_save_to_disk();
+
 	return 0;
 }
+
 VD as_cat(CC *path)
 {
 	INT n;
@@ -563,14 +573,8 @@ VD as_pwd()
 #define EDIT_W	 80
 #define EDIT_H   60
 
-C edit_saved_chars[EDIT_W * EDIT_H];
+C edit_saved_Cs[EDIT_W * EDIT_H];
 u8 edit_saved_attrs[EDIT_W * EDIT_H];
-C edit_draw_chars[EDIT_W * EDIT_H];
-u8 edit_draw_attrs[EDIT_W * EDIT_H];
-C edit_shadow_chars[EDIT_W * EDIT_H];
-u8 edit_shadow_attrs[EDIT_W * EDIT_H];
-INT edit_shadow_valid = 0;
-INT edit_shadow_owner = -9999;
 
 INT as_edit_w(VD)
 {
@@ -625,7 +629,7 @@ VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor)
 		{
 			si = (con_y + y) * EDIT_W + con_x + x;
 			di = y * EDIT_W + x;
-			screen_get_cell(si, &edit_saved_chars[di], &edit_saved_attrs[di]);
+			screen_get_cell(si, &edit_saved_Cs[di], &edit_saved_attrs[di]);
 		}
 	}
 }
@@ -645,15 +649,13 @@ VD as_edit_restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
 		for(x = 0; x < w; x++)
 		{
 			di = y * EDIT_W + x;
-			screen_put_at(con_x + x, con_y + y, edit_saved_chars[di], edit_saved_attrs[di]);
+			screen_put_at(con_x + x, con_y + y, edit_saved_Cs[di], edit_saved_attrs[di]);
 		}
 	}
 
 	cx = oldcx;
 	cy = oldcy;
 	color = oldcolor;
-	edit_shadow_valid = 0;
-	edit_shadow_owner = -9999;
 	cursor_update();
 }
 
@@ -668,103 +670,16 @@ VD as_edit_put_at(INT x, INT y, C c, u8 col)
 	screen_put_at(con_x + x, con_y + y, c, col);
 }
 
-VD as_edit_set_draw_owner(INT owner)
-{
-	if(edit_shadow_owner != owner)
-	{
-		edit_shadow_owner = owner;
-		edit_shadow_valid = 0;
-	}
-}
-
-VD as_edit_invalidate_draw(VD)
-{
-	edit_shadow_valid = 0;
-}
-
-VD as_edit_stage_clear(u8 col)
-{
-	INT x;
-	INT y;
-	INT di;
-	INT w;
-	INT h;
-
-	w = as_edit_w();
-	h = as_edit_h();
-
-	for(y = 0; y < h; y++)
-	{
-		for(x = 0; x < w; x++)
-		{
-			di = y * EDIT_W + x;
-			edit_draw_chars[di] = ' ';
-			edit_draw_attrs[di] = col;
-		}
-	}
-}
-
-VD as_edit_stage_put(INT x, INT y, C c, u8 col)
-{
-	INT di;
-
-	if(x < 0 || x >= as_edit_w())
-		return;
-
-	if(y < 0 || y >= as_edit_h())
-		return;
-
-	di = y * EDIT_W + x;
-	edit_draw_chars[di] = c;
-	edit_draw_attrs[di] = col;
-}
-
-VD as_edit_stage_text(INT x, INT y, CC *s, u8 col)
-{
-	INT i;
-
-	i = 0;
-	while(s[i] && x + i < as_edit_w())
-	{
-		as_edit_stage_put(x + i, y, s[i], col);
-		i++;
-	}
-}
-
-VD as_edit_flush_draw(VD)
-{
-	INT x;
-	INT y;
-	INT di;
-	INT w;
-	INT h;
-
-	w = as_edit_w();
-	h = as_edit_h();
-	cursor_hide();
-
-	for(y = 0; y < h; y++)
-	{
-		for(x = 0; x < w; x++)
-		{
-			di = y * EDIT_W + x;
-			if(!edit_shadow_valid ||
-			   edit_shadow_chars[di] != edit_draw_chars[di] ||
-			   edit_shadow_attrs[di] != edit_draw_attrs[di])
-			{
-				as_edit_put_at(x, y, edit_draw_chars[di], edit_draw_attrs[di]);
-				edit_shadow_chars[di] = edit_draw_chars[di];
-				edit_shadow_attrs[di] = edit_draw_attrs[di];
-			}
-		}
-	}
-
-	edit_shadow_valid = 1;
-}
-
 VD as_edit_clear_editor_area(VD)
 {
-	as_edit_stage_clear(color);
+	INT x;
+	INT y;
+
+	for(y = EDIT_TOP; y < as_edit_h(); y++)
+	{
+		for(x = 0; x < as_edit_w(); x++)
+			as_edit_put_at(x, y, ' ', color);
+	}
 }
 
 INT as_edit_line_start(INT n, INT pos)
@@ -872,7 +787,7 @@ VD as_edit_cursor(INT n, INT pos, INT scroll)
 	if(cy < EDIT_TOP)
 		cy = EDIT_TOP;
 
-	if(cy >= as_edit_h())
+	if(cy >= (U INT)as_edit_h())
 		cy = as_edit_h() - 1;
 
 	cursor_update();
@@ -880,8 +795,14 @@ VD as_edit_cursor(INT n, INT pos, INT scroll)
 
 VD as_edit_draw_header(CC *path)
 {
-	as_edit_stage_text(0, 0, "EDITOR: ", color);
-	as_edit_stage_text(8, 0, path, color);
+	clear();
+
+	cx = 0;
+	cy = 1;
+
+	print("EDITOR: ");
+	print(path);
+	print("\n\n");
 }
 
 VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
@@ -890,20 +811,15 @@ VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
 	INT x;
 	INT y;
 	INT line;
-	INT visible_lines;
 
-	as_edit_stage_clear(color);
 	as_edit_draw_header(path);
+	as_edit_clear_editor_area();
 
 	x = 0;
 	line = 0;
-	visible_lines = as_edit_h() - EDIT_TOP;
 
 	for(i = 0; i < as_nodes[n].size; i++)
 	{
-		if(line >= scroll + visible_lines)
-			break;
-
 		y = EDIT_TOP + (line - scroll);
 
 		if(as_nodes[n].data[i] == '\n')
@@ -914,7 +830,7 @@ VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
 		}
 
 		if(y >= EDIT_TOP && y < as_edit_h())
-			as_edit_stage_put(x, y, as_nodes[n].data[i], color);
+			as_edit_put_at(x, y, as_nodes[n].data[i], color);
 
 		x++;
 
@@ -923,9 +839,11 @@ VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
 			x = 0;
 			line++;
 		}
+
+		if(y >= as_edit_h() && line > scroll + as_edit_h())
+			break;
 	}
 
-	as_edit_flush_draw();
 	as_edit_cursor(n, pos, scroll);
 }
 
@@ -1069,8 +987,6 @@ VD as_edit(CC *path)
 	pos = as_nodes[n].size;
 	scroll = 0;
 
-	as_edit_set_draw_owner(-1);
-	as_edit_invalidate_draw();
 	as_edit_fix_scroll(n, pos, &scroll);
 	as_edit_redraw(n, path, pos, scroll);
 
@@ -1174,7 +1090,7 @@ INT as_edit_win_open(INT id)
 }
 
 INT as_edit_open_win(INT id, CC *path)
-{//open the editor inside window id, drawing into the
+{//open the editor inside window id, drawing INTo the
 //currently loaded console. Returns 0 on success.
 	C parent_path[AS_NAME_MAX * 4];
 	C name[AS_NAME_MAX];
@@ -1237,8 +1153,6 @@ INT as_edit_open_win(INT id, CC *path)
 	as_ew_scroll[id] = 0;
 	as_ew_open_flag[id] = 1;
 
-	as_edit_set_draw_owner(id);
-	as_edit_invalidate_draw();
 	as_edit_fix_scroll(as_ew_node[id], as_ew_pos[id], &as_ew_scroll[id]);
 	as_edit_redraw(as_ew_node[id], as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
 	return 0;
@@ -1249,8 +1163,6 @@ VD as_edit_win_refresh(INT id)
 	if(!as_edit_win_open(id))
 		return;
 
-	as_edit_set_draw_owner(id);
-	as_edit_invalidate_draw();
 	as_edit_fix_scroll(as_ew_node[id], as_ew_pos[id], &as_ew_scroll[id]);
 	as_edit_redraw(as_ew_node[id], as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
 }
@@ -1325,7 +1237,6 @@ INT as_edit_key_win(INT id, INT c)
 	else
 		return 0;
 
-	as_edit_set_draw_owner(id);
 	as_edit_fix_scroll(n, as_ew_pos[id], &as_ew_scroll[id]);
 	as_edit_redraw(n, as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
 	return 0;
@@ -1525,5 +1436,4 @@ INT as_mv(CC *src_path, CC *dst_path)
 
 	return 0;
 }
-
 
