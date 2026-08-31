@@ -1,12 +1,17 @@
-#include <stdINT.h>
+/*
+AneoEngine AnchorSand Filesystem.
+AneoC source file
+*/
 
-TD U C u8;
-TD U S u16;
-TD U INT u32;
-
+#include <stdint.h>
+//TDs
+TD U C U8;
+TD U S U16;
+TD U INT U32;
+//Kernel externs
 extern VD print(CC *s);
 extern VD printINT(INT n);
-extern u8 color;
+extern U8 color;
 extern INT getkey(VD);
 extern VD kb_drain_mouse(VD);
 extern U INT cx;
@@ -14,27 +19,25 @@ extern U INT cy;
 extern INT shift;
 extern VD cursor_update(VD);
 extern VD clear(VD);
-extern VD screen_get_cell(INT i, C *c, u8 *col);
-extern VD screen_set_cell(INT i, C c, u8 col);
-extern VD screen_put_at(INT x, INT y, C c, u8 col);
+extern VD screen_get_cell(INT i, C *c, U8 *col);
+extern VD screen_set_cell(INT i, C c, U8 col);
+extern VD screen_put_at(INT x, INT y, C c, U8 col);
 extern INT con_x;
 extern INT con_y;
 extern INT con_w;
 extern INT con_h;
 extern INT as_save_to_disk(VD);
-
+//Macros, vars
 U INT saveit = 0;
-
-#define AS_MAX_NODES	64
-#define AS_NAME_MAX	32
-#define AS_DATA_MAX	4096
-
-#define AS_FILE		1
-#define AS_DIR		2
+#define AS_MAX_NODES 64
+#define AS_NAME_MAX 32
+#define AS_DATA_MAX 4096
+#define AS_FILE 1
+#define AS_DIR 2
 
 VD pred(C *s)
 {//shell error funtion
-        const u8 oldcolor = color;
+        const U8 oldcolor = color;
         color = 0xCF;
         print("ERROR:");
 	color = oldcolor;
@@ -486,7 +489,7 @@ VD as_ls_node(INT dir)
 		}
 		else
 		{
-			u8 oldcolor;
+			U8 oldcolor;
 
 			print("FILE.........: ");
 
@@ -574,7 +577,7 @@ VD as_pwd()
 #define EDIT_H   60
 
 C edit_saved_Cs[EDIT_W * EDIT_H];
-u8 edit_saved_attrs[EDIT_W * EDIT_H];
+U8 edit_saved_attrs[EDIT_W * EDIT_H];
 
 INT as_edit_w(VD)
 {
@@ -608,7 +611,7 @@ INT as_edit_line_of_pos(INT n, INT pos)
 	return line;
 }
 
-VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor)
+VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, U8 *oldcolor)
 {
 	INT x;
 	INT y;
@@ -634,7 +637,7 @@ VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor)
 	}
 }
 
-VD as_edit_restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
+VD as_edit_restore_screen(U INT oldcx, U INT oldcy, U8 oldcolor)
 {
 	INT x;
 	INT y;
@@ -659,7 +662,7 @@ VD as_edit_restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor)
 	cursor_update();
 }
 
-VD as_edit_put_at(INT x, INT y, C c, u8 col)
+VD as_edit_put_at(INT x, INT y, C c, U8 col)
 {
 	if(x < 0 || x >= as_edit_w())
 		return;
@@ -937,7 +940,7 @@ VD as_edit(CC *path)
 
 	U INT oldcx;
 	U INT oldcy;
-	u8 oldcolor;
+	U8 oldcolor;
 
 	as_edit_save_screen(&oldcx, &oldcy, &oldcolor);
 

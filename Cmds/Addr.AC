@@ -1,20 +1,21 @@
-//Command that prints memory addresses
+/*
+AneoEngine addresser
+AneoC source file
+*/
+
 #include <stdint.h>
-
-//required typedefs
-TD U C u8;
-TD U S u16;
-TD U INT u32;
-
-//required externs
+//TDs
+TD U C U8;
+TD U S U16;
+TD U INT U32;
+//regular kernel externs
 extern VD putc(C c);
 extern VD print(const C *s);
 extern VD printad(const C *s, uint32_t x);
 extern VD printadocu(const C *s, uint32_t x1, uint32_t x2);
 extern VD indprintad(const C *s, uint32_t x);
 extern VD indprintadocu(const C *s, uint32_t x1, uint32_t x2);
-
-//regular addresses
+//memory address externs
 extern uint32_t IVT_START;
 extern uint32_t IVT_END;
 extern uint32_t FREE_LOW_MEM_START;
@@ -24,8 +25,6 @@ extern uint32_t VGA_MEM_START;
 extern uint32_t VGA_MEM_END;
 extern uint32_t VGA_TEXT_BUF_START;
 extern uint32_t VGA_TEXT_BUF_END;
-
-//boot addresses
 extern uint32_t BIOS_DATA_START;
 extern uint32_t BIOS_DATA_END;
 extern uint32_t BOOTLOADER_START;
@@ -37,9 +36,9 @@ extern uint32_t GTD_DATA;
 extern uint32_t KERNEL_ENTRY;
 extern uint32_t KERNEL_DATA_START;
 extern uint32_t KERNEL_DATA_END;
-
+//logic
 VD addr(VD)
-{//print them
+{//address func
 	print("Data addresses listed\n");
         putc('\n');
         printadocu("IVT", IVT_START, IVT_END);

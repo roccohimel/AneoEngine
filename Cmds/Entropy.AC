@@ -1,55 +1,51 @@
+/*
+AneoEngine 64-bit entropic value generator.
+AneoC source file
+*/
+
 #include <stdint.h>
-
-TD U C u8;
-TD U S u16;
-TD U INT u32;
-TD ULL u64;
-
-extern VD printx(u32 x);
+//TDs
+TD U C U8;
+TD U S U16;
+TD U INT U32;
+TD ULL U64;
+//Kernel externs
+extern VD printx(U32 x);
 extern VD printint(U INT n);
-extern u8 color;
+extern U8 color;
 extern VD print(CC *s);
 extern VD putc(C c);
 extern VD nosound(VD);
 extern VD sleep(U INT ms);
-
-SC inline u64 rdtsc()
-{
-	u32 lo, hi;
-	__asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-	return ((u64)hi << 32) | lo;
+//logic
+SC inline U64 rdtsc()
+{//main IN for rdtsc
+	U32 low, high;
+	__asm__ volatile ("rdtsc" : "=a"(low), "=d"(high));
+	return ((U64)high << 32) | low;
 }
 
-SC inline u32 rand32()
-{
-	u32 x = (u32)rdtsc();
-
-	x ^= x << 13;
-	x ^= x >> 17;
-	x ^= x << 5;
-
-	x ^= (u32)rdtsc();
-	x += 0x9E3779B9;
-
-	return x;
+SC inline U32 PRNG_32()
+{//32-bit entropic value generator.
+	U32 xorshift = (U32)rdtsc();
+	xorshift ^= xorshift << 13;
+	xorshift ^= xorshift >> 17;
+	xorshift ^= xorshift << 5;
+	xorshift ^= (U32)rdtsc();
+	xorshift += 0x9E3779B9;
+	return xorshift;
 }
-
 
 VD entropy(VD)
-{
-        U i;
-        u32 hi = rand32();
-
-        for(i = 0; i < 1000; i++);
-
-        u32 lo = rand32();
-
-        u8 oldcolor = color;
+{//main
+        U loop_counter;
+        U32 high = PRNG_32();
+        for(loop_counter = 0; loop_counter < 1000; loop_counter++);
+        U32 low = PRNG_32();
+        U8 oldcolor = color;
         color = 0x1A;
-
-        printx(hi);
-        printx(lo);
-
+        printx(high);
+        printx(low);
         color = oldcolor;
         putc(' ');
 }

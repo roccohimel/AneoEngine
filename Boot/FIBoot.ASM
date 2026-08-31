@@ -1,10 +1,12 @@
+;AneoEngine floppy image boot-loader (for USBs, and HDDs.)
+
 [org 0x7C00]
 [bits 16]
 
+;data vars
 KERNEL_OFFSET  EQU 0x10000
 KERNEL_SEGMENT EQU 0x1000
 KERNEL_SECTORS EQU 539
-
 FLOPPY_KERNEL_LBA EQU 105
 
 start:
@@ -16,46 +18,33 @@ start:
 	MOV SS, AX
 	MOV SP, 0x7C00
 	STI
-
 	MOV [BOOT_DRIVE], DL
 	MOV [0x0500], DL
-
 	MOV AX, 0x0003
 	INT 0x10
-
 	MOV AX, 0x1112
 	XOR BL, BL
 	INT 0x10
-
 	MOV SI, msg_boot
 	CALL print16
-
 	MOV SI, msg_type
 	CALL print16
-
 	CALL enable_a20
 	CALL load_kernel
-
 	MOV SI, msg_loaded
 	CALL print16
-
 	MOV SI, msg_prompt
 	CALL print16
-
 	XOR AX, AX
 	INT 0x16
-
 	CLI
 	LGDT [GDT_DESCRIPTOR]
-
 	CALL copy_font8x8
 	MOV AX, 0x0012
 	INT 0x10
-
 	MOV EAX, CR0
 	OR EAX, 1
 	MOV CR0, EAX
-
 	JMP DWORD CODE_SEG:init_pm
 
 enable_a20:
@@ -69,7 +58,6 @@ print16:
 	LODSB
 	TEST AL, AL
 	JZ .done
-
 	MOV AH, 0x0E
 	MOV BH, 0
 	MOV BL, 0x1F
@@ -99,43 +87,35 @@ load_kernel:
 	MOV DL, [BOOT_DRIVE]
 	INT 0x13
 	JC disk_error
-
 	MOV WORD [DAP_COUNT], 1
 	MOV WORD [DAP_OFFSET], 0x0000
 	MOV WORD [DAP_SEGMENT], KERNEL_SEGMENT
-
 	MOV DWORD [DAP_LBA_LOW], FLOPPY_KERNEL_LBA
 	MOV DWORD [DAP_LBA_HIGH], 0
-
 	MOV WORD [SECTORS_LEFT], KERNEL_SECTORS
 
 .loop:
 	CMP WORD [SECTORS_LEFT], 0
 	JE .done
-
-	; Some BIOSes modify the transferred-sector count,
-	; so restore it before every read.
+	;Some BIOSes modify the transferred-sector count,
+	;so restore it before every read.
 	MOV WORD [DAP_COUNT], 1
-
 	MOV AH, 0x42
 	MOV DL, [BOOT_DRIVE]
 	MOV SI, DAP
 	INT 0x13
 	JC disk_error
-
-	; Advance the destination by one 512-byte sector.
+	;Advance the destination by one 512-byte sector.
 	ADD WORD [DAP_OFFSET], 512
 	JNC .no_segment_wrap
-
-	; Offset wrapped after 64 KiB.
-	; Advance the segment by 0x1000 paragraphs.
+	;Offset wrapped after 64 KiB.
+	;Advance the segment by 0x1000 paragraphs.
 	MOV WORD [DAP_OFFSET], 0
 	ADD WORD [DAP_SEGMENT], 0x1000
-
+	
 .no_segment_wrap:
 	ADD DWORD [DAP_LBA_LOW], 1
 	ADC DWORD [DAP_LBA_HIGH], 0
-
 	DEC WORD [SECTORS_LEFT]
 	JMP .loop
 
@@ -173,16 +153,13 @@ SECTORS_LEFT:
 
 init_pm:
 	CLD
-
 	MOV AX, DATA_SEG
 	MOV DS, AX
 	MOV ES, AX
 	MOV FS, AX
 	MOV GS, AX
 	MOV SS, AX
-
 	MOV ESP, 0x200000
-
 	JMP CODE_SEG:KERNEL_OFFSET
 
 GDT_START:
@@ -215,22 +192,17 @@ DATA_SEG EQU GDT_DATA - GDT_START
 
 BOOT_DRIVE:
 	DB 0
-
+	
 msg_boot:
 	DB 13,10,13,10,13,10,13,10
 	DB "AneoEngine Boot Loader",13,10,0
-
 msg_type:
 	DB "Reading kernel from hard disk/solid state media...",13,10,0
-
 msg_loaded:
 	DB "Kernel found...",13,10,0
-
 msg_prompt:
 	DB 13,10,"Press any key to continue...",13,10,0
-
 msg_disk:
 	DB "Kernel read error!",13,10,0
-
 TIMES 510 - ($ - $$) DB 0
 DW 0xAA55

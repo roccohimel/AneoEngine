@@ -1,108 +1,88 @@
+/*
+AneoEngine music note player.
+AneoC source file
+*/
+
+#include <stdint.h>
+//Kernel externs
 extern VD beep(INT freq);
 extern VD sleep(INT ms);
 extern INT atoi(CC *s);
 extern INT strcmp(CC *a, CC *b);
 extern VD nosound(VD);
-
-TD ST {
+//TDs
+TD ST {//for every note
 	CC *name;
-	INT freq;
+	INT frequency;
 } NOTE;
 
 SC NOTE notes[] =
-{
+{//Ex. notes
 	{"C3", 131}, {"C#3", 139}, {"D3", 147}, {"D#3", 156},
 	{"E3", 165}, {"F3", 175}, {"F#3", 185}, {"G3", 196},
 	{"G#3",208}, {"A3", 220}, {"A#3",233}, {"B3",247},
-
 	{"C4",261}, {"C#4",277}, {"D4",293}, {"D#4",311},
 	{"E4",329}, {"F4",349}, {"F#4",369}, {"G4",392},
 	{"G#4",415}, {"A4",440}, {"A#4",466}, {"B4",493},
-
 	{"C5",523}, {"C#5",554}, {"D5",587}, {"D#5",622},
 	{"E5",659}, {"F5",698}, {"F#5",739}, {"G5",783},
 	{"G#5",830}, {"A5",880}, {"A#5",932}, {"B5",987},
-
 	{NULL,0}
 };
 
-
-INT NoteFreq(CC *name)
-{
-	INT i;
-
-	for(i = 0; notes[i].name; i++)
-	{
-		if(!strcmp(notes[i].name, name))
-			return notes[i].freq;
+INT note_frequency(CC *name)
+{//parse and ret
+	INT loop_counter;
+	for(loop_counter = 0; notes[loop_counter].name; loop_counter++) {
+		if(!strcmp(notes[loop_counter].name, name))
+			return notes[loop_counter].frequency;
 	}
-
 	return 0;
 }
 
-
 INT tempo = 120;
-
-INT NoteDur(C len)
-{
-	INT q;
-
-	q = 60000 / tempo;
-
-	if(len == 'w') return q * 4;
-	if(len == 'h') return q * 2;
-	if(len == 'q') return q;
-	if(len == 'e') return q / 2;
-	if(len == 's') return q / 4;
-
-	return q;
+INT note_duration(C len)
+{//parse and ret note durs
+	INT quarter_note;
+	quarter_note = 60000 / tempo;
+	if(len == 'w') return quarter_note * 4;
+	if(len == 'h') return quarter_note * 2;
+	if(len == 'q') return quarter_note;
+	if(len == 'e') return quarter_note / 2;
+	if(len == 's') return quarter_note / 4;
+	return quarter_note;
 }
 
 VD tune(CC *song)
-{
+{//main
 	C note[8];
-	INT i;
-	INT freq;
-	INT dur;
-	C *p = song;
-
-	while(*p)
-	{
-		while(*p == ' ')
-			p++;
-
-		if(!*p)
+	INT loop_counter;
+	INT frequency;
+	INT duration;
+	C *text_pointer = song;
+	while(*text_pointer) {
+		while(*text_pointer == ' ')
+			text_pointer++;
+		if(!*text_pointer)
 			break;
-
-		if(*p == 'T')
-		{
-			p++;
-			tempo = atoi(p);
-
-			while(*p && *p != ' ')
-				p++;
-
+		if(*text_pointer == 'T') {
+			text_pointer++;
+			tempo = atoi(text_pointer);
+			while(*text_pointer && *text_pointer != ' ')
+				text_pointer++;
 			continue;
 		}
-
-		i = 0;
-
-		while(*p && ((*p >= 'A' && *p <= 'G') || *p == '#' || (*p >= '0' && *p <= '9') || *p == 'R'))
-			note[i++] = *p++;
-
-		note[i] = 0;
-
-		dur = NoteDur(*p);
-
-		if(*p)
-			p++;
-
-		freq = NoteFreq(note);
-
-		if(freq > 0)
-			beep(freq);
-
-		sleep(dur);
+		loop_counter = 0;
+		while(*text_pointer && ((*text_pointer >= 'A' && *text_pointer <= 'G') || *text_pointer == '#' || (*text_pointer >= '0' && *text_pointer <= '9') || *text_pointer == 'R'))
+			note[loop_counter++] = *text_pointer++;
+		note[loop_counter] = 0;
+		duration = note_duration(*text_pointer);
+		if(*text_pointer)
+			text_pointer++;
+		frequency = note_frequency(note);
+		if(frequency > 0)
+			beep(frequency);
+		sleep(duration);
 		nosound();
 	}
 }

@@ -7023,7 +7023,7 @@ static void usage(void)
 	       "  -m32 -c          emit an ELF32 i386 relocatable object\n"
 	       "  -ffreestanding   accepted for freestanding kernel builds\n"
 	       "  -lNAME           add a DT_NEEDED library to x86-64 output\n"
-	       "  --version        show version\n\n
+	       "  --version        show version\n\n",
 	       VERSION);
 }
 
