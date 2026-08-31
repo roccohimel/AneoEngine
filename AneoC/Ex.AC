@@ -1,7 +1,0 @@
-
-
-U main(VD)
-{
-	printf("Hello there\n");
-	return 0;
-}

@@ -1,3 +1,12 @@
+/*
+The official compiler for the AneoC Programming Language.
+AneoC is made for AneoEngine, as its main programming language.
+
+Copyright (C) 2025-2026 Rocco Himel.
+AneoC is distributed under the AneoEngine License V*.*.
+*/
+
+//Macros, ANSI includes.
 #define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
 #include <errno.h>
@@ -15,11 +24,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
-#define VERSION "AneoC independent 2.7"
+#define VERSION "AneoC 1.0"
 #define ARR_GROW(a, n, cap, type)                                  \
 	do                                                         \
 	{                                                          \
@@ -49,6 +57,7 @@ static void fatal(const char *fmt, ...)
 	exit(0);
 }
 
+//Compiler memory functions.
 static void *xmalloc(size_t n)
 {
 	void *p = malloc(n ? n : 1);
@@ -345,7 +354,7 @@ static char *preprocess_source(const char *text)
 	return out.s;
 }
 
-/*eclaration types*/
+//eclaration TD
 typedef enum
 {
 	TY_VOID,
@@ -389,6 +398,7 @@ struct CType
 	bool packed;
 };
 
+//SC defs for AneoC types.
 static CType T_VOID = {.kind = TY_VOID, .name = "void"};
 static CType T_CHAR = {.kind = TY_CHAR, .name = "char"};
 static CType T_SHORT = {.kind = TY_SHORT, .name = "short"};
@@ -481,7 +491,7 @@ static long type_align(CType *t)
 	return 8;
 }
 
-/* ---------- Lexer ---------- */
+//Lexer
 
 typedef enum
 {
@@ -530,11 +540,9 @@ static Tokens lex_source(const char *text, const char *file)
 	size_t i = 0, n = strlen(text);
 	int line = 1, col = 1;
 	bool bol = true;
-
 	while(i < n)
 	{
 		char c = text[i];
-
 		if(bol)
 		{
 			size_t j = i;
@@ -570,7 +578,6 @@ static Tokens lex_source(const char *text, const char *file)
 				continue;
 			}
 		}
-
 		if(isspace((unsigned char)c))
 		{
 			if(c == '\n')
@@ -584,7 +591,6 @@ static Tokens lex_source(const char *text, const char *file)
 			continue;
 		}
 		bol = false;
-
 		if(i + 1 < n && text[i] == '/' && text[i + 1] == '/')
 		{
 			i += 2;
@@ -619,7 +625,6 @@ static Tokens lex_source(const char *text, const char *file)
 			col += 2;
 			continue;
 		}
-
 		{
 			int sl = line, sc = col;
 			size_t start = i;
@@ -638,7 +643,6 @@ static Tokens lex_source(const char *text, const char *file)
 			if(isdigit((unsigned char)c))
 			{
 				bool floating = false;
-
 				i++;
 				col++;
 				if(c == '0' && i < n && (text[i] == 'x' || text[i] == 'X'))
@@ -760,7 +764,7 @@ static Tokens lex_source(const char *text, const char *file)
 	return ts;
 }
 
-/* ---------- AST ---------- */
+//AST tree
 
 typedef struct Expr Expr;
 typedef struct Stmt Stmt;
@@ -896,7 +900,7 @@ static Decl *new_decl(void)
 	return xcalloc(1, sizeof(Decl));
 }
 
-/* ---------- Parser ---------- */
+//Parser
 
 typedef struct
 {
@@ -2004,7 +2008,7 @@ static Stmt *parse_stmt(Parser *p)
 						break;
 				}
 			}
-			/* Inputs and clobbers are parsed only when empty for now. */
+			//Inputs and clobbers are parsed only when empty for now.
 			if(paccept(p, ":"))
 			{
 				if(!peq(p, ")") && !peq(p, ":"))
@@ -2128,7 +2132,7 @@ static void parse_program(Tokens *ts, Program *prog)
 	}
 }
 
-/* ---------- Code generation ---------- */
+//Code generation
 
 typedef enum
 {
@@ -3189,7 +3193,7 @@ static char *generate(Program *p)
 	return g.out.s;
 }
 
-/* ---------- Internal x86-64 assembler and ELF writer ---------- */
+//assembler
 
 typedef enum
 {
@@ -4687,7 +4691,7 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 		fatal("cannot make %s executable: %s", path, strerror(errno));
 }
 
-/* ---------- Internal i386 ELF32 relocatable backend ---------- */
+//i386 backend
 
 typedef struct
 {
@@ -5503,11 +5507,11 @@ static bool i386_expression_is_unsigned(I386Gen *gen, Expr *expression)
 static void i386_emit_division(I386Gen *gen, bool is_unsigned)
 {
 	/*
-	 * Entry: ECX = dividend, EAX = divisor.
-	 * CDQ overwrites EDX, so the divisor must not live in EDX when CDQ
-	 * executes.  Version 1.5 used IDIV EDX after CDQ and therefore
-	 * divided by zero for every positive dividend.
-	 */
+	Entry: ECX = dividend, EAX = divisor.
+	ECDQ overwrites EDX, so the divisor must not live in EDX when CDQ
+	executes.  Version 1.5 used IDIV EDX after CDQ and therefore
+	divided by zero for every positive dividend.
+	*/
 	i386_put8(&gen->text, 0x89);
 	i386_put8(&gen->text, 0xc2);
 	i386_put8(&gen->text, 0x89);
@@ -5546,7 +5550,7 @@ static void i386_emit_mul64_imm(I386Gen *gen,
 	uint32_t low = (uint32_t)multiplier;
 	uint32_t high = (uint32_t)(multiplier >> 32);
 
-	/* Preserve the original halves and form the low 64 bits of the product. */
+	//Preserve the original halves and form the low 64 bits of the product.
 	i386_put8(&gen->text, 0x50);
 	i386_put8(&gen->text, 0x52);
 	i386_put8(&gen->text, 0xb9);
@@ -5555,11 +5559,11 @@ static void i386_emit_mul64_imm(I386Gen *gen,
 	i386_put8(&gen->text, 0xe1);
 	i386_put8(&gen->text, 0x50);
 	i386_put8(&gen->text, 0x52);
-	/* ECX = high32(original_low * low). */
+	//ECX = high32(original_low * low).
 	i386_put8(&gen->text, 0x8b);
 	i386_put8(&gen->text, 0x0c);
 	i386_put8(&gen->text, 0x24);
-	/* Add original_high * low. */
+	//Add original_high * low.
 	i386_put8(&gen->text, 0x8b);
 	i386_put8(&gen->text, 0x44);
 	i386_put8(&gen->text, 0x24);
@@ -5569,7 +5573,7 @@ static void i386_emit_mul64_imm(I386Gen *gen,
 	i386_put32(&gen->text, low);
 	i386_put8(&gen->text, 0x01);
 	i386_put8(&gen->text, 0xc1);
-	/* Add original_low * high. */
+	//Add original_low * high.
 	i386_put8(&gen->text, 0x8b);
 	i386_put8(&gen->text, 0x44);
 	i386_put8(&gen->text, 0x24);
@@ -5579,7 +5583,7 @@ static void i386_emit_mul64_imm(I386Gen *gen,
 	i386_put32(&gen->text, high);
 	i386_put8(&gen->text, 0x01);
 	i386_put8(&gen->text, 0xc1);
-	/* Restore result low and install result high. */
+	//Restore result low and install result high.
 	i386_put8(&gen->text, 0x8b);
 	i386_put8(&gen->text, 0x44);
 	i386_put8(&gen->text, 0x24);
@@ -6265,7 +6269,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 				i386_put8(&gen->text, 0xc0);
 				i386_put32(&gen->text, (uint32_t)element_size);
 			}
-			/* Round the allocation up to 16 bytes. */
+			//Round the allocation up to 16 bytes.
 			i386_put8(&gen->text, 0x83);
 			i386_put8(&gen->text, 0xc0);
 			i386_put8(&gen->text, 0x0f);
@@ -6274,7 +6278,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 			i386_put8(&gen->text, 0xf0);
 			i386_put8(&gen->text, 0x29);
 			i386_put8(&gen->text, 0xc4);
-			/* Save the runtime array base in its fixed frame slot. */
+			//Save the runtime array base in its fixed frame slot.
 			i386_put8(&gen->text, 0x89);
 			i386_put8(&gen->text, 0xa5);
 			i386_put32(&gen->text,
@@ -6367,7 +6371,6 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 		Stmt *body = statement->body;
 		char *default_label;
 		size_t j;
-
 		done_label = i386_new_label(gen, ".Lswitchend");
 		default_label = done_label;
 		if(body && body->kind == ST_BLOCK)
@@ -6379,7 +6382,6 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 				if(child->kind == ST_CASE)
 				{
 					long value;
-
 					if(!eval_const_expr(child->expr, &value))
 						fatal("case value is not an integer constant");
 					child->label = i386_new_label(gen, ".Lcase");
@@ -6455,7 +6457,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 
 				if(!strcmp(constraint, "=a"))
 				{
-					/* Preserve EDX:EAX while calculating the lvalue. */
+					//Preserve EDX:EAX while calculating the lvalue.
 					i386_put8(&gen->text, 0x52);
 					i386_put8(&gen->text, 0x50);
 					output_type = i386_gen_address(gen, output);
@@ -6466,7 +6468,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 					i386_put8(&gen->text, 0x5a);
 				} else if(!strcmp(constraint, "=d"))
 				{
-					/* Store the high half while restoring low EAX. */
+					//Store the high half while restoring low EAX.
 					i386_put8(&gen->text, 0x50);
 					i386_put8(&gen->text, 0x52);
 					output_type = i386_gen_address(gen, output);
@@ -6778,7 +6780,6 @@ static void write_i386_relocatable(const char *path, Program *program)
 	uint32_t data_relocation_count = 0;
 	uint8_t *file;
 	size_t i;
-
 	gen.program = program;
 	i386_prepare_symbols_and_globals(&gen);
 	for(i = 0; i < program->n; i++)
@@ -6890,6 +6891,11 @@ static void write_i386_relocatable(const char *path, Program *program)
 		destination->r_info = ELF32_R_INFO(symbol_index,
 						   source->type);
 	}
+	
+	/*
+		PREPARE YOUR EYES FOR THIS GIGANTIC CHUNK!
+	*/
+	
 	cursor = sizeof(Elf32_Ehdr);
 	text_offset = i386_align32(cursor, 16);
 	cursor = text_offset + (uint32_t)gen.text.n;
@@ -7009,22 +7015,15 @@ static void write_i386_relocatable(const char *path, Program *program)
 	write_file(path, (char *)file, cursor);
 }
 
-/* ---------- Driver ---------- */
-
 static void usage(void)
 {
-	printf("%s\nUsage: aneoc [options] file.AC ...\n\n"
+	printf("%s\nUsage: AneoC [options] Cmds.AC ...\n\n"
 	       "  -o FILE          set output file\n"
 	       "  -S               emit generated x86-64 assembly text\n"
 	       "  -m32 -c          emit an ELF32 i386 relocatable object\n"
 	       "  -ffreestanding   accepted for freestanding kernel builds\n"
 	       "  -lNAME           add a DT_NEEDED library to x86-64 output\n"
-	       "  --version        show version\n\n"
-	       "AneoC type keywords: VD=void, C=char, S=short, "
-	       "L=long, U=unsigned, DB=double, TD=typedef, ST=struct, SC=static.\n"
-	       "AneoC directly writes x86-64 executables and ELF32 i386 object "
-	       "files. It does not invoke GCC, Clang, cc, TinyCC, Python, as, "
-	       "ld, or another linker.\n",
+	       "  --version        show version\n\n
 	       VERSION);
 }
 
@@ -7040,7 +7039,6 @@ int main(int argc, char **argv)
 	bool target_i386 = false;
 	bool freestanding = false;
 	bool needs_x11 = false;
-
 	for(i = 1; i < (size_t)argc; i++)
 	{
 		if(!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
@@ -7084,7 +7082,7 @@ int main(int argc, char **argv)
 			  !strncmp(argv[i], "-I", 2) ||
 			  !strncmp(argv[i], "-D", 2))
 		{
-			/* Accepted compatibility flags; AneoC is always freestanding in -m32 -c mode. */
+			//Accepted compatibility flags; AneoC is always freestanding in -m32 -c mode.
 		} else if(!strncmp(argv[i], "-l", 2))
 		{
 			ARR_GROW(libs, nlibs, clibs, char *);
