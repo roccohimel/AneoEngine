@@ -45,7 +45,7 @@ extern CC *as_edit_win_path(INT id);
 extern INT ctrl;
 extern INT ext;
 extern INT as_get_file_data(CC *path, C **data, INT *size);
-extern VD pred(CC *s);
+extern VD print_red(CC *s);
 extern VD beep(u32 freq);
 extern VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, u8 *oldcolor);
 extern VD as_edit_restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor);
@@ -5389,11 +5389,11 @@ VD shell_exec(C *line)
 	{
 		rmsemi(line);
 		if(as_cd(line + 4) != 0)
-			pred("Directory not found\n");
+			print_red("Directory not found\n");
 	}
 	else if(starts(line, "cd")) {
 		if(as_cd(line + 2) != 0)
-			pred("Directory not found\n");
+			print_red("Directory not found\n");
 	}
 	else if(starts(line, "comment(\"") && ends(line, "\");"))
 	{
@@ -7315,12 +7315,12 @@ VD acri_report(AcriRuntime *rt)
 {
 	if(!rt->error)
 		return;
-	pred("Script error: ");
+	print_red("Script error: ");
 	if(rt->error_text)
-		pred(rt->error_text);
-	pred(" at byte ");
+		print_red(rt->error_text);
+	print_red(" at byte ");
 	printINT(rt->error_pos);
-	pred("\n");
+	print_red("\n");
 }
 
 VD acri_run_data(C *data, INT size)
@@ -7331,7 +7331,7 @@ VD acri_run_data(C *data, INT size)
 
 	if(acri_runtime_depth >= ACRI_MAX_RUNTIMES)
 	{
-		pred("Script runtime stack full\n");
+		print_red("Script runtime stack full\n");
 		return;
 	}
 	rt = &acri_runtimes[acri_runtime_depth++];
@@ -7354,7 +7354,7 @@ VD run_script(CC *path)
 
 	if(as_get_file_data(path, &data, &size) != 0)
 	{
-		pred("File not found\n");
+		print_red("File not found\n");
 		return;
 	}
 
@@ -8123,7 +8123,7 @@ VD wm_task_start_script(INT id, CC *path)
 	wm_windows[id].task_sp = 0;
 
 	if(as_get_file_data(clean, &data, &size) != 0)
-		pred("File not found\n");
+		print_red("File not found\n");
 	else
 		acri_run_data(data, size);
 
@@ -8154,7 +8154,7 @@ VD wm_task_chain_script(INT id, CC *path)
 
 	if(as_get_file_data(clean, &data, &size) != 0)
 	{
-		pred("File not found\n");
+		print_red("File not found\n");
 		return;
 	}
 
@@ -8162,7 +8162,7 @@ VD wm_task_chain_script(INT id, CC *path)
 	{
 		if(win->task_sp >= WM_TASK_STACK_MAX)
 		{
-			pred("Script stack full\n");
+			print_red("Script stack full\n");
 			return;
 		}
 

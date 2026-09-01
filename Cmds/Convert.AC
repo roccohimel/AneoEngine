@@ -30,12 +30,12 @@ U32 divide_64(U32 high, U32 low, U32 *quotient_high_out, U32 *quotient_low_out)
 	U32 quotient_high = 0;
 	U32 quotient_low = 0;
 	U32 remainder = 0;
-	INT loop_counter;
+	INT index;
 	U32 bit;
 	U32 overflow_bit;
 	U32 quotient_bit;
-	for (loop_counter = 63; loop_counter >= 0; loop_counter = loop_counter - 1) {
-		bit = extract_bit(high, low, loop_counter);
+	for (index = 63; index >= 0; index = index - 1) {
+		bit = extract_bit(high, low, index);
 		remainder = (remainder << 1) | bit;
 		if (remainder >= 10) {
 			remainder = remainder - 10;
@@ -55,7 +55,7 @@ U32 divide_64(U32 high, U32 low, U32 *quotient_high_out, U32 *quotient_low_out)
 VD print_64(U32 high, U32 low)
 {//64-bit x dec printer
 	C buf[24];
-	INT loop_counter = 0;
+	INT index = 0;
 	U32 quotient_high;
 	U32 quotient_low;
 	U32 remainder;
@@ -65,31 +65,31 @@ VD print_64(U32 high, U32 low)
 	}
 	while (high != 0 || low != 0) {
 		remainder = divide_64(high, low, &quotient_high, &quotient_low);
-		buf[loop_counter] = (C)remainder + '0';
-		loop_counter = loop_counter + 1;
+		buf[index] = (C)remainder + '0';
+		index = index + 1;
 		high = quotient_high;
 		low = quotient_low;
 	}
-	while (loop_counter > 0) {
-		loop_counter = loop_counter - 1;
-		putc(buf[loop_counter]);
+	while (index > 0) {
+		index = index - 1;
+		putc(buf[index]);
 	}
 }
 
 VD print_bin64(U32 high, U32 low)
 {//64-bit bin printer
-	INT loop_counter;
+	INT index;
 	INT hide_zeros = 0;
 	U32 bit;
-	for (loop_counter = 31; loop_counter >= 0; loop_counter = loop_counter - 1) {
-		bit = (high >> loop_counter) & 1;
+	for (index = 31; index >= 0; index = index - 1) {
+		bit = (high >> index) & 1;
 		if (bit == 1)
 			hide_zeros = 1;
 		if (hide_zeros == 1)
 			putc((C)bit + '0');
 	}
-	for (loop_counter = 31; loop_counter >= 0; loop_counter = loop_counter - 1) {
-		bit = (low >> loop_counter) & 1;
+	for (index = 31; index >= 0; index = index - 1) {
+		bit = (low >> index) & 1;
 		if (bit == 1)
 			hide_zeros = 1;
 		if (hide_zeros == 1)

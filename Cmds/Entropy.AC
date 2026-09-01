@@ -38,9 +38,9 @@ SC inline U32 PRNG_32()
 
 VD entropy(VD)
 {//main
-        U loop_counter;
+        U index;
         U32 high = PRNG_32();
-        for(loop_counter = 0; loop_counter < 1000; loop_counter++);
+        for(index = 0; index < 1000; index++);
         U32 low = PRNG_32();
         U8 oldcolor = color;
         color = 0x1A;

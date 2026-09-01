@@ -32,10 +32,10 @@ SC NOTE notes[] =
 
 INT note_frequency(CC *name)
 {//parse and ret
-	INT loop_counter;
-	for(loop_counter = 0; notes[loop_counter].name; loop_counter++) {
-		if(!strcmp(notes[loop_counter].name, name))
-			return notes[loop_counter].frequency;
+	INT index;
+	for(index = 0; notes[index].name; index++) {
+		if(!strcmp(notes[index].name, name))
+			return notes[index].frequency;
 	}
 	return 0;
 }
@@ -56,7 +56,7 @@ INT note_duration(C len)
 VD tune(CC *song)
 {//main
 	C note[8];
-	INT loop_counter;
+	INT index;
 	INT frequency;
 	INT duration;
 	C *text_pointer = song;
@@ -72,10 +72,10 @@ VD tune(CC *song)
 				text_pointer++;
 			continue;
 		}
-		loop_counter = 0;
+		index = 0;
 		while(*text_pointer && ((*text_pointer >= 'A' && *text_pointer <= 'G') || *text_pointer == '#' || (*text_pointer >= '0' && *text_pointer <= '9') || *text_pointer == 'R'))
-			note[loop_counter++] = *text_pointer++;
-		note[loop_counter] = 0;
+			note[index++] = *text_pointer++;
+		note[index] = 0;
 		duration = note_duration(*text_pointer);
 		if(*text_pointer)
 			text_pointer++;

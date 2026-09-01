@@ -11,7 +11,7 @@ extern void outb(u16 port, u8 value);
 extern u8 inb(u16 port);
 extern void outw(u16 port, u16 value);
 extern u16 inw(u16 port);
-extern void pred(const char *s);
+extern void print_red(const char *string);
 
 extern int bios_disk_op(u8 drive, u32 lba, u32 write);
 
@@ -78,17 +78,17 @@ static int disk_read(u32 lba, u8 *buf) {
 	u8 drive = get_boot_drive();
 
 	if (bad_drive(drive)) {
-		pred("Bad boot drive\n");
+		print_red("Bad boot drive\n");
 		return 0;
 	}
 
 	if (drive >= 0xE0) {
-		pred("CD-ROM is read only\n");
+		print_red("CD-ROM is read only\n");
 		return 0;
 	}
 
 	if (!bios_disk_op(drive, lba, 0)) {
-		pred("BIOS read failed\n");
+		print_red("BIOS read failed\n");
 		return 0;
 	}
 
@@ -100,19 +100,19 @@ static int disk_write(u32 lba, u8 *buf) {
 	u8 drive = get_boot_drive();
 
 	if (bad_drive(drive)) {
-		pred("Bad boot drive\n");
+		print_red("Bad boot drive\n");
 		return 0;
 	}
 
 	if (drive >= 0xE0) {
-		pred("CD-ROM is read only\n");
+		print_red("CD-ROM is read only\n");
 		return 0;
 	}
 
 	copy(bounce, buf, 512);
 
 	if (!bios_disk_op(drive, lba, 1)) {
-		pred("BIOS write failed\n");
+		print_red("BIOS write failed\n");
 		return 0;
 	}
 
@@ -128,12 +128,12 @@ static u32 sw_sum;
 
 static int sw_flush(void) {
 	if (sw_secs >= AS_SAVE_MAX_SECTORS) {
-		pred("Failed to save, AnchorSand is full!\n");
+		print_red("Failed to save, AnchorSand is full!\n");
 		return 0;
 	}
 
 	if (!disk_write(sw_lba, secbuf)) {
-		pred("Failed to flush write\n");
+		print_red("Failed to flush write\n");
 		return 0;
 	}
 
@@ -186,7 +186,7 @@ static u32 sr_sum;
 
 static int sr_fill(void) {
 	if (!disk_read(sr_lba, secbuf)) {
-		pred("Failed to read disk\n");
+		print_red("Failed to read disk\n");
 		return 0;
 	}
 
@@ -198,7 +198,7 @@ static int sr_fill(void) {
 
 static int sr_byte(u8 *b) {
 	if (sr_left == 0) {
-		pred("Read past EOF\n");
+		print_red("Read past EOF\n");
 		return 0;
 	}
 
@@ -256,8 +256,8 @@ int as_save_to_disk(void) {
 		}
 
 		if (!disk_write(lba, secbuf)) {
-			pred("Failed to write node\n");
-			pred("Failed to write to filesystem\n");
+			print_red("Failed to write node\n");
+			print_red("Failed to write to filesystem\n");
 			return 0;
 		}
 
@@ -275,8 +275,8 @@ int as_save_to_disk(void) {
 	put32(secbuf + 20, total);
 
 	if (!disk_write(AS_SAVE_LBA, secbuf)) {
-		pred("Failed to write to header\n");
-		pred("Failed to write to filesystem\n");
+		print_red("Failed to write to header\n");
+		print_red("Failed to write to filesystem\n");
 		return 0;
 	}
 
@@ -298,8 +298,8 @@ int as_load_from_disk(void) {
 	u8 *p = (u8 *)as_nodes;
 
 	if (!disk_read(AS_SAVE_LBA, secbuf)) {
-		pred("Failed to write to header\n");
-                pred("Failed to write to filesystem\n");
+		print_red("Failed to write to header\n");
+                print_red("Failed to write to filesystem\n");
 		return 0;
 	}
 
@@ -311,29 +311,29 @@ int as_load_from_disk(void) {
 	total = get32(secbuf + 20);
 
 	if (magic != AS_MAGIC) {
-		pred("No files!\n");
+		print_red("No files!\n");
 		return 0;
 	}
 
 	if (version != 2) {
-		pred("Bad AnchorSand save version\n");
+		print_red("Bad AnchorSand save version\n");
 		return 0;
 	}
 
 	if (total != sizeof(ASNode) * 64) {
-		pred("Bad AnchorSand save total\n");
+		print_red("Bad AnchorSand save total\n");
 		return 0;
 	}
 
 	if (sectors == 0 || sectors > AS_SAVE_MAX_SECTORS) {
-		pred("Bad AnchorSand save size\n");
+		print_red("Bad AnchorSand save size\n");
 		return 0;
 	}
 
 	while (pos < total) {
 		if (!disk_read(lba, secbuf)) {
-			pred("Failed to read node\n");
-			pred("Failed to load filesystem\n");
+			print_red("Failed to read node\n");
+			print_red("Failed to load filesystem\n");
 			return 0;
 		}
 
@@ -347,7 +347,7 @@ int as_load_from_disk(void) {
 	}
 
 	if (sum != wanted_sum) {
-		pred("AnchorSand checksum bad\n");
+		print_red("AnchorSand checksum bad\n");
 		return 0;
 	}
 

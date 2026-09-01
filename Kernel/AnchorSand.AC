@@ -35,14 +35,14 @@ U INT saveit = 0;
 #define AS_FILE 1
 #define AS_DIR 2
 
-VD pred(C *s)
+VD print_red(C *string)
 {//shell error funtion
-        const U8 oldcolor = color;
+        U8 oldcolor = color;
         color = 0xCF;
         print("ERROR:");
 	color = oldcolor;
         print(" ");
-	print(s);
+	print(string);
 }
 
 TD ST
@@ -58,404 +58,311 @@ TD ST
 ASNode as_nodes[AS_MAX_NODES];
 INT as_cwd = 0;
 
-VD as_strcpy(C *d, CC *s)
-{
-	while(*s)
-		*d++ = *s++;
-	*d = 0;
+VD as_copy_str(C *destination, CC *source)
+{//Copy source string to destination string.
+	while(*source)
+		*destination++ = *source++;
+	*destination = 0;
 }
 
-INT as_streq(CC *a, CC *b)
-{
-	while(*a && *b)
-	{
-		if(*a != *b)
+INT as_compare_equal_str(CC *string_1, CC *string_2)
+{//Compare two strings; if both are exact, ret.
+	while(*string_1 && *string_2) {
+		if(*string_1 != *string_2)
 			return 0;
-		a++;
-		b++;
+		string_1++;
+		string_2++;
 	}
-
-	return *a == *b;
+	return *string_1 == *string_2;
 }
 
-INT as_strlen(CC *s)
-{
-	INT i = 0;
-
-	while(s[i])
-		i++;
-
-	return i;
+INT as_lengthof_str(CC *string)
+{//Counth string length
+	INT index = 0;
+	while(string[index])
+		index++;
+	return index;
 }
 
-INT as_namecmp(CC *a, CC *b)
-{
-	C ca;
-	C cb;
-
-	while(*a && *b)
-	{
-		ca = *a;
-		cb = *b;
-
-		if(ca >= 'A' && ca <= 'Z')
-			ca += 32;
-
-		if(cb >= 'A' && cb <= 'Z')
-			cb += 32;
-
-		if(ca < cb)
+INT as_compare_str(CC *string_1, CC *string_2)
+{//Compare two strings; if both are same chars, ret 0.
+	C string_1_chr;
+	C string_2_chr;
+	while(*string_1 && *string_2) {
+		string_1_chr = *string_1;
+		string_2_chr = *string_2;
+		if(string_1_chr >= 'A' && string_1_chr <= 'Z')
+			string_1_chr += 32;
+		if(string_2_chr >= 'A' && string_2_chr <= 'Z')
+			string_2_chr += 32;
+		if(string_1_chr < string_2_chr)
 			return -1;
-
-		if(ca > cb)
+		if(string_1_chr > string_2_chr)
 			return 1;
-
-		a++;
-		b++;
+		string_1++;
+		string_2++;
 	}
-
-	if(!*a && *b)
+	if(!*string_1 && *string_2)
 		return -1;
-
-	if(*a && !*b)
+	if(*string_1 && !*string_2)
 		return 1;
-
 	return 0;
 }
 
 VD as_init()
-{
-	INT i;
-
+{//Initialize AnchorSand
+	INT index;
 	print("AS_MAX_NODES=");
 	printINT(AS_MAX_NODES);
 	print("\nAS_NAME_MAX=");
 	printINT(AS_NAME_MAX);
 	print("\nAS_DATA_MAX=");
 	printINT(AS_DATA_MAX);
-	for(i = 0; i < AS_MAX_NODES; i++)
-		as_nodes[i].used = 0;
-
-	as_nodes[0].used = 1;
+	for(index = 0; index < AS_MAX_NODES; index++)
+		as_nodes[index].used = 0;
+	as_nodes[0].used = index;
 	as_nodes[0].type = AS_DIR;
 	as_nodes[0].parent = 0;
 	as_nodes[0].size = 0;
-	as_strcpy(as_nodes[0].name, "/");
+	as_copy_str(as_nodes[0].name, "/");
 }
 
-INT as_alloc()
-{
-	INT i;
-
-	for(i = 1; i < AS_MAX_NODES; i++)
-	{
-		if(!as_nodes[i].used)
-			return i;
+INT as_node_allocator()
+{//Node allocator
+	INT index;
+	for(index = 1; index < AS_MAX_NODES; index++) {
+		if(!as_nodes[index].used)
+			return index;
 	}
-
 	return -1;
 }
 
 INT as_find_child(INT parent, CC *name)
-{
-	INT i;
-
-	for(i = 0; i < AS_MAX_NODES; i++)
-	{
+{//used child node finder with parent and name
+	INT index;
+	for(index = 0; index < AS_MAX_NODES; index++) {
 		if(
-			as_nodes[i].used &&
-			as_nodes[i].parent == parent &&
-			as_streq(as_nodes[i].name, name)
+			as_nodes[index].used &&
+			as_nodes[index].parent == parent &&
+			as_compare_equal_str(as_nodes[index].name, name)
 		)
-			return i;
+			return index;
 	}
-
 	return -1;
 }
 
 VD as_split_path(CC *path, C *parent, C *name)
-{
-	INT len;
-	INT i;
-	INT slash;
-
+{//splits a path into 2 seperate strings.
+	INT length;
+	INT index;
+	INT last_slash;
 	parent[0] = 0;
 	name[0] = 0;
-
-	len = as_strlen(path);
-	slash = -1;
-
-	for(i = 0; i < len; i++)
-	{
-		if(path[i] == '/')
-			slash = i;
+	length = as_lengthof_str(path);
+	last_slash = -1;
+	for(index = 0; index < length; index++) {
+		if(path[index] == '/')
+			last_slash = index;
 	}
-
-	if(slash == -1)
-	{
-		as_strcpy(parent, ".");
-		as_strcpy(name, path);
+	if(last_slash == -1) {
+		as_copy_str(parent, ".");
+		as_copy_str(name, path);
 		return;
 	}
-
-	if(slash == 0)
-	{
-		as_strcpy(parent, "/");
-		as_strcpy(name, path + 1);
+	if(last_slash == 0) {
+		as_copy_str(parent, "/");
+		as_copy_str(name, path + 1);
 		return;
 	}
-
-	for(i = 0; i < slash; i++)
-		parent[i] = path[i];
-
-	parent[slash] = 0;
-	as_strcpy(name, path + slash + 1);
+	for(index = 0; index < last_slash; index++)
+		parent[index] = path[index];
+	parent[last_slash] = 0;
+	as_copy_str(name, path + last_slash + 1);
 }
 
-INT as_resolve(CC *path)
-{
-	INT cur;
-	INT i;
-	INT j;
-	INT n;
+INT as_resolve_path(CC *path)
+{//resolve FS path into node index
+	INT current_node;
+	INT path_index;
+	INT part_index;
+	INT node_index;
 	C part[AS_NAME_MAX];
-
 	if(!path || !path[0])
 		return as_cwd;
-
-	if(path[0] == '/')
-	{
-		cur = 0;
-		i = 1;
+	if(path[0] == '/') {
+		current_node = 0;
+		path_index = 1;
+	} else {
+		current_node = as_cwd;
+		path_index = 0;
 	}
-	else
-	{
-		cur = as_cwd;
-		i = 0;
-	}
-
-	while(1)
-	{
-		while(path[i] == '/')
-			i++;
-
-		if(!path[i])
-			return cur;
-
-		j = 0;
-
-		while(path[i] && path[i] != '/' && j < AS_NAME_MAX - 1)
-			part[j++] = path[i++];
-
-		part[j] = 0;
-
-		if(as_streq(part, "."))
+	while(1) {
+		while(path[path_index] == '/')
+			path_index++;
+		if(!path[path_index])
+			return current_node;
+		part_index = 0;
+		while(path[path_index] && path[path_index] != '/' && path_index < AS_NAME_MAX - 1)
+			part[part_index++] = path[path_index++];
+		part[part_index] = 0;
+		if(as_compare_equal_str(part, "."))
 			continue;
-
-		if(as_streq(part, ".."))
-		{
-			if(cur != 0)
-				cur = as_nodes[cur].parent;
-
+		if(as_compare_equal_str(part, "..")) {
+			if(current_node != 0)
+				current_node = as_nodes[current_node].parent;
 			continue;
 		}
-
-		n = as_find_child(cur, part);
-
-		if(n == -1)
+		node_index = as_find_child(current_node, part);
+		if(node_index == -1)
 			return -1;
-
-		cur = n;
+		current_node = node_index;
 	}
 }
 
 INT as_mkdir_at(INT parent, CC *name)
-{
-	INT n;
-
+{//mkdir node under parent
+	INT node_index;
 	if(!name[0])
 		return -1;
-
 	if(as_find_child(parent, name) != -1)
 		return -1;
-
-	n = as_alloc();
-
-	if(n == -1)
+	node_index = as_node_allocator();
+	if(node_index == -1)
 		return -1;
-
-	as_nodes[n].used = 1;
-	as_nodes[n].type = AS_DIR;
-	as_nodes[n].size = 0;
-	as_nodes[n].parent = parent;
-	as_strcpy(as_nodes[n].name, name);
-
+	as_nodes[node_index].used = 1;
+	as_nodes[node_index].type = AS_DIR;
+	as_nodes[node_index].size = 0;
+	as_nodes[node_index].parent = parent;
+	as_copy_str(as_nodes[node_index].name, name);
 	if(saveit == 1)
 		as_save_to_disk();
-
 	return 0;
 }
 
 INT as_touch_at(INT parent, CC *name)
-{
-	INT n;
-
+{//new empty node under parent.
+	INT node_index;
 	if(!name[0])
 		return -1;
-
 	if(as_find_child(parent, name) != -1)
 		return -1;
-
-	n = as_alloc();
-
-	if(n == -1)
+	node_index = as_node_allocator();
+	if(node_index == -1)
 		return -1;
-
-	as_nodes[n].used = 1;
-	as_nodes[n].type = AS_FILE;
-	as_nodes[n].size = 0;
-	as_nodes[n].parent = parent;
-	as_strcpy(as_nodes[n].name, name);
-	as_nodes[n].data[0] = 0;
-
+	as_nodes[node_index].used = 1;
+	as_nodes[node_index].type = AS_FILE;
+	as_nodes[node_index].size = 0;
+	as_nodes[node_index].parent = parent;
+	as_copy_str(as_nodes[node_index].name, name);
+	as_nodes[node_index].data[0] = 0;
 	if(saveit == 1)
                 as_save_to_disk();
-
 	return 0;
 }
 
 INT as_mkdir(CC *path)
-{
+{//make new directory.
 	C parent_path[AS_NAME_MAX * 4];
 	C name[AS_NAME_MAX];
 	INT parent;
-
 	as_split_path(path, parent_path, name);
-
-	parent = as_resolve(parent_path);
-
+	parent = as_resolve_path(parent_path);
 	if(parent == -1)
 		return -1;
-
 	if(as_nodes[parent].type != AS_DIR)
 		return -1;
-
 	return as_mkdir_at(parent, name);
 }
 
 INT as_touch(CC *path)
-{
+{//make new regular file.
 	C parent_path[AS_NAME_MAX * 4];
 	C name[AS_NAME_MAX];
 	INT parent;
-
 	as_split_path(path, parent_path, name);
-
-	parent = as_resolve(parent_path);
-
+	parent = as_resolve_path(parent_path);
 	if(parent == -1)
 		return -1;
-
 	if(as_nodes[parent].type != AS_DIR)
 		return -1;
-
 	return as_touch_at(parent, name);
 }
 
 INT as_write(CC *path, CC *text)
-{
+{//overwrite text file
 	C parent_path[AS_NAME_MAX * 4];
 	C name[AS_NAME_MAX];
 	INT parent;
-	INT n;
-	INT i;
-
+	INT node_index;
+	INT index;
 	as_split_path(path, parent_path, name);
-
-	parent = as_resolve(parent_path);
-
+	parent = as_resolve_path(parent_path);
 	if(parent == -1)
 		return -1;
-
 	if(as_nodes[parent].type != AS_DIR)
 		return -1;
-
-	n = as_find_child(parent, name);
-
-	if(n == -1)
-	{
+	node_index = as_find_child(parent, name);
+	if(node_index == -1) {
 		if(as_touch_at(parent, name) != 0)
 			return -1;
-
-		n = as_find_child(parent, name);
+		node_index = as_find_child(parent, name);
 	}
-
-	if(as_nodes[n].type != AS_FILE)
+	if(as_nodes[node_index].type != AS_FILE)
 		return -1;
-
-	for(i = 0; text[i] && i < AS_DATA_MAX - 1; i++)
-		as_nodes[n].data[i] = text[i];
-
-	as_nodes[n].data[i] = 0;
-	as_nodes[n].size = i;
-
+	for(index = 0; text[index] && index < AS_DATA_MAX - 1; index++)
+		as_nodes[node_index].data[index] = text[index];
+	as_nodes[node_index].data[index] = 0;
+	as_nodes[node_index].size = index;
 	if(saveit == 1)
                 as_save_to_disk();
-
 	return 0;
 }
 
 VD as_cat(CC *path)
-{
-	INT n;
-
-	n = as_resolve(path);
-
-	if(n == -1)
-	{
-		pred("File not found\n");
+{//cat a text file from path
+	INT node_index;
+	node_index = as_resolve_path(path);
+	if(node_index == -1) {
+		print_red("File not found\n");
 		return;
 	}
-
-	if(as_nodes[n].type != AS_FILE)
-	{
-		pred("Not a readable file\n");
+	if(as_nodes[node_index].type != AS_FILE) {
+		print_red("Not a readable file\n");
 		return;
 	}
-
-	print(as_nodes[n].data);
+	print(as_nodes[node_index].data);
 	print("\n");
 }
 
 VD as_ls_node(INT dir)
 {
-	INT i;
-	INT j;
-	INT count = 0;
+	INT index;
+	INT sorting_index;
+	INT child_node_count = 0;
 	INT entries[AS_MAX_NODES];
 	INT temp;
 
 	print("DIR..........: .\n");
 	print("DIR..........: ..\n");
 
-	for(i = 0; i < AS_MAX_NODES; i++)
+	for(index = 0; index < AS_MAX_NODES; index++)
 	{
 		if(
-			as_nodes[i].used &&
-			as_nodes[i].parent == dir &&
-			i != dir
+			as_nodes[index].used &&
+			as_nodes[index].parent == dir &&
+			index != dir
 		)
 		{
-			entries[count++] = i;
+			entries[child_node_count++] = index;
 		}
 	}
 
-	for(i = 0; i < count - 1; i++)
+	for(index = 0; index < child_node_count - 1; index++)
 	{
-		for(j = i + 1; j < count; j++)
+		for(sorting_index = index + 1; sorting_index < child_node_count; sorting_index++)
 		{
-			INT a = entries[i];
-			INT b = entries[j];
+			INT a = entries[index];
+			INT b = entries[sorting_index];
 			INT swap = 0;
 
 			if(as_nodes[a].type != as_nodes[b].type)
@@ -465,22 +372,22 @@ VD as_ls_node(INT dir)
 			}
 			else
 			{
-				if(as_namecmp(as_nodes[a].name, as_nodes[b].name) > 0)
+				if(as_compare_str(as_nodes[a].name, as_nodes[b].name) > 0)
 					swap = 1;
 			}
 
 			if(swap)
 			{
-				temp = entries[i];
-				entries[i] = entries[j];
-				entries[j] = temp;
+				temp = entries[index];
+				entries[index] = entries[sorting_index];
+				entries[sorting_index] = temp;
 			}
 		}
 	}
 
-	for(i = 0; i < count; i++)
+	for(index = 0; index < child_node_count; index++)
 	{
-		INT idx = entries[i];
+		INT idx = entries[index];
 
 		if(as_nodes[idx].type == AS_DIR)
 		{
@@ -512,17 +419,17 @@ VD as_ls_path(CC *path)
 {
 	INT n;
 
-	n = as_resolve(path);
+	n = as_resolve_path(path);
 
 	if(n == -1)
 	{
-		pred("Directory not found\n");
+		print_red("Directory not found\n");
 		return;
 	}
 
 	if(as_nodes[n].type != AS_DIR)
 	{
-		pred("Not a directory\n");
+		print_red("Not a directory\n");
 		return;
 	}
 
@@ -533,7 +440,7 @@ INT as_cd(CC *path)
 {
 	INT n;
 
-	n = as_resolve(path);
+	n = as_resolve_path(path);
 
 	if(n == -1)
 		return -1;
@@ -945,19 +852,19 @@ VD as_edit(CC *path)
 	as_edit_save_screen(&oldcx, &oldcy, &oldcolor);
 
 	as_split_path(path, parent_path, name);
-	parent = as_resolve(parent_path);
+	parent = as_resolve_path(parent_path);
 
 	if(parent == -1)
 	{
 		as_edit_restore_screen(oldcx, oldcy, oldcolor);
-		pred("Directory not found\n");
+		print_red("Directory not found\n");
 		return;
 	}
 
 	if(as_nodes[parent].type != AS_DIR)
 	{
 		as_edit_restore_screen(oldcx, oldcy, oldcolor);
-		pred("Not a directory\n");
+		print_red("Not a directory\n");
 		return;
 	}
 
@@ -968,7 +875,7 @@ VD as_edit(CC *path)
 		if(as_touch_at(parent, name) != 0)
 		{
 			as_edit_restore_screen(oldcx, oldcy, oldcolor);
-			pred("Could not create file\n");
+			print_red("Could not create file\n");
 			return;
 		}
 
@@ -978,7 +885,7 @@ VD as_edit(CC *path)
 	if(as_nodes[n].type != AS_FILE)
 	{
 		as_edit_restore_screen(oldcx, oldcy, oldcolor);
-		pred("Not a readable file\n");
+		print_red("Not a readable file\n");
 		return;
 	}
 
@@ -1105,17 +1012,17 @@ INT as_edit_open_win(INT id, CC *path)
 		return -1;
 
 	as_split_path(path, parent_path, name);
-	parent = as_resolve(parent_path);
+	parent = as_resolve_path(parent_path);
 
 	if(parent == -1)
 	{
-		pred("Directory not found\n");
+		print_red("Directory not found\n");
 		return -1;
 	}
 
 	if(as_nodes[parent].type != AS_DIR)
 	{
-		pred("Not a directory\n");
+		print_red("Not a directory\n");
 		return -1;
 	}
 
@@ -1125,7 +1032,7 @@ INT as_edit_open_win(INT id, CC *path)
 	{
 		if(as_touch_at(parent, name) != 0)
 		{
-			pred("Could not create file\n");
+			print_red("Could not create file\n");
 			return -1;
 		}
 
@@ -1134,7 +1041,7 @@ INT as_edit_open_win(INT id, CC *path)
 
 	if(as_nodes[n].type != AS_FILE)
 	{
-		pred("Not a readable file\n");
+		print_red("Not a readable file\n");
 		return -1;
 	}
 
@@ -1248,7 +1155,7 @@ INT as_get_file_data(CC *path, C **data, INT *size)
 {
 	INT n;
 
-	n = as_resolve(path);
+	n = as_resolve_path(path);
 
 	if(n == -1)
 		return -1;
@@ -1294,7 +1201,7 @@ VD as_rm(C *name)
 	{
 		if (as_nodes[i].used &&
 		    as_nodes[i].parent == as_cwd &&
-		    as_streq(as_nodes[i].name, name))
+		    as_compare_equal_str(as_nodes[i].name, name))
 		{
 			as_rm_recursive(i);
 			if(saveit == 1)
@@ -1318,7 +1225,7 @@ INT as_path_parent_name(CC *path, INT *parent, C *name)
 	if(!name[0])
 		return -1;
 
-	*parent = as_resolve(parent_path);
+	*parent = as_resolve_path(parent_path);
 
 	if(*parent == -1)
 		return -1;
@@ -1337,14 +1244,14 @@ INT as_copy_node_recursive(INT src, INT dst_parent, CC *newname)
 	if(as_find_child(dst_parent, newname) != -1)
 		return -1;
 
-	n = as_alloc();
+	n = as_node_allocator();
 
 	if(n == -1)
 		return -1;
 
 	as_nodes[n] = as_nodes[src];
 	as_nodes[n].parent = dst_parent;
-	as_strcpy(as_nodes[n].name, newname);
+	as_copy_str(as_nodes[n].name, newname);
 
 	if(as_nodes[src].type == AS_DIR)
 	{
@@ -1367,29 +1274,29 @@ INT as_cp(CC *src_path, CC *dst_path)
 	INT dst_parent;
 	C dst_name[AS_NAME_MAX];
 
-	src = as_resolve(src_path);
+	src = as_resolve_path(src_path);
 
 	if(src == -1)
 	{
-		pred("cp: source not found\n");
+		print_red("cp: source not found\n");
 		return -1;
 	}
 
 	if(src == 0)
 	{
-		pred("cp: cannot copy root\n");
+		print_red("cp: cannot copy root\n");
 		return -1;
 	}
 
 	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0)
 	{
-		pred("cp: bad destination\n");
+		print_red("cp: bad destination\n");
 		return -1;
 	}
 
 	if(as_copy_node_recursive(src, dst_parent, dst_name) != 0)
 	{
-		pred("cp: failed\n");
+		print_red("cp: failed\n");
 		return -1;
 	}
 
@@ -1405,34 +1312,34 @@ INT as_mv(CC *src_path, CC *dst_path)
 	INT dst_parent;
 	C dst_name[AS_NAME_MAX];
 
-	src = as_resolve(src_path);
+	src = as_resolve_path(src_path);
 
 	if(src == -1)
 	{
-		pred("mv: source not found\n");
+		print_red("mv: source not found\n");
 		return -1;
 	}
 
 	if(src == 0)
 	{
-		pred("mv: cannot move root\n");
+		print_red("mv: cannot move root\n");
 		return -1;
 	}
 
 	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0)
 	{
-		pred("mv: bad destination\n");
+		print_red("mv: bad destination\n");
 		return -1;
 	}
 
 	if(as_find_child(dst_parent, dst_name) != -1)
 	{
-		pred("mv: destination exists\n");
+		print_red("mv: destination exists\n");
 		return -1;
 	}
 
 	as_nodes[src].parent = dst_parent;
-	as_strcpy(as_nodes[src].name, dst_name);
+	as_copy_str(as_nodes[src].name, dst_name);
 
 	if(saveit == 1)
 		as_save_to_disk();
