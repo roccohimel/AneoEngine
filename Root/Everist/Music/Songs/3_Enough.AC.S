@@ -20,7 +20,6 @@ VD music(VD)
 	tune("T120 E4q");
 	print("dear, ");
 	tune("T120 D3q");
-
 	print("That ");
 	tune("T120 B3q");
 	print("will ");
@@ -41,7 +40,6 @@ VD music(VD)
 	tune("T120 E4q");
 	print("dear,\n");
 	tune("T120 D3q");
-
 	print("No, ");
 	tune("T120 G4q");
 	print("No, ");
@@ -60,7 +58,6 @@ VD music(VD)
 	tune("T120 G4q");
 	print("much! ");
 	tune("T120 B3q");
-
 	print("No, ");
 	tune("T120 G4q");
 	print("No, ");
@@ -79,16 +76,6 @@ VD music(VD)
 	tune("T120 G4q");
 	print("much!\n\n");
 	tune("T120 B3q");
-	 
-
-
-
-
-
-
-
-
-
 	print("That ");
 	tune("T120 B3q");
 	print("will ");
@@ -109,7 +96,6 @@ VD music(VD)
 	tune("T120 E4q");
 	print("dear, ");
 	tune("T120 D3q");
-
 	print("That ");
 	tune("T120 B3q");
 	print("will ");
@@ -130,7 +116,6 @@ VD music(VD)
 	tune("T120 E4q");
 	print("dear,\n");
 	tune("T120 D3q");
-
 	print("No, ");
 	tune("T120 G4q");
 	print("No, ");
@@ -149,7 +134,6 @@ VD music(VD)
 	tune("T120 G4q");
 	print("much! ");
 	tune("T120 B3q");
-
 	print("No, ");
 	tune("T120 G4q");
 	print("No, ");

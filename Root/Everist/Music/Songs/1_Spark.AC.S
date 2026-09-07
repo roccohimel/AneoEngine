@@ -7,7 +7,7 @@ VD music(VD)
 	print("ha");
 	tune("T120 E4h");
 	print("ve an ");
-	tune("T120 D4e"); 
+	tune("T120 D4e");
 	print("ide");
 	tune("T120 E4e G4q");
 	print("a?\n");
@@ -22,9 +22,7 @@ VD music(VD)
 	print("spa");
 	tune("T120 C4w");
 	print("rk?\n");
-
 	tune("T120 Rq");
-
 	print("Do ");
 	tune("T120 C4e");
 	print("I ");
@@ -32,7 +30,7 @@ VD music(VD)
 	print("ha");
 	tune("T120 E4h");
 	print("ve an ");
-	tune("T120 D4e"); 
+	tune("T120 D4e");
 	print("ide");
 	tune("T120 E4e G4q");
 	print("a?\n");
@@ -47,15 +45,13 @@ VD music(VD)
 	print("spa");
 	tune("T120 C5w");
 	print("rk!\n");
-
 	tune("T120 Rq");
-
 	print("Is ");
 	tune("T120 E4e");
 	print("it ");
 	tune("T120 F4e");
 	print("re");
-	tune("T120 G4q"); 
+	tune("T120 G4q");
 	print("ady ");
 	tune("T120 A4h");
 	print("for ");
@@ -76,15 +72,13 @@ VD music(VD)
 	tune("T120 B4h");
 	print("ne!\n");
 	tune("T120 A4w");
-
 	tune("T120 Rq");
-
 	print("Is ");
 	tune("T120 E4e");
 	print("it ");
 	tune("T120 F4e");
 	print("re");
-	tune("T120 G4q"); 
+	tune("T120 G4q");
 	print("ady ");
 	tune("T120 A4h");
 	print("for ");
@@ -105,15 +99,13 @@ VD music(VD)
 	tune("T120 B4h");
 	print("ne!\n");
 	tune("T120 A4w");
-
 	tune("T120 Rq");
-
 	print("Make ");
 	tune("T120 E4e");
 	print("it ");
 	tune("T120 F4e");
 	print("re");
-	tune("T120 G4q"); 
+	tune("T120 G4q");
 	print("ady ");
 	tune("T120 A4h");
 	print("for ");
@@ -145,5 +137,3 @@ INT main(VD)
 	mm;
 	return 0;
 }
-
-

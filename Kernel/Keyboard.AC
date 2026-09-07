@@ -1,10 +1,8 @@
 //keyboard driver
 #include <stdint.h>
-
 TD U C u8;
 TD U S u16;
 TD U INT u32;
-
 #define KEY_F1  0x3B
 #define KEY_F2  0x3C
 #define KEY_F3  0x3D
@@ -17,7 +15,6 @@ TD U INT u32;
 #define KEY_F10 0x44
 #define KEY_F11 0x57
 #define KEY_F12 0x58
-
 extern INT as_edit_win_mem(INT id);
 extern CC *as_edit_win_path(INT id);
 extern u8 inb(u16 port);
@@ -36,7 +33,6 @@ extern INT wm_create_window(INT kind);
 extern VD wm_enqueue_cmd(INT id, CC *cmd);
 extern VD wm_open_help_window(VD);
 extern VD entropy(VD);
-
 SC CC keymap[128] =
 {//allowed Cs
 	0, 27, '1', '2', '3', '4', '5', '6',
@@ -48,7 +44,6 @@ SC CC keymap[128] =
 	'b', 'n', 'm', ',', '.', '/', 0, '*',
 	0, ' ', 0
 };
-
 SC CC shiftmap[128] =
 {//allowed Cs when shift is pressed
 	0, 27, '!', '@', '#', '$', '%', '^',
@@ -60,15 +55,12 @@ SC CC shiftmap[128] =
 	'B', 'N', 'M', '<', '>', '?', 0, '*',
 	0, ' ', 0
 };
-
 INT shift = 0;
-
 #define KEY_UP    0x101
 #define KEY_DOWN  0x102
 #define KEY_LEFT  0x103
 #define KEY_RIGHT 0x104
 #define ESC       27
-
 INT ctrl = 0;
 INT ext = 0;
 
@@ -80,10 +72,9 @@ VD clearet(VD)
 	run_script("/RunCmds.c");
 }
 
-SC VD HandleFn(u8 sc)
+SC VD HandleFn(u8 scan_code)
 {
-	switch(sc)
-	{
+	switch(scan_code) {
 		case KEY_F1:
 			wm_open_help_window();
 			break;
@@ -119,100 +110,74 @@ SC VD HandleFn(u8 sc)
 
 INT getkey(VD)
 {
-	u8 st;
-	u8 sc;
-	C c;
-
-	st = inb(0x64);
-	if(!(st & 1))
+	u8 status;
+	u8 scan_code;
+	C character;
+	status = inb(0x64);
+	if(!(status & 1))
 		return 0;
-
-	if(st & 0x20)
-	{
+	if(status & 0x20) {
 		if(wm_on)
 			return 0;
 		inb(0x60);
 		return 0;
 	}
-
-	sc = inb(0x60);
-
-	if(sc == 0xE0)
-	{
+	scan_code = inb(0x60);
+	if(scan_code == 0xE0) {
 		ext = 1;
 		return 0;
 	}
-
-	if(sc == 0x01)
-	{
+	if(scan_code == 0x01) {
 		return ESC;
 	}
-
-	if(ext)
-	{
+	if(ext) {
 		ext = 0;
-
-		if(sc == 0x48)
+		if(scan_code == 0x48)
 			return KEY_UP;
-		if(sc == 0x50)
+		if(scan_code == 0x50)
 			return KEY_DOWN;
-		if(sc == 0x4B)
+		if(scan_code == 0x4B)
 			return KEY_LEFT;
-		if(sc == 0x4D)
+		if(scan_code == 0x4D)
 			return KEY_RIGHT;
 		return 0;
 	}
-
-	if(sc == 42 || sc == 54)
-	{
+	if(scan_code == 42 || scan_code == 54) {
 		shift = 1;
 		return 0;
 	}
-
-	if(sc == 170 || sc == 182)
-	{
+	if(scan_code == 170 || scan_code == 182) {
 		shift = 0;
 		return 0;
 	}
-
-	if(sc == 29)
-	{
+	if(scan_code == 29) {
 		ctrl = 1;
 		return 0;
 	}
-
-	if(sc == 157)
-	{
+	if(scan_code == 157) {
 		ctrl = 0;
 		return 0;
 	}
-
-	if(sc & 0x80)
+	if(scan_code & 0x80)
 		return 0;
-
 	if(
-		(sc >= KEY_F1 && sc <= KEY_F10) ||
-		sc == KEY_F11 ||
-		sc == KEY_F12
+		(scan_code >= KEY_F1 && scan_code <= KEY_F10) ||
+		scan_code == KEY_F11 ||
+		scan_code == KEY_F12
 	)
 	{
-		HandleFn(sc);
+		HandleFn(scan_code);
 		return 0;
 	}
-
-	if(sc >= 128)
+	if(scan_code >= 128)
 		return 0;
-
 	if(shift)
-		c = shiftmap[sc];
+		character = shiftmap[scan_code];
 	else
-		c = keymap[sc];
-
-	if(ctrl && c >= 'a' && c <= 'z')
-		return c - 'a' + 1;
-
-	if(ctrl && c >= 'A' && c <= 'Z')
-		return c - 'A' + 1;
-
-	return c;
+		character = keymap[scan_code];
+	if(ctrl && character >= 'a' && character <= 'z')
+		return character - 'a' + 1;
+	if(ctrl && character >= 'A' && character <= 'Z')
+		return character - 'A' + 1;
+	return character;
 }

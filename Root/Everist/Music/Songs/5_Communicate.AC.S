@@ -22,7 +22,6 @@ VD music(VD)
 	tune("T84 A4e");
 	tune("T84 E4e");
 	tune("T84 G4q");
-
 	tune("T84 D4s");
 	tune("T84 D4s");
 	tune("T84 D4s");
@@ -45,7 +44,6 @@ VD music(VD)
 	tune("T84 A4e");
 	tune("T84 E4e");
 	tune("T84 G4q");
-
 	print("How ");
 	tune("T126 F4e");
 	print("will ");
@@ -74,7 +72,6 @@ VD music(VD)
 	tune("T84 E4s");
 	print("?\n");
 	tune("T84 C4q");
-
 	print("How ");
 	tune("T126 F4e");
 	print("will ");
@@ -103,8 +100,6 @@ VD music(VD)
 	tune("T84 E4s");
 	print("?\n");
 	tune("T84 C4q");
-
-	 
 	tune("T84 D4s");
 	tune("T84 D4s");
 	tune("T84 D4s");
@@ -127,7 +122,6 @@ VD music(VD)
 	tune("T84 A4e");
 	tune("T84 E4e");
 	tune("T84 G4q");
-
 	tune("T84 D4s");
 	tune("T84 D4s");
 	tune("T84 D4s");
@@ -150,7 +144,6 @@ VD music(VD)
 	tune("T84 A4e");
 	tune("T84 E4e");
 	tune("T84 G4q");
-
 	print("How ");
 	tune("T126 F4e");
 	print("will ");
@@ -179,7 +172,6 @@ VD music(VD)
 	tune("T84 E4s");
 	print("?\n");
 	tune("T84 C4q");
-
 	print("How ");
 	tune("T126 F4e");
 	print("will ");

@@ -2,7 +2,6 @@
 AneoEngine AnchorSand Filesystem.
 AneoC source file
 */
-
 #include <stdint.h>
 //TDs
 TD U C U8;
@@ -44,7 +43,6 @@ VD print_red(C *string)
         print(" ");
 	print(string);
 }
-
 TD ST
 {
 	C name[AS_NAME_MAX];
@@ -54,7 +52,6 @@ TD ST
 	INT used;
 	INT parent;
 } ASNode;
-
 ASNode as_nodes[AS_MAX_NODES];
 INT as_cwd = 0;
 
@@ -387,7 +384,7 @@ VD as_ls_path(CC *path)
 }
 
 INT as_cd(CC *path)
-{//change current directory. 
+{//change current directory.
 	INT node_index;
 	node_index = as_resolve_path(path);
 	if(node_index == -1) return -1;
@@ -412,7 +409,6 @@ VD as_pwd()
 {//print working directory
 	as_pwd_recursively(as_cwd);
 }
-
 //macros and vars for editor
 #define EDIT_KEY_UP 0x101
 #define EDIT_KEY_DOWN 0x102
@@ -421,7 +417,6 @@ VD as_pwd()
 #define EDIT_TOP 3
 #define EDIT_W 80
 #define EDIT_H 60
-
 C edit_saved_chrs[EDIT_W * EDIT_H];
 U8 edit_saved_display_attributes[EDIT_W * EDIT_H];
 
@@ -429,7 +424,6 @@ INT as_edit_w(VD)
 {
 	if(con_w > 0 && con_w <= EDIT_W)
 		return con_w;
-
 	return EDIT_W;
 }
 
@@ -437,334 +431,262 @@ INT as_edit_h(VD)
 {
 	if(con_h > EDIT_TOP && con_h <= EDIT_H)
 		return con_h;
-
 	return EDIT_H;
 }
 
-INT as_edit_line_of_pos(INT n, INT pos)
+INT as_edit_line_of_pos(INT count, INT pos)
 {
-	INT i;
+	INT index;
 	INT line;
-
 	line = 0;
-
-	for(i = 0; i < pos && i < as_nodes[n].size; i++)
-	{
-		if(as_nodes[n].data[i] == '\n')
+	for(index = 0; index < pos && index < as_nodes[count].size; index++) {
+		if(as_nodes[count].data[index] == '\n')
 			line++;
 	}
-
 	return line;
 }
 
 VD as_edit_save_screen(U INT *oldcx, U INT *oldcy, U8 *oldcolor)
 {
-	INT x;
-	INT y;
-	INT w;
-	INT h;
-	INT si;
-	INT di;
-
+	INT x_coordinate;
+	INT y_coordinate;
+	INT width;
+	INT height;
+	INT source_index;
+	INT destination_index;
 	*oldcx = cx;
 	*oldcy = cy;
 	*oldcolor = color;
-	w = as_edit_w();
-	h = as_edit_h();
-
-	for(y = 0; y < h; y++)
-	{
-		for(x = 0; x < w; x++)
-		{
-			si = (con_y + y) * EDIT_W + con_x + x;
-			di = y * EDIT_W + x;
-			screen_get_cell(si, &edit_saved_chrs[di], &edit_saved_display_attributes[di]);
+	width = as_edit_w();
+	height = as_edit_h();
+	for(y_coordinate = 0; y_coordinate < height; y_coordinate++) {
+		for(x_coordinate = 0; x_coordinate < width; x_coordinate++) {
+			source_index = (con_y + y_coordinate) * EDIT_W + con_x + x_coordinate;
+			destination_index = y_coordinate * EDIT_W + x_coordinate;
+			screen_get_cell(source_index, &edit_saved_chrs[destination_index], &edit_saved_display_attributes[destination_index]);
 		}
 	}
 }
 
 VD as_edit_restore_screen(U INT oldcx, U INT oldcy, U8 oldcolor)
 {
-	INT x;
-	INT y;
-	INT w;
-	INT h;
-	INT di;
-
-	w = as_edit_w();
-	h = as_edit_h();
-	for(y = 0; y < h; y++)
-	{
-		for(x = 0; x < w; x++)
-		{
-			di = y * EDIT_W + x;
-			screen_put_at(con_x + x, con_y + y, edit_saved_chrs[di], edit_saved_display_attributes[di]);
+	INT x_coordinate;
+	INT y_coordinate;
+	INT width;
+	INT height;
+	INT destination_index;
+	width = as_edit_w();
+	height = as_edit_h();
+	for(y_coordinate = 0; y_coordinate < height; y_coordinate++) {
+		for(x_coordinate = 0; x_coordinate < width; x_coordinate++) {
+			destination_index = y_coordinate * EDIT_W + x_coordinate;
+			screen_put_at(con_x + x_coordinate, con_y + y_coordinate, edit_saved_chrs[destination_index], edit_saved_display_attributes[destination_index]);
 		}
 	}
-
 	cx = oldcx;
 	cy = oldcy;
 	color = oldcolor;
 	cursor_update();
 }
 
-VD as_edit_put_at(INT x, INT y, C c, U8 col)
+VD as_edit_put_at(INT x_coordinate, INT y_coordinate, C character, U8 col)
 {
-	if(x < 0 || x >= as_edit_w())
+	if(x_coordinate < 0 || x_coordinate >= as_edit_w())
 		return;
-
-	if(y < 0 || y >= as_edit_h())
+	if(y_coordinate < 0 || y_coordinate >= as_edit_h())
 		return;
-
-	screen_put_at(con_x + x, con_y + y, c, col);
+	screen_put_at(con_x + x_coordinate, con_y + y_coordinate, character, col);
 }
 
 VD as_edit_clear_editor_area(VD)
 {
-	INT x;
-	INT y;
-
-	for(y = EDIT_TOP; y < as_edit_h(); y++)
-	{
-		for(x = 0; x < as_edit_w(); x++)
-			as_edit_put_at(x, y, ' ', color);
+	INT x_coordinate;
+	INT y_coordinate;
+	for(y_coordinate = EDIT_TOP; y_coordinate < as_edit_h(); y_coordinate++) {
+		for(x_coordinate = 0; x_coordinate < as_edit_w(); x_coordinate++)
+			as_edit_put_at(x_coordinate, y_coordinate, ' ', color);
 	}
 }
 
-INT as_edit_line_start(INT n, INT pos)
+INT as_edit_line_start(INT count, INT pos)
 {
-	while(pos > 0 && as_nodes[n].data[pos - 1] != '\n')
+	while(pos > 0 && as_nodes[count].data[pos - 1] != '\n')
 		pos--;
-
 	return pos;
 }
 
-INT as_edit_line_end(INT n, INT pos)
+INT as_edit_line_end(INT count, INT pos)
 {
-	while(pos < as_nodes[n].size && as_nodes[n].data[pos] != '\n')
+	while(pos < as_nodes[count].size && as_nodes[count].data[pos] != '\n')
 		pos++;
-
 	return pos;
 }
 
-INT as_edit_col(INT n, INT pos)
+INT as_edit_col(INT count, INT pos)
 {
-	return pos - as_edit_line_start(n, pos);
+	return pos - as_edit_line_start(count, pos);
 }
 
-INT as_edit_prev_line(INT n, INT pos)
+INT as_edit_prev_line(INT count, INT pos)
 {
 	INT start;
 	INT col;
 	INT prev_end;
 	INT prev_start;
 	INT prev_len;
-
-	start = as_edit_line_start(n, pos);
-
+	start = as_edit_line_start(count, pos);
 	if(start == 0)
 		return pos;
-
 	col = pos - start;
 	prev_end = start - 1;
-	prev_start = as_edit_line_start(n, prev_end);
+	prev_start = as_edit_line_start(count, prev_end);
 	prev_len = prev_end - prev_start;
-
 	if(col > prev_len)
 		col = prev_len;
-
 	return prev_start + col;
 }
 
-INT as_edit_next_line(INT n, INT pos)
+INT as_edit_next_line(INT count, INT pos)
 {
 	INT col;
 	INT end;
 	INT next_start;
 	INT next_end;
 	INT next_len;
-
-	col = as_edit_col(n, pos);
-	end = as_edit_line_end(n, pos);
-
-	if(end >= as_nodes[n].size)
+	col = as_edit_col(count, pos);
+	end = as_edit_line_end(count, pos);
+	if(end >= as_nodes[count].size)
 		return pos;
-
 	next_start = end + 1;
-	next_end = as_edit_line_end(n, next_start);
+	next_end = as_edit_line_end(count, next_start);
 	next_len = next_end - next_start;
-
 	if(col > next_len)
 		col = next_len;
-
 	return next_start + col;
 }
 
-VD as_edit_cursor(INT n, INT pos, INT scroll)
+VD as_edit_cursor(INT count, INT pos, INT scroll)
 {
-	INT i;
-	INT x;
-	INT y;
+	INT index;
+	INT x_coordinate;
+	INT y_coordinate;
 	INT line;
-
-	x = 0;
-	y = EDIT_TOP;
+	x_coordinate = 0;
+	y_coordinate = EDIT_TOP;
 	line = 0;
-
-	for(i = 0; i < pos; i++)
-	{
-		if(as_nodes[n].data[i] == '\n')
-		{
+	for(index = 0; index < pos; index++) {
+		if(as_nodes[count].data[index] == '\n') {
 			line++;
-			x = 0;
+			x_coordinate = 0;
 		}
-		else
-		{
-			x++;
-
-			if(x >= as_edit_w())
-			{
-				x = 0;
+		else {
+			x_coordinate++;
+			if(x_coordinate >= as_edit_w()) {
+				x_coordinate = 0;
 				line++;
 			}
 		}
 	}
-
-	cx = x;
+	cx = x_coordinate;
 	cy = EDIT_TOP + (line - scroll);
-
 	if(cy < EDIT_TOP)
 		cy = EDIT_TOP;
-
 	if(cy >= (U INT)as_edit_h())
 		cy = as_edit_h() - 1;
-
 	cursor_update();
 }
 
 VD as_edit_draw_header(CC *path)
 {
 	clear();
-
 	cx = 0;
 	cy = 1;
-
 	print("EDITOR: ");
 	print(path);
 	print("\n\n");
 }
 
-VD as_edit_redraw(INT n, CC *path, INT pos, INT scroll)
+VD as_edit_redraw(INT count, CC *path, INT pos, INT scroll)
 {
-	INT i;
-	INT x;
-	INT y;
+	INT index;
+	INT x_coordinate;
+	INT y_coordinate;
 	INT line;
-
 	as_edit_draw_header(path);
 	as_edit_clear_editor_area();
-
-	x = 0;
+	x_coordinate = 0;
 	line = 0;
-
-	for(i = 0; i < as_nodes[n].size; i++)
-	{
-		y = EDIT_TOP + (line - scroll);
-
-		if(as_nodes[n].data[i] == '\n')
-		{
-			x = 0;
+	for(index = 0; index < as_nodes[count].size; index++) {
+		y_coordinate = EDIT_TOP + (line - scroll);
+		if(as_nodes[count].data[index] == '\n') {
+			x_coordinate = 0;
 			line++;
 			continue;
 		}
-
-		if(y >= EDIT_TOP && y < as_edit_h())
-			as_edit_put_at(x, y, as_nodes[n].data[i], color);
-
-		x++;
-
-		if(x >= as_edit_w())
-		{
-			x = 0;
+		if(y_coordinate >= EDIT_TOP && y_coordinate < as_edit_h())
+			as_edit_put_at(x_coordinate, y_coordinate, as_nodes[count].data[index], color);
+		x_coordinate++;
+		if(x_coordinate >= as_edit_w()) {
+			x_coordinate = 0;
 			line++;
 		}
-
-		if(y >= as_edit_h() && line > scroll + as_edit_h())
+		if(y_coordinate >= as_edit_h() && line > scroll + as_edit_h())
 			break;
 	}
-
-	as_edit_cursor(n, pos, scroll);
+	as_edit_cursor(count, pos, scroll);
 }
 
-VD as_edit_insert(INT n, INT *pos, INT c)
+VD as_edit_insert(INT count, INT *pos, INT character_value)
 {
-	INT i;
-
-	if(as_nodes[n].size >= AS_DATA_MAX - 1)
+	INT index;
+	if(as_nodes[count].size >= AS_DATA_MAX - 1)
 		return;
-
-	i = as_nodes[n].size;
-
-	while(i >= *pos)
-	{
-		as_nodes[n].data[i + 1] = as_nodes[n].data[i];
-
-		if(i == 0)
+	index = as_nodes[count].size;
+	while(index >= *pos) {
+		as_nodes[count].data[index + 1] = as_nodes[count].data[index];
+		if(index == 0)
 			break;
-
-		i--;
+		index--;
 	}
-
-	as_nodes[n].data[*pos] = c;
+	as_nodes[count].data[*pos] = character_value;
 	(*pos)++;
-	as_nodes[n].size++;
-	as_nodes[n].data[as_nodes[n].size] = 0;
+	as_nodes[count].size++;
+	as_nodes[count].data[as_nodes[count].size] = 0;
 }
 
-VD as_edit_backspace(INT n, INT *pos)
+VD as_edit_backspace(INT count, INT *pos)
 {
-	INT i;
-
+	INT index;
 	if(*pos <= 0)
 		return;
-
-	for(i = *pos - 1; i < as_nodes[n].size; i++)
-		as_nodes[n].data[i] = as_nodes[n].data[i + 1];
-
+	for(index = *pos - 1; index < as_nodes[count].size; index++)
+		as_nodes[count].data[index] = as_nodes[count].data[index + 1];
 	(*pos)--;
-	as_nodes[n].size--;
-
-	if(as_nodes[n].size < 0)
-		as_nodes[n].size = 0;
-
-	as_nodes[n].data[as_nodes[n].size] = 0;
+	as_nodes[count].size--;
+	if(as_nodes[count].size < 0)
+		as_nodes[count].size = 0;
+	as_nodes[count].data[as_nodes[count].size] = 0;
 }
 
-VD as_edit_restore_file(INT n, C *olddata, INT oldsize)
+VD as_edit_restore_file(INT count, C *olddata, INT oldsize)
 {
-	INT i;
-
-	for(i = 0; i <= oldsize && i < AS_DATA_MAX; i++)
-		as_nodes[n].data[i] = olddata[i];
-
-	as_nodes[n].size = oldsize;
-	as_nodes[n].data[as_nodes[n].size] = 0;
+	INT index;
+	for(index = 0; index <= oldsize && index < AS_DATA_MAX; index++)
+		as_nodes[count].data[index] = olddata[index];
+	as_nodes[count].size = oldsize;
+	as_nodes[count].data[as_nodes[count].size] = 0;
 }
 
-VD as_edit_fix_scroll(INT n, INT pos, INT *scroll)
+VD as_edit_fix_scroll(INT count, INT pos, INT *scroll)
 {
 	INT cursor_line;
 	INT visible_lines;
-
-	cursor_line = as_edit_line_of_pos(n, pos);
+	cursor_line = as_edit_line_of_pos(count, pos);
 	visible_lines = as_edit_h() - EDIT_TOP;
-
 	if(cursor_line < *scroll)
 		*scroll = cursor_line;
-
 	if(cursor_line >= *scroll + visible_lines)
 		*scroll = cursor_line - visible_lines + 1;
-
 	if(*scroll < 0)
 		*scroll = 0;
 }
@@ -773,158 +695,109 @@ VD as_edit(CC *path)
 {
 	C parent_path[AS_NAME_MAX * 4];
 	C name[AS_NAME_MAX];
-
 	C olddata[AS_DATA_MAX];
 	INT oldsize;
-
 	INT parent;
-	INT n;
-	INT i;
+	INT count;
+	INT index;
 	INT pos;
-	INT c;
+	INT character_value;
 	INT scroll;
-
 	U INT oldcx;
 	U INT oldcy;
 	U8 oldcolor;
-
 	as_edit_save_screen(&oldcx, &oldcy, &oldcolor);
-
 	as_split_path(path, parent_path, name);
 	parent = as_resolve_path(parent_path);
-
-	if(parent == -1)
-	{
+	if(parent == -1) {
 		as_edit_restore_screen(oldcx, oldcy, oldcolor);
 		print_red("Directory not found\n");
 		return;
 	}
-
-	if(as_nodes[parent].type != AS_DIR)
-	{
+	if(as_nodes[parent].type != AS_DIR) {
 		as_edit_restore_screen(oldcx, oldcy, oldcolor);
 		print_red("Not a directory\n");
 		return;
 	}
-
-	n = as_find_child(parent, name);
-
-	if(n == -1)
-	{
-		if(as_touch_at(parent, name) != 0)
-		{
+	count = as_find_child(parent, name);
+	if(count == -1) {
+		if(as_touch_at(parent, name) != 0) {
 			as_edit_restore_screen(oldcx, oldcy, oldcolor);
 			print_red("Could not create file\n");
 			return;
 		}
-
-		n = as_find_child(parent, name);
+		count = as_find_child(parent, name);
 	}
-
-	if(as_nodes[n].type != AS_FILE)
-	{
+	if(as_nodes[count].type != AS_FILE) {
 		as_edit_restore_screen(oldcx, oldcy, oldcolor);
 		print_red("Not a readable file\n");
 		return;
 	}
-
-	oldsize = as_nodes[n].size;
-
-	for(i = 0; i <= oldsize && i < AS_DATA_MAX; i++)
-		olddata[i] = as_nodes[n].data[i];
-
-	pos = as_nodes[n].size;
+	oldsize = as_nodes[count].size;
+	for(index = 0; index <= oldsize && index < AS_DATA_MAX; index++)
+		olddata[index] = as_nodes[count].data[index];
+	pos = as_nodes[count].size;
 	scroll = 0;
-
-	as_edit_fix_scroll(n, pos, &scroll);
-	as_edit_redraw(n, path, pos, scroll);
-
-	for(;;)
-	{
+	as_edit_fix_scroll(count, pos, &scroll);
+	as_edit_redraw(count, path, pos, scroll);
+	for(;;) {
 		kb_drain_mouse();
-		c = getkey();
-
-		if(!c)
+		character_value = getkey();
+		if(!character_value)
 			continue;
-
-		if(c == 19)
-		{
+		if(character_value == 19) {
 			as_edit_restore_screen(oldcx, oldcy, oldcolor);
-
 			if(saveit == 1)
 				as_save_to_disk();
-
 			return;
 		}
-
-		if(c == 16 && shift)
-		{
-			as_edit_restore_file(n, olddata, oldsize);
+		if(character_value == 16 && shift) {
+			as_edit_restore_file(count, olddata, oldsize);
 			as_edit_restore_screen(oldcx, oldcy, oldcolor);
 			return;
 		}
-
-		if(c == EDIT_KEY_LEFT)
-		{
+		if(character_value == EDIT_KEY_LEFT) {
 			if(pos > 0)
 				pos--;
-
-			as_edit_fix_scroll(n, pos, &scroll);
-			as_edit_redraw(n, path, pos, scroll);
+			as_edit_fix_scroll(count, pos, &scroll);
+			as_edit_redraw(count, path, pos, scroll);
 			continue;
 		}
-
-		if(c == EDIT_KEY_RIGHT)
-		{
-			if(pos < as_nodes[n].size)
+		if(character_value == EDIT_KEY_RIGHT) {
+			if(pos < as_nodes[count].size)
 				pos++;
-
-			as_edit_fix_scroll(n, pos, &scroll);
-			as_edit_redraw(n, path, pos, scroll);
+			as_edit_fix_scroll(count, pos, &scroll);
+			as_edit_redraw(count, path, pos, scroll);
 			continue;
 		}
-
-		if(c == EDIT_KEY_UP)
-		{
-			pos = as_edit_prev_line(n, pos);
-
-			as_edit_fix_scroll(n, pos, &scroll);
-			as_edit_redraw(n, path, pos, scroll);
+		if(character_value == EDIT_KEY_UP) {
+			pos = as_edit_prev_line(count, pos);
+			as_edit_fix_scroll(count, pos, &scroll);
+			as_edit_redraw(count, path, pos, scroll);
 			continue;
 		}
-
-		if(c == EDIT_KEY_DOWN)
-		{
-			pos = as_edit_next_line(n, pos);
-
-			as_edit_fix_scroll(n, pos, &scroll);
-			as_edit_redraw(n, path, pos, scroll);
+		if(character_value == EDIT_KEY_DOWN) {
+			pos = as_edit_next_line(count, pos);
+			as_edit_fix_scroll(count, pos, &scroll);
+			as_edit_redraw(count, path, pos, scroll);
 			continue;
 		}
-
-		if(c == '\b')
-		{
-			as_edit_backspace(n, &pos);
-
-			as_edit_fix_scroll(n, pos, &scroll);
-			as_edit_redraw(n, path, pos, scroll);
+		if(character_value == '\b') {
+			as_edit_backspace(count, &pos);
+			as_edit_fix_scroll(count, pos, &scroll);
+			as_edit_redraw(count, path, pos, scroll);
 			continue;
 		}
-
-		as_edit_insert(n, &pos, c);
-
-		as_edit_fix_scroll(n, pos, &scroll);
-		as_edit_redraw(n, path, pos, scroll);
+		as_edit_insert(count, &pos, character_value);
+		as_edit_fix_scroll(count, pos, &scroll);
+		as_edit_redraw(count, path, pos, scroll);
 	}
 }
-
 //Per-window editor state machine. Unlike as_edit() above,
 //these do not block: the kernel window manager feeds keys
 //in one at a time, so other windows keep running.
-
 #define as_edit_wINS 6
 #define AS_EDIT_PATH_MAX 128
-
 INT as_ew_open_flag[as_edit_wINS];
 INT as_ew_node[as_edit_wINS];
 INT as_ew_pos[as_edit_wINS];
@@ -933,198 +806,155 @@ INT as_ew_oldsize[as_edit_wINS];
 C as_ew_old[as_edit_wINS][AS_DATA_MAX];
 C as_ew_path[as_edit_wINS][AS_EDIT_PATH_MAX];
 
-INT as_edit_win_open(INT id)
+INT as_edit_win_open(INT window_id)
 {
-	return id >= 0 && id < as_edit_wINS && as_ew_open_flag[id];
+	return window_id >= 0 && window_id < as_edit_wINS && as_ew_open_flag[window_id];
 }
 
-INT as_edit_open_win(INT id, CC *path)
+INT as_edit_open_win(INT identifier, CC *path)
 {//open the editor inside window id, drawing INTo the
 //currently loaded console. Returns 0 on success.
 	C parent_path[AS_NAME_MAX * 4];
 	C name[AS_NAME_MAX];
 	INT parent;
-	INT n;
-	INT i;
-
-	if(id < 0 || id >= as_edit_wINS)
+	INT count;
+	INT index;
+	if(identifier < 0 || identifier >= as_edit_wINS)
 		return -1;
-
 	as_split_path(path, parent_path, name);
 	parent = as_resolve_path(parent_path);
-
-	if(parent == -1)
-	{
+	if(parent == -1) {
 		print_red("Directory not found\n");
 		return -1;
 	}
-
-	if(as_nodes[parent].type != AS_DIR)
-	{
+	if(as_nodes[parent].type != AS_DIR) {
 		print_red("Not a directory\n");
 		return -1;
 	}
-
-	n = as_find_child(parent, name);
-
-	if(n == -1)
-	{
-		if(as_touch_at(parent, name) != 0)
-		{
+	count = as_find_child(parent, name);
+	if(count == -1) {
+		if(as_touch_at(parent, name) != 0) {
 			print_red("Could not create file\n");
 			return -1;
 		}
-
-		n = as_find_child(parent, name);
+		count = as_find_child(parent, name);
 	}
-
-	if(as_nodes[n].type != AS_FILE)
-	{
+	if(as_nodes[count].type != AS_FILE) {
 		print_red("Not a readable file\n");
 		return -1;
 	}
-
-	as_ew_node[id] = n;
-	as_ew_oldsize[id] = as_nodes[n].size;
-
-	for(i = 0; i <= as_ew_oldsize[id] && i < AS_DATA_MAX; i++)
-		as_ew_old[id][i] = as_nodes[n].data[i];
-
-	i = 0;
-	while(path[i] && i < AS_EDIT_PATH_MAX - 1)
-	{
-		as_ew_path[id][i] = path[i];
-		i++;
+	as_ew_node[identifier] = count;
+	as_ew_oldsize[identifier] = as_nodes[count].size;
+	for(index = 0; index <= as_ew_oldsize[identifier] && index < AS_DATA_MAX; index++)
+		as_ew_old[identifier][index] = as_nodes[count].data[index];
+	index = 0;
+	while(path[index] && index < AS_EDIT_PATH_MAX - 1) {
+		as_ew_path[identifier][index] = path[index];
+		index++;
 	}
-	as_ew_path[id][i] = 0;
-
-	as_ew_pos[id] = as_nodes[n].size;
-	as_ew_scroll[id] = 0;
-	as_ew_open_flag[id] = 1;
-
-	as_edit_fix_scroll(as_ew_node[id], as_ew_pos[id], &as_ew_scroll[id]);
-	as_edit_redraw(as_ew_node[id], as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
+	as_ew_path[identifier][index] = 0;
+	as_ew_pos[identifier] = as_nodes[count].size;
+	as_ew_scroll[identifier] = 0;
+	as_ew_open_flag[identifier] = 1;
+	as_edit_fix_scroll(as_ew_node[identifier], as_ew_pos[identifier], &as_ew_scroll[identifier]);
+	as_edit_redraw(as_ew_node[identifier], as_ew_path[identifier], as_ew_pos[identifier], as_ew_scroll[identifier]);
 	return 0;
 }
 
-VD as_edit_win_refresh(INT id)
+VD as_edit_win_refresh(INT window_id)
 {//redraw the editor, e.g. after the window was resized
-	if(!as_edit_win_open(id))
+	if(!as_edit_win_open(window_id))
 		return;
-
-	as_edit_fix_scroll(as_ew_node[id], as_ew_pos[id], &as_ew_scroll[id]);
-	as_edit_redraw(as_ew_node[id], as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
+	as_edit_fix_scroll(as_ew_node[window_id], as_ew_pos[window_id], &as_ew_scroll[window_id]);
+	as_edit_redraw(as_ew_node[window_id], as_ew_path[window_id], as_ew_pos[window_id], as_ew_scroll[window_id]);
 }
 
-VD as_edit_win_close(INT id)
+VD as_edit_win_close(INT window_id)
 {//drop editor state without touching the file
-	if(id >= 0 && id < as_edit_wINS)
-		as_ew_open_flag[id] = 0;
+	if(window_id >= 0 && window_id < as_edit_wINS)
+		as_ew_open_flag[window_id] = 0;
 }
 
-INT as_edit_win_mem(INT id)
+INT as_edit_win_mem(INT window_id)
 {//bytes of editor state held open for this window
-	if(!as_edit_win_open(id))
+	if(!as_edit_win_open(window_id))
 		return 0;
-
 	return AS_DATA_MAX + AS_EDIT_PATH_MAX + 5 * (INT)sizeof(INT);
 }
 
-CC *as_edit_win_path(INT id)
+CC *as_edit_win_path(INT window_id)
 {//path of the file being edited in this window
-	if(!as_edit_win_open(id))
+	if(!as_edit_win_open(window_id))
 		return "";
-
-	return as_ew_path[id];
+	return as_ew_path[window_id];
 }
 
-INT as_edit_key_win(INT id, INT c)
+INT as_edit_key_win(INT identifier, INT character_code)
 {//handle one key for the window editor.
 //Returns 1 when the editor closed, 0 otherwise.
-	INT n;
-
-	if(!as_edit_win_open(id))
+	INT count;
+	if(!as_edit_win_open(identifier))
 		return 1;
-
-	n = as_ew_node[id];
-
-	if(c == 19)
-	{
-		as_ew_open_flag[id] = 0;
-
+	count = as_ew_node[identifier];
+	if(character_code == 19) {
+		as_ew_open_flag[identifier] = 0;
 		if(saveit == 1)
 			as_save_to_disk();
-
 		return 1;
 	}
-
-	if(c == 16 && shift)
-	{
-		as_edit_restore_file(n, as_ew_old[id], as_ew_oldsize[id]);
-		as_ew_open_flag[id] = 0;
+	if(character_code == 16 && shift) {
+		as_edit_restore_file(count, as_ew_old[identifier], as_ew_oldsize[identifier]);
+		as_ew_open_flag[identifier] = 0;
 		return 1;
 	}
-
-	if(c == EDIT_KEY_LEFT)
-	{
-		if(as_ew_pos[id] > 0)
-			as_ew_pos[id]--;
+	if(character_code == EDIT_KEY_LEFT) {
+		if(as_ew_pos[identifier] > 0)
+			as_ew_pos[identifier]--;
 	}
-	else if(c == EDIT_KEY_RIGHT)
-	{
-		if(as_ew_pos[id] < as_nodes[n].size)
-			as_ew_pos[id]++;
+	else if(character_code == EDIT_KEY_RIGHT) {
+		if(as_ew_pos[identifier] < as_nodes[count].size)
+			as_ew_pos[identifier]++;
 	}
-	else if(c == EDIT_KEY_UP)
-		as_ew_pos[id] = as_edit_prev_line(n, as_ew_pos[id]);
-	else if(c == EDIT_KEY_DOWN)
-		as_ew_pos[id] = as_edit_next_line(n, as_ew_pos[id]);
-	else if(c == '\b')
-		as_edit_backspace(n, &as_ew_pos[id]);
-	else if(c == '\n' || (c >= 32 && c < 127))
-		as_edit_insert(n, &as_ew_pos[id], c);
+	else if(character_code == EDIT_KEY_UP)
+		as_ew_pos[identifier] = as_edit_prev_line(count, as_ew_pos[identifier]);
+	else if(character_code == EDIT_KEY_DOWN)
+		as_ew_pos[identifier] = as_edit_next_line(count, as_ew_pos[identifier]);
+	else if(character_code == '\b')
+		as_edit_backspace(count, &as_ew_pos[identifier]);
+	else if(character_code == '\n' || (character_code >= 32 && character_code < 127))
+		as_edit_insert(count, &as_ew_pos[identifier], character_code);
 	else
 		return 0;
-
-	as_edit_fix_scroll(n, as_ew_pos[id], &as_ew_scroll[id]);
-	as_edit_redraw(n, as_ew_path[id], as_ew_pos[id], as_ew_scroll[id]);
+	as_edit_fix_scroll(count, as_ew_pos[identifier], &as_ew_scroll[identifier]);
+	as_edit_redraw(count, as_ew_path[identifier], as_ew_pos[identifier], as_ew_scroll[identifier]);
 	return 0;
 }
+
 INT as_get_file_data(CC *path, C **data, INT *size)
 {
-	INT n;
-
-	n = as_resolve_path(path);
-
-	if(n == -1)
+	INT count;
+	count = as_resolve_path(path);
+	if(count == -1)
 		return -1;
-
-	if(as_nodes[n].type != AS_FILE)
+	if(as_nodes[count].type != AS_FILE)
 		return -1;
-
-	*data = as_nodes[n].data;
-	*size = as_nodes[n].size;
-
+	*data = as_nodes[count].data;
+	*size = as_nodes[count].size;
 	return 0;
 }
 
 VD as_rm_recursive(INT node)
 {
-	INT i;
-
+	INT index;
 	if (!as_nodes[node].used)
 		return;
-
 	/* Delete children first if directory */
-	if (as_nodes[node].type == AS_DIR)
-	{
-		for (i = 0; i < AS_MAX_NODES; i++)
-		{
-			if (as_nodes[i].used && as_nodes[i].parent == node)
-				as_rm_recursive(i);
+	if (as_nodes[node].type == AS_DIR) {
+		for (index = 0; index < AS_MAX_NODES; index++) {
+			if (as_nodes[index].used && as_nodes[index].parent == node)
+				as_rm_recursive(index);
 		}
 	}
-
 	as_nodes[node].used = 0;
 	as_nodes[node].size = 0;
 	as_nodes[node].name[0] = 0;
@@ -1134,15 +964,13 @@ VD as_rm_recursive(INT node)
 
 VD as_rm(C *name)
 {
-	INT i;
-
-	for (i = 0; i < AS_MAX_NODES; i++)
-	{
-		if (as_nodes[i].used &&
-		    as_nodes[i].parent == as_cwd &&
-		    as_compare_equal_str(as_nodes[i].name, name))
+	INT index;
+	for (index = 0; index < AS_MAX_NODES; index++) {
+		if (as_nodes[index].used &&
+		    as_nodes[index].parent == as_cwd &&
+		    as_compare_equal_str(as_nodes[index].name, name))
 		{
-			as_rm_recursive(i);
+			as_rm_recursive(index);
 			if(saveit == 1)
 		                as_save_to_disk();
 			print("Removed: ");
@@ -1151,59 +979,43 @@ VD as_rm(C *name)
 			return;
 		}
 	}
-
 	print("rm: not found\n");
 }
 
 INT as_path_parent_name(CC *path, INT *parent, C *name)
 {
 	C parent_path[AS_NAME_MAX * 4];
-
 	as_split_path(path, parent_path, name);
-
 	if(!name[0])
 		return -1;
-
 	*parent = as_resolve_path(parent_path);
-
 	if(*parent == -1)
 		return -1;
-
 	if(as_nodes[*parent].type != AS_DIR)
 		return -1;
-
 	return 0;
 }
 
 INT as_copy_node_recursive(INT src, INT dst_parent, CC *newname)
 {
-	INT n;
-	INT i;
-
+	INT count;
+	INT index;
 	if(as_find_child(dst_parent, newname) != -1)
 		return -1;
-
-	n = as_node_allocator();
-
-	if(n == -1)
+	count = as_node_allocator();
+	if(count == -1)
 		return -1;
-
-	as_nodes[n] = as_nodes[src];
-	as_nodes[n].parent = dst_parent;
-	as_copy_str(as_nodes[n].name, newname);
-
-	if(as_nodes[src].type == AS_DIR)
-	{
-		for(i = 0; i < AS_MAX_NODES; i++)
-		{
-			if(as_nodes[i].used && as_nodes[i].parent == src && i != src)
-			{
-				if(as_copy_node_recursive(i, n, as_nodes[i].name) != 0)
+	as_nodes[count] = as_nodes[src];
+	as_nodes[count].parent = dst_parent;
+	as_copy_str(as_nodes[count].name, newname);
+	if(as_nodes[src].type == AS_DIR) {
+		for(index = 0; index < AS_MAX_NODES; index++) {
+			if(as_nodes[index].used && as_nodes[index].parent == src && index != src) {
+				if(as_copy_node_recursive(index, count, as_nodes[index].name) != 0)
 					return -1;
 			}
 		}
 	}
-
 	return 0;
 }
 
@@ -1212,36 +1024,25 @@ INT as_cp(CC *src_path, CC *dst_path)
 	INT src;
 	INT dst_parent;
 	C dst_name[AS_NAME_MAX];
-
 	src = as_resolve_path(src_path);
-
-	if(src == -1)
-	{
+	if(src == -1) {
 		print_red("cp: source not found\n");
 		return -1;
 	}
-
-	if(src == 0)
-	{
+	if(src == 0) {
 		print_red("cp: cannot copy root\n");
 		return -1;
 	}
-
-	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0)
-	{
+	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0) {
 		print_red("cp: bad destination\n");
 		return -1;
 	}
-
-	if(as_copy_node_recursive(src, dst_parent, dst_name) != 0)
-	{
+	if(as_copy_node_recursive(src, dst_parent, dst_name) != 0) {
 		print_red("cp: failed\n");
 		return -1;
 	}
-
 	if(saveit == 1)
 		as_save_to_disk();
-
 	return 0;
 }
 
@@ -1250,39 +1051,26 @@ INT as_mv(CC *src_path, CC *dst_path)
 	INT src;
 	INT dst_parent;
 	C dst_name[AS_NAME_MAX];
-
 	src = as_resolve_path(src_path);
-
-	if(src == -1)
-	{
+	if(src == -1) {
 		print_red("mv: source not found\n");
 		return -1;
 	}
-
-	if(src == 0)
-	{
+	if(src == 0) {
 		print_red("mv: cannot move root\n");
 		return -1;
 	}
-
-	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0)
-	{
+	if(as_path_parent_name(dst_path, &dst_parent, dst_name) != 0) {
 		print_red("mv: bad destination\n");
 		return -1;
 	}
-
-	if(as_find_child(dst_parent, dst_name) != -1)
-	{
+	if(as_find_child(dst_parent, dst_name) != -1) {
 		print_red("mv: destination exists\n");
 		return -1;
 	}
-
 	as_nodes[src].parent = dst_parent;
 	as_copy_str(as_nodes[src].name, dst_name);
-
 	if(saveit == 1)
 		as_save_to_disk();
-
 	return 0;
 }
-

@@ -101,7 +101,6 @@ VD music(VD)
 	tune("T60 C5e");
 	print("ning.\n\n");
 	tune("T60 F5e");
-	 
 	tune("T60 C5s");
 	tune("T60 G5s");
 	tune("T60 C5s");

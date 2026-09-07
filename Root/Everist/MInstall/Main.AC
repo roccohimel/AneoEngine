@@ -5,4 +5,3 @@ print("[*] Copying /Everist/MInstall/RunCmds.AC to /RunCmds.AC\n");
 cp("/Everist/MInstall/RunCmds.AC /RunCmds.AC");
 save;
 print("[!] Done!\n");
-

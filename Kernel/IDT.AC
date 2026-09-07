@@ -1,9 +1,7 @@
 #include <stdint.h>
-
 TD U C u8;
 TD U S u16;
 TD U INT u32;
-
 extern u8 inb(u16 port);
 extern VD restore_screen(U INT oldcx, U INT oldcy, u8 oldcolor);
 extern INT soldcx;
@@ -49,7 +47,6 @@ extern VD triple_fault();
 extern VD beep(u32 freq);
 extern VD nosound(VD);
 extern VD sleep(U INT ms);
-
 extern VD clear(VD);
 extern VD print(C *);
 extern u8 color;
@@ -57,25 +54,18 @@ extern u8 defcolor;
 extern u8 cy;
 extern u8 cx;
 
-
 VD waitkey(VD)
 {//wait till key is pressed; continue
-        u8 sc;
-
+        u8 scan_code;
         while (inb(0x64) & 1)
                 inb(0x60);
-
         for (;;) {
                 while (!(inb(0x64) & 1));
-
-                sc = inb(0x60);
-
-                if (!(sc & 0x80))
+                scan_code = inb(0x60);
+                if (!(scan_code & 0x80))
                         break;
         }
 }
-
-
 ST IDTEntry
 {
 	u16 base_low;
@@ -84,20 +74,17 @@ ST IDTEntry
 	u8 flags;
 	u16 base_high;
 } __attribute__((packed));
-
 ST IDTPtr
 {
 	u16 limit;
 	u32 base;
 } __attribute__((packed));
-
 ST Registers
 {
 	u32 gs;
 	u32 fs;
 	u32 es;
 	u32 ds;
-
 	u32 edi;
 	u32 esi;
 	u32 ebp;
@@ -106,18 +93,14 @@ ST Registers
 	u32 edx;
 	u32 ecx;
 	u32 eax;
-
 	u32 INT_no;
 	u32 err_code;
-
 	u32 eip;
 	u32 cs;
 	u32 eflags;
 };
-
 ST IDTEntry idt[256];
 ST IDTPtr idtp;
-
 C *exceptions[] =
 {
 	"DivideByZero",
@@ -153,7 +136,6 @@ C *exceptions[] =
 	"SecurityException",
 	"Reserved"
 };
-
 C *exception_info[] =
 {
 	"Division by zero.",
@@ -190,61 +172,49 @@ C *exception_info[] =
 	"Reserved exception."
 };
 
-VD print_hex_digit(u8 n)
+VD print_hex_digit(u8 count)
 {
-	C c[2];
-
-	if(n < 10)
-		c[0] = '0' + n;
+	C character[2];
+	if(count < 10)
+		character[0] = '0' + count;
 	else
-		c[0] = 'A' + (n - 10);
-
-	c[1] = 0;
-
-	print(c);
+		character[0] = 'A' + (count - 10);
+	character[1] = 0;
+	print(character);
 }
 
-VD print_hex32(u32 n)
+VD print_hex32(u32 count)
 {
-	print_hex_digit((n >> 28) & 0xF);
-	print_hex_digit((n >> 24) & 0xF);
-	print_hex_digit((n >> 20) & 0xF);
-	print_hex_digit((n >> 16) & 0xF);
-	print_hex_digit((n >> 12) & 0xF);
-	print_hex_digit((n >> 8) & 0xF);
-	print_hex_digit((n >> 4) & 0xF);
-	print_hex_digit(n & 0xF);
+	print_hex_digit((count >> 28) & 0xF);
+	print_hex_digit((count >> 24) & 0xF);
+	print_hex_digit((count >> 20) & 0xF);
+	print_hex_digit((count >> 16) & 0xF);
+	print_hex_digit((count >> 12) & 0xF);
+	print_hex_digit((count >> 8) & 0xF);
+	print_hex_digit((count >> 4) & 0xF);
+	print_hex_digit(count & 0xF);
 }
 
-VD print_dec(u32 n)
+VD print_dec(u32 count)
 {
 	C buf[16];
-	C c[2];
-	INT i;
-
-	if(n == 0)
-	{
+	C character[2];
+	INT index;
+	if(count == 0) {
 		print("0");
 		return;
 	}
-
-	i = 0;
-
-	while(n > 0)
-	{
-		buf[i] = '0' + (n % 10);
-		n = n / 10;
-		i++;
+	index = 0;
+	while(count > 0) {
+		buf[index] = '0' + (count % 10);
+		count = count / 10;
+		index++;
 	}
-
-	while(i > 0)
-	{
-		i--;
-
-		c[0] = buf[i];
-		c[1] = 0;
-
-		print(c);
+	while(index > 0) {
+		index--;
+		character[0] = buf[index];
+		character[1] = 0;
+		print(character);
 	}
 }
 
@@ -281,22 +251,18 @@ VD print_caller_line(u32 addr, C *name)
 	print("\n");
 }
 
-VD exception_handler(ST Registers *r)
+VD exception_handler(ST Registers *result)
 {
 	cy = 80;
 	color = 0x0F;
 	defcolor = color;
-
 	print(" Fault: ");
-
-	if(r->INT_no < 32)
-		print(exceptions[r->INT_no]);
+	if(result->INT_no < 32)
+		print(exceptions[result->INT_no]);
 	else
 		print("Unknown");
-
-	printadl(" Error Code", r->err_code);
+	printadl(" Error Code", result->err_code);
 	print("\n");
-
 	beep(480);
         sleep(1000);
         nosound();
@@ -309,60 +275,42 @@ VD exception_handler(ST Registers *r)
         sleep(1000);
         nosound();
         sleep(1000);
-
 	print("\n");
 	print("          AneoEngine ERROR\n");
 	print("Kernel halted due to CPU exception\n\n");
-
 	print("\n\nException Report:\n");
-
-	printadl("EIP", r->eip);
-	printadl("EBP", r->ebp);
-
+	printadl("EIP", result->eip);
+	printadl("EBP", result->ebp);
 	print("\n");
-
-	printadl("ESP", r->esp);
-	printadl("EAX", r->eax);
-
+	printadl("ESP", result->esp);
+	printadl("EAX", result->eax);
         print("\n");
-
-	printadl("EBX", r->ebx);
-	printadl("ECX", r->ecx);
-
+	printadl("EBX", result->ebx);
+	printadl("ECX", result->ecx);
         print("\n");
-
-	printadl("EDX", r->edx);
-	printadl("ESI", r->esi);
-
+	printadl("EDX", result->edx);
+	printadl("ESI", result->esi);
         print("\n");
-
-	printadl("EDI", r->edi);
-	printadl("CS", r->cs);
-
+	printadl("EDI", result->edi);
+	printadl("CS", result->cs);
         print("\n");
-
-	printadl("DS", r->ds);
-	printadl("ES", r->es);
-
+	printadl("DS", result->ds);
+	printadl("ES", result->es);
         print("\n");
-
-	printadl("FS", r->fs);
-	printadl("GS", r->gs);
-
+	printadl("FS", result->fs);
+	printadl("GS", result->gs);
         print("\n");
-
-	printadl("EFLAGS", r->eflags);
+	printadl("EFLAGS", result->eflags);
 	print("\n\n");
 	print("Press any key to continue.\n\n");
-
 	u8 oldcy = cy;
         cy = 0;
 	cx = 0;
         print("IDT Info                          \n");
-        for(INT ia = 0; ia < 34; ia++) putc(196);
+        for(INT interrupt_address = 0; interrupt_address < 34; interrupt_address++) putc(196);
         print("\n");
         putc(179);
-        printadl("Faulting Instruction", r->eip);
+        printadl("Faulting Instruction", result->eip);
         putc(179);
         print("\n");
         putc(179);
@@ -378,7 +326,7 @@ VD exception_handler(ST Registers *r)
         putc(179);
         print("\n");
         putc(179);
-        printadl("Fault Addr          ", r->eip);
+        printadl("Fault Addr          ", result->eip);
         putc(179);
         print("\n");
         putc(179);
@@ -391,16 +339,12 @@ VD exception_handler(ST Registers *r)
         print("\n");
         putc(179);
         putc(192);
-        for(INT i = 0; i < 31; i++) putc(196);
+        for(INT index = 0; index < 31; index++) putc(196);
         putc(217);
-
         cy = oldcy;
         cx = 0;
-
 	nosound();
-
 	waitkey();
-
 	clear();
 	print("Rebooting");
 	sleep(1000);
@@ -412,16 +356,13 @@ VD exception_handler(ST Registers *r)
 VD idt_init()
 {
 	print("Init IDT\n");
-	INT i;
-
+	INT index;
 	idtp.limit = sizeof(ST IDTEntry) * 256 - 1;
 	idtp.base = (u32)&idt;
-
 	print("        Create IDT...");
-	for(i = 0; i < 256; i++)
-		idt_set_gate(i, 0, 0, 0);
+	for(index = 0; index < 256; index++)
+		idt_set_gate(index, 0, 0, 0);
 	print("(DONE)\n");
-
 	print("        idt_set_gate isr0 - isr9...");
 	idt_set_gate(0, (u32)isr0, 0x08, 0x8E);
 	idt_set_gate(1, (u32)isr1, 0x08, 0x8E);
@@ -435,7 +376,6 @@ VD idt_init()
 	idt_set_gate(9, (u32)isr9, 0x08, 0x8E);
 	idt_set_gate(10, (u32)isr10, 0x08, 0x8E);
 	print("(DONE)\n");
-	
 	print("        idt_set_gate isr10 - isr19...");
 	idt_set_gate(11, (u32)isr11, 0x08, 0x8E);
 	idt_set_gate(12, (u32)isr12, 0x08, 0x8E);
@@ -447,8 +387,6 @@ VD idt_init()
 	idt_set_gate(18, (u32)isr18, 0x08, 0x8E);
 	idt_set_gate(19, (u32)isr19, 0x08, 0x8E);
 	print("(DONE)\n");
-	
-
 	print("        idt_set_gate isr20 - isr31...");
 	idt_set_gate(20, (u32)isr20, 0x08, 0x8E);
 	idt_set_gate(21, (u32)isr21, 0x08, 0x8E);
@@ -463,8 +401,6 @@ VD idt_init()
 	idt_set_gate(30, (u32)isr30, 0x08, 0x8E);
 	idt_set_gate(31, (u32)isr31, 0x08, 0x8E);
 	print("(DONE)\n");
-
 	print("Load IDTR\n");
 	idt_load((u32)&idtp);
-	
 }

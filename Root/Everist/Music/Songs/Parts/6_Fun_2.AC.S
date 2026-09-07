@@ -29,7 +29,6 @@ print("ley!\n");
 tune("T117 G4e");
 tune("T117 C4e");
 tune("T117 E4e");
-
 print("I ");
 tune("T78 F4e");
 print("don't ");
@@ -62,7 +61,6 @@ print("me?\n");
 tune("T117 G4e");
 tune("T117 C4e");
 tune("T117 E4e"); //d
-
 print("Hit ");
 tune("T117 E4e");
 print("or ");
@@ -95,7 +93,6 @@ tune("T78 F4s");
 print("(\n");
 tune("T78 D4s");
 tune("T78 F4s");
-
 print("Hit ");
 tune("T117 E4e");
 print("or ");

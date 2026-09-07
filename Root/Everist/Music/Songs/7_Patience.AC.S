@@ -58,7 +58,6 @@ VD music(VD)
         tune("T162 B4q");
         tune("T162 B4q");
         tune("T162 C4q");
- 
         print("Hold!");
 	tune("T162 G5q");
         print(".");
@@ -126,4 +125,3 @@ INT main(VD)
         mm;
         return 0;
 }
-

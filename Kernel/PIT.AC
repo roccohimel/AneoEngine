@@ -1,10 +1,8 @@
 //PIT funtions
 #include <stdint.h>
-
 TD U C u8;
 TD U S u16;
 TD U INT u32;
-
 extern VD poutb(u16 port, u8 val);
 extern u8 inb(u16 port);
 extern VD outb(u16 port, u16 val);
@@ -19,27 +17,24 @@ VD pit_init_1000hz(VD)
         poutb(0x40, (divisor >> 8) & 0xFF);
 }
 
-
 U S pit_read_counter(VD)
 {
-        U C lo;
-        U C hi;
+        U C low_byte;
+        U C high_byte;
 	outb(0x43, 0x00);
-        lo = inb(0x40);
-        hi = inb(0x40);
-	return (hi << 8) | lo;
+        low_byte = inb(0x40);
+        high_byte = inb(0x40);
+	return (high_byte << 8) | low_byte;
 }
 
-VD sleep(U INT ms)
+VD sleep(U INT duration_ms)
 {//sleep funtion
-        U INT i;
+        U INT index;
         U S last;
         U S now;
-        for (i = 0; i < ms; i++)
-        {
+        for (index = 0; index < duration_ms; index++) {
                 last = pit_read_counter();
-                while(1)
-                {
+                while(1) {
                         now = pit_read_counter();
                         if(now > last)
                                 break;

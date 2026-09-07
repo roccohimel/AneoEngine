@@ -1,10 +1,8 @@
 //This file contains funtions for halting the system
 #include <stdint.h>
-
 TD U C u8;
 TD U S u16;
 TD U INT u32;
-
 extern VD print(CC *s);
 extern VD sleep(U INT ms);
 extern U INT cy;
@@ -15,11 +13,9 @@ extern VD poutw(u16 port, u16 val);
 extern VD poutb(u16 port, u16 val);
 extern VD poutwfail(u16 port, u16 val);
 extern VD poutbfail(u16 port, u8 val);
-
 //values
 #define VAL1 0x2000
 #define VAL2 0x3400
-
 //VM IO ports
 #define IOP1 0x604
 #define IOP2 0xB004
@@ -32,19 +28,14 @@ VD vmoff(VD)
 	U INT oldcy = cy;
 	U INT oldcx = cx;
 	cy = 0;
-
 	poutw(IOP1, VAL1);
 	poutw(IOP2, VAL1);
 	poutw(IOP3, VAL2);
-
 	poutwfail(IOP1, VAL1);
 	poutwfail(IOP2, VAL1);
         poutwfail(IOP3, VAL2);
-
 	cy = oldcy;
 	cx = oldcx;
-
-
 	for(;;)
 		asm volatile("hlt");
 }
@@ -66,10 +57,8 @@ VD reset(VD)
         U INT oldcx = cx;
         cy = 0;
 	cx = 0;
-
 	print("Resetting the system...\n");
 	sleep(1000);
-
         poutb(0xCF9, 0x06);
         poutbfail(0xCF9, 0x06);
 }

@@ -1,11 +1,9 @@
 /*
 The official compiler for the AneoC Programming Language.
 AneoC is made for AneoEngine, as its main programming language.
-
 Copyright (C) 2025-2026 Rocco Himel.
 AneoC is distributed under the AneoEngine License V*.*.
 */
-
 //Macros, ANSI includes.
 #define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
@@ -37,137 +35,135 @@ AneoC is distributed under the AneoEngine License V*.*.
 			(a) = xrealloc((a), (cap) * sizeof(type)); \
 		}                                                  \
 	} while(0)
-
 typedef struct
 {
 	char *s;
 	size_t n;
 	size_t cap;
 } Buf;
-
 //init functions
+
 static void fatal(const char *fmt, ...)
 {
-	va_list ap;
+	va_list argument_list;
 	fprintf(stderr, "\033[37;41mERROR:\033[0m Compilation failed: ");
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
+	va_start(argument_list, fmt);
+	vfprintf(stderr, fmt, argument_list);
+	va_end(argument_list);
 	fputc('\n', stderr);
 	exit(0);
 }
-
 //Compiler memory functions.
-static void *xmalloc(size_t n)
+
+static void *xmalloc(size_t count)
 {
-	void *p = malloc(n ? n : 1);
-	if(!p)
+	void *position = malloc(count ? count : 1);
+	if(!position)
 		fatal("out of memory");
-	return p;
+	return position;
 }
 
-static void *xcalloc(size_t n, size_t z)
+static void *xcalloc(size_t argument_count, size_t element_size_1)
 {
-	void *p = calloc(n ? n : 1, z ? z : 1);
-	if(!p)
+	void *position = calloc(argument_count ? argument_count : 1, element_size_1 ? element_size_1 : 1);
+	if(!position)
 		fatal("out of memory");
-	return p;
+	return position;
 }
 
-static void *xrealloc(void *p, size_t n)
+static void *xrealloc(void *pointer, size_t count)
 {
-	p = realloc(p, n ? n : 1);
-	if(!p)
+	pointer = realloc(pointer, count ? count : 1);
+	if(!pointer)
 		fatal("out of memory");
-	return p;
+	return pointer;
 }
 
-static char *xstrdup(const char *s)
+static char *xstrdup(const char *string)
 {
-	size_t n = strlen(s) + 1;
-	char *p = xmalloc(n);
-	memcpy(p, s, n);
-	return p;
+	size_t length = strlen(string) + 1;
+	char *position = xmalloc(length);
+	memcpy(position, string, length);
+	return position;
 }
 
-static char *xstrndup2(const char *s, size_t n)
+static char *xstrndup2(const char *string, size_t length)
 {
-	char *p = xmalloc(n + 1);
-	memcpy(p, s, n);
-	p[n] = 0;
-	return p;
+	char *position = xmalloc(length + 1);
+	memcpy(position, string, length);
+	position[length] = 0;
+	return position;
 }
 
-static void bneed(Buf *b, size_t extra)
+static void bneed(Buf *buffer, size_t extra)
 {
-	size_t need = b->n + extra + 1;
-	if(need <= b->cap)
+	size_t need = buffer->n + extra + 1;
+	if(need <= buffer->cap)
 		return;
-	if(!b->cap)
-		b->cap = 4096;
-	while(b->cap < need)
-		b->cap *= 2;
-	b->s = xrealloc(b->s, b->cap);
+	if(!buffer->cap)
+		buffer->cap = 4096;
+	while(buffer->cap < need)
+		buffer->cap *= 2;
+	buffer->s = xrealloc(buffer->s, buffer->cap);
 }
 
-static void bputn(Buf *b, const char *s, size_t n)
+static void bputn(Buf *buffer, const char *string, size_t count)
 {
-	bneed(b, n);
-	memcpy(b->s + b->n, s, n);
-	b->n += n;
-	b->s[b->n] = 0;
+	bneed(buffer, count);
+	memcpy(buffer->s + buffer->n, string, count);
+	buffer->n += count;
+	buffer->s[buffer->n] = 0;
 }
 
-static void bputs(Buf *b, const char *s)
+static void bputs(Buf *buffer, const char *string)
 {
-	bputn(b, s, strlen(s));
+	bputn(buffer, string, strlen(string));
 }
 
-static void bprintf(Buf *b, const char *fmt, ...)
+static void bprintf(Buf *buffer, const char *fmt, ...)
 {
-	va_list ap, aq;
-	int n;
-	va_start(ap, fmt);
-	va_copy(aq, ap);
-	n = vsnprintf(NULL, 0, fmt, aq);
-	va_end(aq);
-	if(n < 0)
+	va_list argument_list, copied_argument_list;
+	int count;
+	va_start(argument_list, fmt);
+	va_copy(copied_argument_list, argument_list);
+	count = vsnprintf(NULL, 0, fmt, copied_argument_list);
+	va_end(copied_argument_list);
+	if(count < 0)
 		fatal("formatting failed");
-	bneed(b, (size_t)n);
-	vsnprintf(b->s + b->n, b->cap - b->n, fmt, ap);
-	va_end(ap);
-	b->n += (size_t)n;
+	bneed(buffer, (size_t)count);
+	vsnprintf(buffer->s + buffer->n, buffer->cap - buffer->n, fmt, argument_list);
+	va_end(argument_list);
+	buffer->n += (size_t)count;
 }
 
 static char *read_file(const char *path)
 {
-	FILE *f = fopen(path, "rb");
-	Buf b = {0};
+	FILE *file = fopen(path, "rb");
+	Buf buffer = {0};
 	char tmp[8192];
-	size_t n;
-	if(!f)
+	size_t count;
+	if(!file)
 		fatal("cannot open %s: %s", path, strerror(errno));
-	while((n = fread(tmp, 1, sizeof(tmp), f)) != 0)
-		bputn(&b, tmp, n);
-	if(ferror(f))
+	while((count = fread(tmp, 1, sizeof(tmp), file)) != 0)
+		bputn(&buffer, tmp, count);
+	if(ferror(file))
 		fatal("cannot read %s", path);
-	fclose(f);
-	if(!b.s)
-		b.s = xstrdup("");
-	return b.s;
+	fclose(file);
+	if(!buffer.s)
+		buffer.s = xstrdup("");
+	return buffer.s;
 }
 
-static void write_file(const char *path, const char *s, size_t n)
+static void write_file(const char *path, const char *string, size_t count)
 {
-	FILE *f = fopen(path, "wb");
-	if(!f)
+	FILE *file = fopen(path, "wb");
+	if(!file)
 		fatal("cannot create %s: %s", path, strerror(errno));
-	if(n && fwrite(s, 1, n, f) != n)
+	if(count && fwrite(string, 1, count, file) != count)
 		fatal("cannot write %s", path);
-	if(fclose(f))
+	if(fclose(file))
 		fatal("cannot close %s", path);
 }
-
 typedef struct
 {
 	char *name;
@@ -176,12 +172,11 @@ typedef struct
 
 static Macro *find_macro(Macro *macros, size_t nmacros, const char *name, size_t length)
 {
-	size_t i;
-
-	for(i = 0; i < nmacros; i++)
-		if(strlen(macros[i].name) == length &&
-		   !memcmp(macros[i].name, name, length))
-			return &macros[i];
+	size_t index;
+	for(index = 0; index < nmacros; index++)
+		if(strlen(macros[index].name) == length &&
+		   !memcmp(macros[index].name, name, length))
+			return &macros[index];
 	return NULL;
 }
 
@@ -191,8 +186,8 @@ static char *preprocess_source(const char *text)
 	size_t nmacros = 0, capmacros = 0;
 	Buf body = {0};
 	Buf out = {0};
-	const char *p = text;
-	size_t i, n;
+	const char *position = text;
+	size_t index, count;
 	enum
 	{
 		PP_NORMAL,
@@ -202,55 +197,47 @@ static char *preprocess_source(const char *text)
 		PP_BLOCK_COMMENT
 	} state = PP_NORMAL;
 	bool escaped = false;
-
-	while(*p)
-	{
-		const char *line = p;
-		const char *end = strchr(p, '\n');
-		const char *q;
-
+	while(*position) {
+		const char *line = position;
+		const char *end = strchr(position, '\n');
+		const char *cursor;
 		if(!end)
-			end = p + strlen(p);
-		q = line;
-		while(q < end && (*q == ' ' || *q == '\t' || *q == '\r'))
-			q++;
-		if(q < end && *q == '#')
-		{
-			q++;
-			while(q < end && isspace((unsigned char)*q))
-				q++;
-			if(end - q >= 6 && !memcmp(q, "define", 6) &&
-			   (q + 6 == end || isspace((unsigned char)q[6])))
+			end = position + strlen(position);
+		cursor = line;
+		while(cursor < end && (*cursor == ' ' || *cursor == '\t' || *cursor == '\r'))
+			cursor++;
+		if(cursor < end && *cursor == '#') {
+			cursor++;
+			while(cursor < end && isspace((unsigned char)*cursor))
+				cursor++;
+			if(end - cursor >= 6 && !memcmp(cursor, "define", 6) &&
+			   (cursor + 6 == end || isspace((unsigned char)cursor[6])))
 			{
 				const char *name;
 				const char *value;
 				const char *value_end;
 				Macro *old;
-
-				q += 6;
-				while(q < end && isspace((unsigned char)*q))
-					q++;
-				name = q;
-				if(q < end && (isalpha((unsigned char)*q) || *q == '_'))
-				{
-					q++;
-					while(q < end && (isalnum((unsigned char)*q) || *q == '_'))
-						q++;
-					if(q < end && *q != '(')
-					{
-						value = q;
+				cursor += 6;
+				while(cursor < end && isspace((unsigned char)*cursor))
+					cursor++;
+				name = cursor;
+				if(cursor < end && (isalpha((unsigned char)*cursor) || *cursor == '_')) {
+					cursor++;
+					while(cursor < end && (isalnum((unsigned char)*cursor) || *cursor == '_'))
+						cursor++;
+					if(cursor < end && *cursor != '(') {
+						value = cursor;
 						while(value < end && isspace((unsigned char)*value))
 							value++;
 						value_end = end;
 						while(value_end > value &&
 						      isspace((unsigned char)value_end[-1]))
 							value_end--;
-						old = find_macro(macros, nmacros, name, (size_t)(q - name));
-						if(!old)
-						{
+						old = find_macro(macros, nmacros, name, (size_t)(cursor - name));
+						if(!old) {
 							ARR_GROW(macros, nmacros, capmacros, Macro);
 							old = &macros[nmacros++];
-							old->name = xstrndup2(name, (size_t)(q - name));
+							old->name = xstrndup2(name, (size_t)(cursor - name));
 						} else {
 							free(old->value);
 						}
@@ -265,86 +252,75 @@ static char *preprocess_source(const char *text)
 			if(*end == '\n')
 				bputn(&body, "\n", 1);
 		}
-		p = *end ? end + 1 : end;
+		position = *end ? end + 1 : end;
 	}
 	if(!body.s)
 		body.s = xstrdup("");
-	n = body.n;
-	for(i = 0; i < n;)
-	{
-		char c = body.s[i];
-		char next = i + 1 < n ? body.s[i + 1] : 0;
-
-		if(state == PP_NORMAL)
-		{
-			if(c == '/' && next == '/')
-			{
+	count = body.n;
+	for(index = 0; index < count;) {
+		char character = body.s[index];
+		char next = index + 1 < count ? body.s[index + 1] : 0;
+		if(state == PP_NORMAL) {
+			if(character == '/' && next == '/') {
 				bputn(&out, "//", 2);
-				i += 2;
+				index += 2;
 				state = PP_LINE_COMMENT;
 				continue;
 			}
-			if(c == '/' && next == '*')
-			{
+			if(character == '/' && next == '*') {
 				bputn(&out, "/*", 2);
-				i += 2;
+				index += 2;
 				state = PP_BLOCK_COMMENT;
 				continue;
 			}
-			if(c == '"' || c == '\'')
-			{
-				bputn(&out, &c, 1);
-				i++;
-				state = c == '"' ? PP_STRING : PP_CHAR;
+			if(character == '"' || character == '\'') {
+				bputn(&out, &character, 1);
+				index++;
+				state = character == '"' ? PP_STRING : PP_CHAR;
 				escaped = false;
 				continue;
 			}
-			if(isalpha((unsigned char)c) || c == '_')
-			{
-				size_t start = i;
+			if(isalpha((unsigned char)character) || character == '_') {
+				size_t start = index;
 				Macro *macro;
-
-				i++;
-				while(i < n && (isalnum((unsigned char)body.s[i]) ||
-						body.s[i] == '_'))
-					i++;
-				macro = find_macro(macros, nmacros, body.s + start, i - start);
-				if(macro)
-				{
+				index++;
+				while(index < count && (isalnum((unsigned char)body.s[index]) ||
+						body.s[index] == '_'))
+					index++;
+				macro = find_macro(macros, nmacros, body.s + start, index - start);
+				if(macro) {
 					bputn(&out, "(", 1);
 					bputs(&out, macro->value);
 					bputn(&out, ")", 1);
 				} else {
-					bputn(&out, body.s + start, i - start);
+					bputn(&out, body.s + start, index - start);
 				}
 				continue;
 			}
-			bputn(&out, &c, 1);
-			i++;
+			bputn(&out, &character, 1);
+			index++;
 			continue;
 		}
-		bputn(&out, &c, 1);
-		i++;
-		if(state == PP_LINE_COMMENT)
-		{
-			if(c == '\n')
+		bputn(&out, &character, 1);
+		index++;
+		if(state == PP_LINE_COMMENT) {
+			if(character == '\n')
 				state = PP_NORMAL;
 		} else if(state == PP_BLOCK_COMMENT)
 		{
-			if(c == '*' && next == '/')
-			{
+			if(character == '*' && next == '/') {
 				bputn(&out, "/", 1);
-				i++;
+				index++;
 				state = PP_NORMAL;
 			}
 		} else if(escaped)
 		{
 			escaped = false;
-		} else if(c == '\\')
+		} else if(character == '\\')
 		{
 			escaped = true;
-		} else if((state == PP_STRING && c == '"') ||
-			  (state == PP_CHAR && c == '\''))
+		} else if((state == PP_STRING && character == '"') ||
+			  (state == PP_CHAR && character == '\''))
 		{
 			state = PP_NORMAL;
 		}
@@ -353,7 +329,6 @@ static char *preprocess_source(const char *text)
 		out.s = xstrdup("");
 	return out.s;
 }
-
 //eclaration TD
 typedef enum
 {
@@ -373,17 +348,14 @@ typedef enum
 	TY_VALIST,
 	TY_OPAQUE
 } TypeKind;
-
 typedef struct CType CType;
 typedef struct StructMember StructMember;
-
 struct StructMember
 {
 	char *name;
 	CType *type;
 	long offset;
 };
-
 struct CType
 {
 	TypeKind kind;
@@ -397,7 +369,6 @@ struct CType
 	long align;
 	bool packed;
 };
-
 //SC defs for AneoC types.
 static CType T_VOID = {.kind = TY_VOID, .name = "void"};
 static CType T_CHAR = {.kind = TY_CHAR, .name = "char"};
@@ -413,24 +384,26 @@ static CType T_VALIST = {.kind = TY_VALIST, .name = "va_list"};
 static CType T_DISPLAY = {.kind = TY_OPAQUE, .name = "Display"};
 static CType T_FILE = {.kind = TY_OPAQUE, .name = "FILE"};
 
-static CType *new_type(TypeKind k, CType *base, long count, const char *name)
+static CType *new_type(TypeKind third_index, CType *base, long count, const char *name)
 {
-	CType *t = xcalloc(1, sizeof(*t));
-	t->kind = k;
-	t->base = base;
-	t->count = count;
-	t->name = name;
-	return t;
+	CType *type = xcalloc(1, sizeof(*type));
+	type->kind = third_index;
+	type->base = base;
+	type->count = count;
+	type->name = name;
+	return type;
 }
 
 static CType *ptr_to(CType *base)
 {
 	return new_type(TY_PTR, base, 0, NULL);
 }
-static CType *array_of(CType *base, long n)
+
+static CType *array_of(CType *base, long count)
 {
-	return new_type(TY_ARRAY, base, n, NULL);
+	return new_type(TY_ARRAY, base, count, NULL);
 }
+
 static CType *vla_of(CType *base, const char *bound)
 {
 	return new_type(TY_ARRAY, base, -1, xstrdup(bound));
@@ -441,10 +414,9 @@ static bool is_vla(CType *type)
 	return type && type->kind == TY_ARRAY && type->count < 0;
 }
 
-static long type_size(CType *t)
+static long type_size(CType *type)
 {
-	switch(t->kind)
-	{
+	switch(type->kind) {
 	case TY_VOID:
 		return 0;
 	case TY_CHAR:
@@ -462,11 +434,11 @@ static long type_size(CType *t)
 	case TY_OPAQUE:
 		return 8;
 	case TY_STRUCT:
-		return t->size;
+		return type->size;
 	case TY_ARRAY:
-		if(is_vla(t))
+		if(is_vla(type))
 			return 8;
-		return type_size(t->base) * t->count;
+		return type_size(type->base) * type->count;
 	case TY_XEVENT:
 		return 192;
 	case TY_VALIST:
@@ -476,23 +448,21 @@ static long type_size(CType *t)
 	return 0;
 }
 
-static long type_align(CType *t)
+static long type_align(CType *type)
 {
-	if(t->kind == TY_CHAR || t->kind == TY_U8)
+	if(type->kind == TY_CHAR || type->kind == TY_U8)
 		return 1;
-	if(t->kind == TY_SHORT || t->kind == TY_U16)
+	if(type->kind == TY_SHORT || type->kind == TY_U16)
 		return 2;
-	if(t->kind == TY_INT || t->kind == TY_U32)
+	if(type->kind == TY_INT || type->kind == TY_U32)
 		return 4;
-	if(t->kind == TY_ARRAY)
-		return type_align(t->base);
-	if(t->kind == TY_STRUCT)
-		return t->align ? t->align : 1;
+	if(type->kind == TY_ARRAY)
+		return type_align(type->base);
+	if(type->kind == TY_STRUCT)
+		return type->align ? type->align : 1;
 	return 8;
 }
-
 //Lexer
-
 typedef enum
 {
 	TK_ID,
@@ -502,7 +472,6 @@ typedef enum
 	TK_OP,
 	TK_EOF
 } TokKind;
-
 typedef struct
 {
 	TokKind kind;
@@ -510,7 +479,6 @@ typedef struct
 	int line;
 	int col;
 } Token;
-
 typedef struct
 {
 	Token *a;
@@ -519,243 +487,209 @@ typedef struct
 	const char *file;
 } Tokens;
 
-static void tok_push(Tokens *ts, TokKind k, const char *s, size_t n, int line, int col)
+static void tok_push(Tokens *token_stream, TokKind third_index, const char *string, size_t count, int line, int col)
 {
-	ARR_GROW(ts->a, ts->n, ts->cap, Token);
-	ts->a[ts->n].kind = k;
-	ts->a[ts->n].v = xstrndup2(s, n);
-	ts->a[ts->n].line = line;
-	ts->a[ts->n].col = col;
-	ts->n++;
+	ARR_GROW(token_stream->a, token_stream->n, token_stream->cap, Token);
+	token_stream->a[token_stream->n].kind = third_index;
+	token_stream->a[token_stream->n].v = xstrndup2(string, count);
+	token_stream->a[token_stream->n].line = line;
+	token_stream->a[token_stream->n].col = col;
+	token_stream->n++;
 }
 
-static bool starts(const char *s, size_t i, const char *x)
+static bool starts(const char *string, size_t index, const char *x_value)
 {
-	return !strncmp(s + i, x, strlen(x));
+	return !strncmp(string + index, x_value, strlen(x_value));
 }
 
 static Tokens lex_source(const char *text, const char *file)
 {
 	Tokens ts = {0};
-	size_t i = 0, n = strlen(text);
+	size_t index = 0, count = strlen(text);
 	int line = 1, col = 1;
 	bool bol = true;
-	while(i < n)
-	{
-		char c = text[i];
-		if(bol)
-		{
-			size_t j = i;
+	while(index < count) {
+		char character = text[index];
+		if(bol) {
+			size_t inner_index = index;
 			int ccol = col;
-			while(j < n && (text[j] == ' ' || text[j] == '\t' || text[j] == '\r'))
-			{
-				j++;
+			while(inner_index < count && (text[inner_index] == ' ' || text[inner_index] == '\t' || text[inner_index] == '\r')) {
+				inner_index++;
 				ccol++;
 			}
-			if(j < n && text[j] == '#')
-			{
+			if(inner_index < count && text[inner_index] == '#') {
 				bool cont;
-				do
-				{
+				do {
 					cont = false;
-					while(i < n && text[i] != '\n')
-					{
-						if(text[i] == '\\')
+					while(index < count && text[index] != '\n') {
+						if(text[index] == '\\')
 							cont = true;
-						else if(text[i] != '\r' && !isspace((unsigned char)text[i]))
+						else if(text[index] != '\r' && !isspace((unsigned char)text[index]))
 							cont = false;
-						i++;
+						index++;
 						col++;
 					}
-					if(i < n && text[i] == '\n')
-					{
-						i++;
+					if(index < count && text[index] == '\n') {
+						index++;
 						line++;
 						col = 1;
 						bol = true;
 					}
-				} while(cont && i < n);
+				} while(cont && index < count);
 				continue;
 			}
 		}
-		if(isspace((unsigned char)c))
-		{
-			if(c == '\n')
-			{
+		if(isspace((unsigned char)character)) {
+			if(character == '\n') {
 				line++;
 				col = 1;
 				bol = true;
 			} else
 				col++;
-			i++;
+			index++;
 			continue;
 		}
 		bol = false;
-		if(i + 1 < n && text[i] == '/' && text[i + 1] == '/')
-		{
-			i += 2;
+		if(index + 1 < count && text[index] == '/' && text[index + 1] == '/') {
+			index += 2;
 			col += 2;
-			while(i < n && text[i] != '\n')
-			{
-				i++;
+			while(index < count && text[index] != '\n') {
+				index++;
 				col++;
 			}
 			continue;
 		}
-		if(i + 1 < n && text[i] == '/' && text[i + 1] == '*')
-		{
-			i += 2;
+		if(index + 1 < count && text[index] == '/' && text[index + 1] == '*') {
+			index += 2;
 			col += 2;
-			while(i + 1 < n && !(text[i] == '*' && text[i + 1] == '/'))
-			{
-				if(text[i] == '\n')
-				{
+			while(index + 1 < count && !(text[index] == '*' && text[index + 1] == '/')) {
+				if(text[index] == '\n') {
 					line++;
 					col = 1;
 					bol = true;
-					i++;
+					index++;
 				} else {
-					i++;
+					index++;
 					col++;
 				}
 			}
-			if(i + 1 >= n)
+			if(index + 1 >= count)
 				fatal("%s:%d:%d: unterminated comment", file, line, col);
-			i += 2;
+			index += 2;
 			col += 2;
 			continue;
 		}
 		{
-			int sl = line, sc = col;
-			size_t start = i;
-			if(isalpha((unsigned char)c) || c == '_')
-			{
-				i++;
+			int source_line = line, scan_code = col;
+			size_t start = index;
+			if(isalpha((unsigned char)character) || character == '_') {
+				index++;
 				col++;
-				while(i < n && (isalnum((unsigned char)text[i]) || text[i] == '_'))
-				{
-					i++;
+				while(index < count && (isalnum((unsigned char)text[index]) || text[index] == '_')) {
+					index++;
 					col++;
 				}
-				tok_push(&ts, TK_ID, text + start, i - start, sl, sc);
+				tok_push(&ts, TK_ID, text + start, index - start, source_line, scan_code);
 				continue;
 			}
-			if(isdigit((unsigned char)c))
-			{
+			if(isdigit((unsigned char)character)) {
 				bool floating = false;
-				i++;
+				index++;
 				col++;
-				if(c == '0' && i < n && (text[i] == 'x' || text[i] == 'X'))
-				{
-					i++;
+				if(character == '0' && index < count && (text[index] == 'x' || text[index] == 'X')) {
+					index++;
 					col++;
-					while(i < n && isxdigit((unsigned char)text[i]))
-					{
-						i++;
+					while(index < count && isxdigit((unsigned char)text[index])) {
+						index++;
 						col++;
 					}
 				} else {
-					while(i < n && isdigit((unsigned char)text[i]))
-					{
-						i++;
+					while(index < count && isdigit((unsigned char)text[index])) {
+						index++;
 						col++;
 					}
-					if(i < n && text[i] == '.')
-					{
+					if(index < count && text[index] == '.') {
 						floating = true;
-						i++;
+						index++;
 						col++;
-						while(i < n && isdigit((unsigned char)text[i]))
-						{
-							i++;
+						while(index < count && isdigit((unsigned char)text[index])) {
+							index++;
 							col++;
 						}
 					}
-					if(i < n && (text[i] == 'e' || text[i] == 'E'))
-					{
+					if(index < count && (text[index] == 'e' || text[index] == 'E')) {
 						floating = true;
-						i++;
+						index++;
 						col++;
-						if(i < n && (text[i] == '+' || text[i] == '-'))
-						{
-							i++;
+						if(index < count && (text[index] == '+' || text[index] == '-')) {
+							index++;
 							col++;
 						}
-						while(i < n && isdigit((unsigned char)text[i]))
-						{
-							i++;
+						while(index < count && isdigit((unsigned char)text[index])) {
+							index++;
 							col++;
 						}
 					}
 				}
-				if(floating)
-				{
-					if(i < n && (text[i] == 'f' || text[i] == 'F' || text[i] == 'l' || text[i] == 'L'))
-					{
-						i++;
+				if(floating) {
+					if(index < count && (text[index] == 'f' || text[index] == 'F' || text[index] == 'l' || text[index] == 'L')) {
+						index++;
 						col++;
 					}
 				} else {
-					while(i < n && strchr("uUlL", text[i]))
-					{
-						i++;
+					while(index < count && strchr("uUlL", text[index])) {
+						index++;
 						col++;
 					}
 				}
-				tok_push(&ts, TK_NUM, text + start, i - start, sl, sc);
+				tok_push(&ts, TK_NUM, text + start, index - start, source_line, scan_code);
 				continue;
 			}
-			if(c == '"' || c == '\'')
-			{
-				char q = c;
+			if(character == '"' || character == '\'') {
+				char cursor = character;
 				bool esc = false;
-				i++;
+				index++;
 				col++;
-				while(i < n)
-				{
-					char d = text[i++];
+				while(index < count) {
+					char value = text[index++];
 					col++;
-					if(d == '\n')
-					{
+					if(value == '\n') {
 						line++;
 						col = 1;
 					}
 					if(esc)
 						esc = false;
-					else if(d == '\\')
+					else if(value == '\\')
 						esc = true;
-					else if(d == q)
+					else if(value == cursor)
 						break;
 				}
-				if(text[i - 1] != q)
-					fatal("%s:%d:%d: unterminated literal", file, sl, sc);
-				tok_push(&ts, q == '"' ? TK_STR : TK_CHAR, text + start, i - start, sl, sc);
+				if(text[index - 1] != cursor)
+					fatal("%s:%d:%d: unterminated literal", file, source_line, scan_code);
+				tok_push(&ts, cursor == '"' ? TK_STR : TK_CHAR, text + start, index - start, source_line, scan_code);
 				continue;
 			}
 			{
 				static const char *ops[] = {
 					"<<=", ">>=", "...", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "->", "<<", ">>", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", NULL};
-				int k;
-				for(k = 0; ops[k]; k++)
-				{
-					size_t z = strlen(ops[k]);
-					if(i + z <= n && starts(text, i, ops[k]))
-					{
-						tok_push(&ts, TK_OP, text + i, z, sl, sc);
-						i += z;
-						col += (int)z;
+				int third_index;
+				for(third_index = 0; ops[third_index]; third_index++) {
+					size_t token_length = strlen(ops[third_index]);
+					if(index + token_length <= count && starts(text, index, ops[third_index])) {
+						tok_push(&ts, TK_OP, text + index, token_length, source_line, scan_code);
+						index += token_length;
+						col += (int)token_length;
 						goto token_done;
 					}
 				}
 			}
-			if(strchr("{}[]();,.*&+-/%!~<>=|^?:", c))
-			{
-				tok_push(&ts, TK_OP, text + i, 1, sl, sc);
-				i++;
+			if(strchr("{}[]();,.*&+-/%!~<>=|^?:", character)) {
+				tok_push(&ts, TK_OP, text + index, 1, source_line, scan_code);
+				index++;
 				col++;
 				continue;
 			}
-			fatal("%s:%d:%d: unexpected character '%c'", file, line, col, c);
+			fatal("%s:%d:%d: unexpected character '%c'", file, line, col, character);
 		}
 	token_done:;
 	}
@@ -763,13 +697,10 @@ static Tokens lex_source(const char *text, const char *file)
 	ts.file = file;
 	return ts;
 }
-
 //AST tree
-
 typedef struct Expr Expr;
 typedef struct Stmt Stmt;
 typedef struct Decl Decl;
-
 typedef struct
 {
 	char *name;
@@ -785,7 +716,6 @@ typedef struct
 	char *name;
 	CType *type;
 } StructTag;
-
 typedef struct
 {
 	char *name;
@@ -794,7 +724,6 @@ typedef struct
 	size_t nparams, capparams;
 	bool variadic, function;
 } Declarator;
-
 typedef enum
 {
 	EX_NUM,
@@ -822,7 +751,6 @@ struct Expr
 	CType *type;
 	CType *sizeof_type;
 };
-
 typedef enum
 {
 	ST_BLOCK,
@@ -857,7 +785,6 @@ struct Stmt
 	Stmt **children;
 	size_t nchildren, capchildren;
 };
-
 struct Decl
 {
 	char *name;
@@ -872,7 +799,6 @@ struct Decl
 	bool is_inline;
 	Stmt *body;
 };
-
 typedef struct
 {
 	Decl **a;
@@ -883,25 +809,25 @@ typedef struct
 	size_t ntags, captags;
 } Program;
 
-static Expr *new_expr(ExprKind k)
+static Expr *new_expr(ExprKind third_index)
 {
-	Expr *e = xcalloc(1, sizeof(*e));
-	e->kind = k;
-	return e;
+	Expr *expression = xcalloc(1, sizeof(*expression));
+	expression->kind = third_index;
+	return expression;
 }
-static Stmt *new_stmt(StmtKind k)
+
+static Stmt *new_stmt(StmtKind third_index)
 {
-	Stmt *s = xcalloc(1, sizeof(*s));
-	s->kind = k;
-	return s;
+	Stmt *statement = xcalloc(1, sizeof(*statement));
+	statement->kind = third_index;
+	return statement;
 }
+
 static Decl *new_decl(void)
 {
 	return xcalloc(1, sizeof(Decl));
 }
-
 //Parser
-
 typedef struct
 {
 	Tokens *ts;
@@ -909,80 +835,81 @@ typedef struct
 	Program *prog;
 } Parser;
 
-static Token *ptok(Parser *p)
+static Token *ptok(Parser *parser)
 {
-	return &p->ts->a[p->p];
+	return &parser->ts->a[parser->p];
 }
-static bool peq(Parser *p, const char *s)
+
+static bool peq(Parser *parser, const char *string)
 {
-	return !strcmp(ptok(p)->v, s);
+	return !strcmp(ptok(parser)->v, string);
 }
-static bool paccept(Parser *p, const char *s)
+
+static bool paccept(Parser *parser, const char *string)
 {
-	if(peq(p, s))
-	{
-		p->p++;
+	if(peq(parser, string)) {
+		parser->p++;
 		return true;
 	}
 	return false;
 }
-static void perr(Parser *p, const char *fmt, ...)
+
+static void perr(Parser *parser, const char *fmt, ...)
 {
-	va_list ap;
-	Token *t = ptok(p);
-	fprintf(stderr, "aneoc: %s:%d:%d: ", p->ts->file, t->line, t->col);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	fprintf(stderr, "; got '%s'\n", t->v);
+	va_list argument_list;
+	Token *token = ptok(parser);
+	fprintf(stderr, "aneoc: %s:%d:%d: ", parser->ts->file, token->line, token->col);
+	va_start(argument_list, fmt);
+	vfprintf(stderr, fmt, argument_list);
+	va_end(argument_list);
+	fprintf(stderr, "; got '%s'\n", token->v);
 	exit(1);
 }
-static void pexpect(Parser *p, const char *s)
+
+static void pexpect(Parser *parser, const char *string)
 {
-	if(!paccept(p, s))
-		perr(p, "expected '%s'", s);
+	if(!paccept(parser, string))
+		perr(parser, "expected '%s'", string);
 }
-static char *pexpect_id(Parser *p, bool optional)
+
+static char *pexpect_id(Parser *parser, bool optional)
 {
-	if(ptok(p)->kind == TK_ID)
-		return p->ts->a[p->p++].v;
+	if(ptok(parser)->kind == TK_ID)
+		return parser->ts->a[parser->p++].v;
 	if(optional)
 		return xstrdup("");
-	perr(p, "expected identifier");
+	perr(parser, "expected identifier");
 	return NULL;
 }
 
 static CType *find_alias(Program *prog, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < prog->naliases; i++)
-		if(!strcmp(prog->aliases[i].name, name))
-			return prog->aliases[i].type;
+	size_t index;
+	for(index = 0; index < prog->naliases; index++)
+		if(!strcmp(prog->aliases[index].name, name))
+			return prog->aliases[index].type;
 	return NULL;
 }
 
-static bool same_type(CType *a, CType *b)
+static bool same_type(CType *array, CType *base_type)
 {
-	if(a == b)
+	if(array == base_type)
 		return true;
-	if(!a || !b || a->kind != b->kind || a->count != b->count)
+	if(!array || !base_type || array->kind != base_type->kind || array->count != base_type->count)
 		return false;
-	if(a->kind == TY_PTR || a->kind == TY_ARRAY)
-		return same_type(a->base, b->base);
+	if(array->kind == TY_PTR || array->kind == TY_ARRAY)
+		return same_type(array->base, base_type->base);
 	return true;
 }
 
-static void add_alias(Parser *p, char *name, CType *type)
+static void add_alias(Parser *parser, char *name, CType *type)
 {
-	Program *prog = p->prog;
+	Program *prog = parser->prog;
 	CType *old = find_alias(prog, name);
-
-	if(old)
-	{
+	if(old) {
 		if(same_type(old, type))
 			return;
-		perr(p, "conflicting typedef '%s'", name);
+		perr(parser, "conflicting typedef '%s'", name);
 	}
 	ARR_GROW(prog->aliases, prog->naliases, prog->capaliases, TypeAlias);
 	prog->aliases[prog->naliases].name = name;
@@ -992,97 +919,88 @@ static void add_alias(Parser *p, char *name, CType *type)
 
 static CType *find_struct_tag(Program *prog, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < prog->ntags; i++)
-		if(!strcmp(prog->tags[i].name, name))
-			return prog->tags[i].type;
+	size_t index;
+	for(index = 0; index < prog->ntags; index++)
+		if(!strcmp(prog->tags[index].name, name))
+			return prog->tags[index].type;
 	return NULL;
 }
 
-static void add_struct_tag(Parser *p, char *name, CType *type)
+static void add_struct_tag(Parser *parser, char *name, CType *type)
 {
 	CType *old;
-
 	if(!name || !*name)
 		return;
-	old = find_struct_tag(p->prog, name);
+	old = find_struct_tag(parser->prog, name);
 	if(old && old != type)
-		perr(p, "conflicting struct tag '%s'", name);
+		perr(parser, "conflicting struct tag '%s'", name);
 	if(old)
 		return;
-	ARR_GROW(p->prog->tags, p->prog->ntags, p->prog->captags, StructTag);
-	p->prog->tags[p->prog->ntags].name = name;
-	p->prog->tags[p->prog->ntags].type = type;
-	p->prog->ntags++;
+	ARR_GROW(parser->prog->tags, parser->prog->ntags, parser->prog->captags, StructTag);
+	parser->prog->tags[parser->prog->ntags].name = name;
+	parser->prog->tags[parser->prog->ntags].type = type;
+	parser->prog->ntags++;
 }
 
 static StructMember *find_struct_member(CType *type, const char *name)
 {
 	static StructMember xevent_type_member = {"type", &T_INT, 0};
-	size_t i;
-
+	size_t index;
 	if(!type)
 		return NULL;
 	if(type->kind == TY_XEVENT)
 		return !strcmp(name, "type") ? &xevent_type_member : NULL;
 	if(type->kind != TY_STRUCT)
 		return NULL;
-	for(i = 0; i < type->nmembers; i++)
-		if(!strcmp(type->members[i].name, name))
-			return &type->members[i];
+	for(index = 0; index < type->nmembers; index++)
+		if(!strcmp(type->members[index].name, name))
+			return &type->members[index];
 	return NULL;
 }
-
 static Declarator parse_declarator(Parser *p, CType *base, bool unnamed);
 static Expr *parse_expr(Parser *p, int minprec);
 static bool eval_const_expr(Expr *e, long *value);
 
-static bool type_start(Parser *p)
+static bool type_start(Parser *parser)
 {
-	const char *s = ptok(p)->v;
-
-	if(find_alias(p->prog, s))
+	const char *character = ptok(parser)->v;
+	if(find_alias(parser->prog, character))
 		return true;
-	return !strcmp(s, "VD") || !strcmp(s, "C") || !strcmp(s, "CC") ||
-	       !strcmp(s, "INT") || !strcmp(s, "ULL") || !strcmp(s, "DB") || !strcmp(s, "L") ||
-	       !strcmp(s, "S") || !strcmp(s, "U") || !strcmp(s, "void") ||
-	       !strcmp(s, "char") || !strcmp(s, "short") || !strcmp(s, "int") ||
-	       !strcmp(s, "double") ||
-	       !strcmp(s, "FILE") || !strcmp(s, "Display") || !strcmp(s, "Window") ||
-	       !strcmp(s, "GC") || !strcmp(s, "Font") || !strcmp(s, "XEvent") ||
-	       !strcmp(s, "va_list") || !strcmp(s, "size_t") ||
-	       !strcmp(s, "uint8_t") || !strcmp(s, "uint16_t") ||
-	       !strcmp(s, "uint32_t") || !strcmp(s, "uint64_t") ||
-	       !strcmp(s, "int8_t") || !strcmp(s, "int16_t") ||
-	       !strcmp(s, "int32_t") || !strcmp(s, "int64_t") ||
-	       !strcmp(s, "const") || !strcmp(s, "unsigned") ||
-	       !strcmp(s, "long") || !strcmp(s, "signed") ||
-	       !strcmp(s, "struct") || !strcmp(s, "ST");
+	return !strcmp(character, "VD") || !strcmp(character, "C") || !strcmp(character, "CC") ||
+	       !strcmp(character, "INT") || !strcmp(character, "ULL") || !strcmp(character, "DB") || !strcmp(character, "L") ||
+	       !strcmp(character, "S") || !strcmp(character, "U") || !strcmp(character, "void") ||
+	       !strcmp(character, "char") || !strcmp(character, "short") || !strcmp(character, "int") ||
+	       !strcmp(character, "double") ||
+	       !strcmp(character, "FILE") || !strcmp(character, "Display") || !strcmp(character, "Window") ||
+	       !strcmp(character, "GC") || !strcmp(character, "Font") || !strcmp(character, "XEvent") ||
+	       !strcmp(character, "va_list") || !strcmp(character, "size_t") ||
+	       !strcmp(character, "uint8_t") || !strcmp(character, "uint16_t") ||
+	       !strcmp(character, "uint32_t") || !strcmp(character, "uint64_t") ||
+	       !strcmp(character, "int8_t") || !strcmp(character, "int16_t") ||
+	       !strcmp(character, "int32_t") || !strcmp(character, "int64_t") ||
+	       !strcmp(character, "const") || !strcmp(character, "unsigned") ||
+	       !strcmp(character, "long") || !strcmp(character, "signed") ||
+	       !strcmp(character, "struct") || !strcmp(character, "ST");
 }
 
-static bool parse_gnu_attributes(Parser *p)
+static bool parse_gnu_attributes(Parser *parser)
 {
 	bool packed = false;
-
-	while(peq(p, "__attribute__") || peq(p, "__attribute"))
-	{
+	while(peq(parser, "__attribute__") || peq(parser, "__attribute")) {
 		int depth = 0;
-
-		p->p++;
-		pexpect(p, "(");
+		parser->p++;
+		pexpect(parser, "(");
 		depth = 1;
-		while(depth > 0)
-		{
-			if(ptok(p)->kind == TK_EOF)
-				perr(p, "unterminated __attribute__");
-			if(peq(p, "packed") || peq(p, "__packed__"))
+		while(depth > 0) {
+			if(ptok(parser)->kind == TK_EOF)
+				perr(parser, "unterminated __attribute__");
+			if(peq(parser, "packed") || peq(parser, "__packed__"))
 				packed = true;
-			if(peq(p, "("))
+			if(peq(parser, "("))
 				depth++;
-			else if(peq(p, ")"))
+			else if(peq(parser, ")"))
 				depth--;
-			p->p++;
+			parser->p++;
 		}
 	}
 	return packed;
@@ -1092,18 +1010,15 @@ static void finish_struct_layout(CType *type, bool packed)
 {
 	long offset = 0;
 	long maximum = 1;
-	size_t i;
-
+	size_t index;
 	type->packed = packed;
-	for(i = 0; i < type->nmembers; i++)
-	{
-		long alignment = packed ? 1 : type_align(type->members[i].type);
-		long size = type_size(type->members[i].type);
-
+	for(index = 0; index < type->nmembers; index++) {
+		long alignment = packed ? 1 : type_align(type->members[index].type);
+		long size = type_size(type->members[index].type);
 		if(alignment < 1)
 			alignment = 1;
 		offset = (offset + alignment - 1) / alignment * alignment;
-		type->members[i].offset = offset;
+		type->members[index].offset = offset;
 		offset += size;
 		if(alignment > maximum)
 			maximum = alignment;
@@ -1112,695 +1027,617 @@ static void finish_struct_layout(CType *type, bool packed)
 	type->size = packed ? offset : (offset + maximum - 1) / maximum * maximum;
 }
 
-static CType *parse_type(Parser *p)
+static CType *parse_type(Parser *parser)
 {
-	const char *s;
+	const char *character;
 	CType *alias;
 	bool is_unsigned = false;
-
-	paccept(p, "const");
-	if(paccept(p, "struct") || paccept(p, "ST"))
-	{
+	paccept(parser, "const");
+	if(paccept(parser, "struct") || paccept(parser, "ST")) {
 		char *tag = NULL;
 		CType *type;
-
-		if(ptok(p)->kind == TK_ID && !peq(p, "{"))
-			tag = pexpect_id(p, false);
-		if(!paccept(p, "{"))
-		{
-			type = find_struct_tag(p->prog, tag ? tag : "");
+		if(ptok(parser)->kind == TK_ID && !peq(parser, "{"))
+			tag = pexpect_id(parser, false);
+		if(!paccept(parser, "{")) {
+			type = find_struct_tag(parser->prog, tag ? tag : "");
 			if(!type)
-				perr(p, "unknown struct '%s'", tag ? tag : "");
+				perr(parser, "unknown struct '%s'", tag ? tag : "");
 			return type;
 		}
 		type = new_type(TY_STRUCT, NULL, 0, tag ? tag : "<anonymous>");
-		add_struct_tag(p, tag, type);
-		while(!paccept(p, "}"))
-		{
-			CType *member_base = parse_type(p);
-			Declarator member = parse_declarator(p, member_base, false);
+		add_struct_tag(parser, tag, type);
+		while(!paccept(parser, "}")) {
+			CType *member_base = parse_type(parser);
+			Declarator member = parse_declarator(parser, member_base, false);
 			if(member.function)
-				perr(p, "struct member cannot be a function");
-			pexpect(p, ";");
+				perr(parser, "struct member cannot be a function");
+			pexpect(parser, ";");
 			ARR_GROW(type->members, type->nmembers, type->capmembers, StructMember);
 			type->members[type->nmembers].name = member.name;
 			type->members[type->nmembers].type = member.type;
 			type->members[type->nmembers].offset = 0;
 			type->nmembers++;
 		}
-		finish_struct_layout(type, parse_gnu_attributes(p));
+		finish_struct_layout(type, parse_gnu_attributes(parser));
 		return type;
 	}
-	if(paccept(p, "unsigned") || paccept(p, "U"))
+	if(paccept(parser, "unsigned") || paccept(parser, "U"))
 		is_unsigned = true;
 	else
-		paccept(p, "signed");
-
-	if(is_unsigned)
-	{
-		if(paccept(p, "char") || paccept(p, "C"))
+		paccept(parser, "signed");
+	if(is_unsigned) {
+		if(paccept(parser, "char") || paccept(parser, "C"))
 			return &T_U8;
-		if(paccept(p, "short") || paccept(p, "S"))
-		{
-			paccept(p, "int");
-			paccept(p, "INT");
+		if(paccept(parser, "short") || paccept(parser, "S")) {
+			paccept(parser, "int");
+			paccept(parser, "INT");
 			return &T_U16;
 		}
-		if(paccept(p, "long") || paccept(p, "L"))
-		{
-			paccept(p, "long");
-			paccept(p, "L");
+		if(paccept(parser, "long") || paccept(parser, "L")) {
+			paccept(parser, "long");
+			paccept(parser, "L");
 			return &T_U64;
 		}
-		paccept(p, "int");
-		paccept(p, "INT");
+		paccept(parser, "int");
+		paccept(parser, "INT");
 		return &T_U32;
 	}
-
-	if(paccept(p, "long") || paccept(p, "L"))
-	{
-		paccept(p, "long");
-		paccept(p, "L");
+	if(paccept(parser, "long") || paccept(parser, "L")) {
+		paccept(parser, "long");
+		paccept(parser, "L");
 		return &T_U64;
 	}
-	if(paccept(p, "short") || paccept(p, "S"))
-	{
-		paccept(p, "int");
-		paccept(p, "INT");
+	if(paccept(parser, "short") || paccept(parser, "S")) {
+		paccept(parser, "int");
+		paccept(parser, "INT");
 		return &T_SHORT;
 	}
-
-	s = ptok(p)->v;
-	alias = find_alias(p->prog, s);
-	if(alias)
-	{
-		p->p++;
+	character = ptok(parser)->v;
+	alias = find_alias(parser->prog, character);
+	if(alias) {
+		parser->p++;
 		return alias;
 	}
-	if(!strcmp(s, "VD") || !strcmp(s, "void"))
-	{
-		p->p++;
+	if(!strcmp(character, "VD") || !strcmp(character, "void")) {
+		parser->p++;
 		return &T_VOID;
 	}
-	if(!strcmp(s, "C") || !strcmp(s, "CC") || !strcmp(s, "char") ||
-	   !strcmp(s, "int8_t"))
+	if(!strcmp(character, "C") || !strcmp(character, "CC") || !strcmp(character, "char") ||
+	   !strcmp(character, "int8_t"))
 	{
-		p->p++;
+		parser->p++;
 		return &T_CHAR;
 	}
-	if(!strcmp(s, "INT") || !strcmp(s, "int") || !strcmp(s, "int32_t"))
-	{
-		p->p++;
+	if(!strcmp(character, "INT") || !strcmp(character, "int") || !strcmp(character, "int32_t")) {
+		parser->p++;
 		return &T_INT;
 	}
-	if(!strcmp(s, "DB") || !strcmp(s, "double"))
-	{
-		p->p++;
+	if(!strcmp(character, "DB") || !strcmp(character, "double")) {
+		parser->p++;
 		return &T_DOUBLE;
 	}
-	if(!strcmp(s, "uint8_t"))
-	{
-		p->p++;
+	if(!strcmp(character, "uint8_t")) {
+		parser->p++;
 		return &T_U8;
 	}
-	if(!strcmp(s, "uint16_t"))
-	{
-		p->p++;
+	if(!strcmp(character, "uint16_t")) {
+		parser->p++;
 		return &T_U16;
 	}
-	if(!strcmp(s, "uint32_t"))
-	{
-		p->p++;
+	if(!strcmp(character, "uint32_t")) {
+		parser->p++;
 		return &T_U32;
 	}
-	if(!strcmp(s, "ULL") || !strcmp(s, "uint64_t") ||
-	   !strcmp(s, "int64_t") || !strcmp(s, "Window") ||
-	   !strcmp(s, "Font") || !strcmp(s, "size_t"))
+	if(!strcmp(character, "ULL") || !strcmp(character, "uint64_t") ||
+	   !strcmp(character, "int64_t") || !strcmp(character, "Window") ||
+	   !strcmp(character, "Font") || !strcmp(character, "size_t"))
 	{
-		p->p++;
+		parser->p++;
 		return &T_U64;
 	}
-	if(!strcmp(s, "int16_t"))
-	{
-		p->p++;
+	if(!strcmp(character, "int16_t")) {
+		parser->p++;
 		return &T_SHORT;
 	}
-	if(!strcmp(s, "FILE"))
-	{
-		p->p++;
+	if(!strcmp(character, "FILE")) {
+		parser->p++;
 		return &T_FILE;
 	}
-	if(!strcmp(s, "Display"))
-	{
-		p->p++;
+	if(!strcmp(character, "Display")) {
+		parser->p++;
 		return &T_DISPLAY;
 	}
-	if(!strcmp(s, "GC"))
-	{
-		p->p++;
+	if(!strcmp(character, "GC")) {
+		parser->p++;
 		return ptr_to(&T_VOID);
 	}
-	if(!strcmp(s, "XEvent"))
-	{
-		p->p++;
+	if(!strcmp(character, "XEvent")) {
+		parser->p++;
 		return &T_XEVENT;
 	}
-	if(!strcmp(s, "va_list"))
-	{
-		p->p++;
+	if(!strcmp(character, "va_list")) {
+		parser->p++;
 		return &T_VALIST;
 	}
-	perr(p, "expected type");
+	perr(parser, "expected type");
 	return NULL;
 }
 
-static Declarator parse_declarator(Parser *p, CType *base, bool unnamed)
+static Declarator parse_declarator(Parser *parser, CType *base, bool unnamed)
 {
 	Declarator d = {0};
-	CType *t = base;
-	while(paccept(p, "*"))
-		t = ptr_to(t);
-	d.name = pexpect_id(p, unnamed);
-	d.type = t;
-	if(paccept(p, "("))
-	{
+	CType *type_1 = base;
+	while(paccept(parser, "*"))
+		type_1 = ptr_to(type_1);
+	d.name = pexpect_id(parser, unnamed);
+	d.type = type_1;
+	if(paccept(parser, "(")) {
 		d.function = true;
-		if(paccept(p, ")"))
+		if(paccept(parser, ")"))
 			return d;
-		if((peq(p, "VD") || peq(p, "void")) &&
-		   !strcmp(p->ts->a[p->p + 1].v, ")"))
+		if((peq(parser, "VD") || peq(parser, "void")) &&
+		   !strcmp(parser->ts->a[parser->p + 1].v, ")"))
 		{
-			p->p += 2;
+			parser->p += 2;
 			return d;
 		}
-		for(;;)
-		{
-			CType *pt;
-			char *pn;
-			if(paccept(p, "..."))
-			{
+		for(;;) {
+			CType *parsed_type;
+			char *parameter_name;
+			if(paccept(parser, "...")) {
 				d.variadic = true;
-				pexpect(p, ")");
+				pexpect(parser, ")");
 				break;
 			}
-			pt = parse_type(p);
-			while(paccept(p, "*"))
-				pt = ptr_to(pt);
-			pn = pexpect_id(p, true);
-			if(!*pn)
-			{
-				char z[32];
-				snprintf(z, sizeof(z), "__arg%zu", d.nparams);
-				pn = xstrdup(z);
+			parsed_type = parse_type(parser);
+			while(paccept(parser, "*"))
+				parsed_type = ptr_to(parsed_type);
+			parameter_name = pexpect_id(parser, true);
+			if(!*parameter_name) {
+				char temporary_buffer[32];
+				snprintf(temporary_buffer, sizeof(temporary_buffer), "__arg%zu", d.nparams);
+				parameter_name = xstrdup(temporary_buffer);
 			}
-			if(paccept(p, "["))
-			{
-				if(ptok(p)->kind == TK_NUM)
-					p->p++;
-				pexpect(p, "]");
-				pt = ptr_to(pt);
+			if(paccept(parser, "[")) {
+				if(ptok(parser)->kind == TK_NUM)
+					parser->p++;
+				pexpect(parser, "]");
+				parsed_type = ptr_to(parsed_type);
 			}
 			ARR_GROW(d.params, d.nparams, d.capparams, Param);
-			d.params[d.nparams].name = pn;
-			d.params[d.nparams].type = pt;
+			d.params[d.nparams].name = parameter_name;
+			d.params[d.nparams].type = parsed_type;
 			d.nparams++;
-			if(paccept(p, ")"))
+			if(paccept(parser, ")"))
 				break;
-			pexpect(p, ",");
+			pexpect(parser, ",");
 		}
 		return d;
 	}
-	while(paccept(p, "["))
-	{
+	while(paccept(parser, "[")) {
 		Expr *bound;
 		long count;
-
-		if(paccept(p, "]"))
-		{
-			t = array_of(t, 0);
-			d.type = t;
+		if(paccept(parser, "]")) {
+			type_1 = array_of(type_1, 0);
+			d.type = type_1;
 			continue;
 		}
-		bound = parse_expr(p, 1);
-		pexpect(p, "]");
-		if(eval_const_expr(bound, &count))
-		{
+		bound = parse_expr(parser, 1);
+		pexpect(parser, "]");
+		if(eval_const_expr(bound, &count)) {
 			if(count < 0)
-				perr(p, "array length cannot be negative");
-			t = array_of(t, count);
+				perr(parser, "array length cannot be negative");
+			type_1 = array_of(type_1, count);
 		} else if(bound->kind == EX_ID)
 		{
-			t = vla_of(t, bound->str);
+			type_1 = vla_of(type_1, bound->str);
 		} else {
-			perr(p, "array length must be a constant expression or identifier");
+			perr(parser, "array length must be a constant expression or identifier");
 		}
-		d.type = t;
+		d.type = type_1;
 	}
 	return d;
 }
 
-static char decode_escape(const char **pp)
+static char decode_escape(const char **pointer_pointer)
 {
-	const char *p = *pp;
-	char c = *p++;
-	if(c != '\\')
-	{
-		*pp = p;
-		return c;
+	const char *position = *pointer_pointer;
+	char character = *position++;
+	if(character != '\\') {
+		*pointer_pointer = position;
+		return character;
 	}
-	c = *p++;
-	switch(c)
-	{
+	character = *position++;
+	switch(character) {
 	case 'a':
-		c = '\a';
+		character = '\a';
 		break;
 	case 'b':
-		c = '\b';
+		character = '\b';
 		break;
 	case 'f':
-		c = '\f';
+		character = '\f';
 		break;
 	case 'n':
-		c = '\n';
+		character = '\n';
 		break;
 	case 'r':
-		c = '\r';
+		character = '\r';
 		break;
 	case 't':
-		c = '\t';
+		character = '\t';
 		break;
 	case 'v':
-		c = '\v';
+		character = '\v';
 		break;
 	case '0':
-		c = '\0';
+		character = '\0';
 		break;
 	case '\\':
-		c = '\\';
+		character = '\\';
 		break;
 	case '\'':
-		c = '\'';
+		character = '\'';
 		break;
 	case '"':
-		c = '"';
+		character = '"';
 		break;
 	default:
 		break;
 	}
-	*pp = p;
-	return c;
+	*pointer_pointer = position;
+	return character;
 }
 
 static char *decode_string(const char *raw)
 {
-	size_t n = strlen(raw), i = 1;
-	Buf b = {0};
-	while(i + 1 < n)
-	{
-		const char *p = raw + i;
-		char c = decode_escape(&p);
-		bputn(&b, &c, 1);
-		i = (size_t)(p - raw);
+	size_t length = strlen(raw), index = 1;
+	Buf buffer = {0};
+	while(index + 1 < length) {
+		const char *position = raw + index;
+		char character = decode_escape(&position);
+		bputn(&buffer, &character, 1);
+		index = (size_t)(position - raw);
 	}
-	if(!b.s)
-		b.s = xstrdup("");
-	return b.s;
+	if(!buffer.s)
+		buffer.s = xstrdup("");
+	return buffer.s;
 }
 
-static Expr *parse_primary(Parser *p)
+static Expr *parse_primary(Parser *parser)
 {
-	Token *t = ptok(p);
-	Expr *e;
-	if(paccept(p, "("))
-	{
-		e = parse_expr(p, 1);
-		pexpect(p, ")");
-		return e;
+	Token *token = ptok(parser);
+	Expr *expression;
+	if(paccept(parser, "(")) {
+		expression = parse_expr(parser, 1);
+		pexpect(parser, ")");
+		return expression;
 	}
-	if(t->kind == TK_NUM)
-	{
-		bool floating = strchr(t->v, '.') != NULL;
-		const char *number = t->v;
-
+	if(token->kind == TK_NUM) {
+		bool floating = strchr(token->v, '.') != NULL;
+		const char *number = token->v;
 		if(!floating && !(number[0] == '0' && (number[1] == 'x' || number[1] == 'X')) &&
 		   (strchr(number, 'e') || strchr(number, 'E')))
 			floating = true;
-		if(floating)
-		{
-			e = new_expr(EX_NUM);
-			e->fnum = strtod(t->v, NULL);
-			e->type = &T_DOUBLE;
-			p->p++;
-			return e;
+		if(floating) {
+			expression = new_expr(EX_NUM);
+			expression->fnum = strtod(token->v, NULL);
+			expression->type = &T_DOUBLE;
+			parser->p++;
+			return expression;
 		}
-		char *q = xstrdup(t->v), *x = q;
+		char *cursor_1 = xstrdup(token->v), *x_value = cursor_1;
 		char *suffix = NULL;
-		unsigned long long v;
+		unsigned long long value;
 		bool wide = false;
 		bool uns = false;
-
-		while(*x)
-		{
-			if(strchr("uUlL", *x))
-			{
-				suffix = x;
-				*x = 0;
+		while(*x_value) {
+			if(strchr("uUlL", *x_value)) {
+				suffix = x_value;
+				*x_value = 0;
 				break;
 			}
-			x++;
+			x_value++;
 		}
-		if(suffix)
-		{
-			const char *r = t->v + (suffix - q);
-
-			while(*r)
-			{
-				if(*r == 'u' || *r == 'U')
+		if(suffix) {
+			const char *result = token->v + (suffix - cursor_1);
+			while(*result) {
+				if(*result == 'u' || *result == 'U')
 					uns = true;
-				if((*r == 'l' || *r == 'L') &&
-				   (r[1] == 'l' || r[1] == 'L'))
+				if((*result == 'l' || *result == 'L') &&
+				   (result[1] == 'l' || result[1] == 'L'))
 					wide = true;
-				r++;
+				result++;
 			}
 		}
-		v = strtoull(q, NULL, 0);
-		free(q);
-		p->p++;
-		e = new_expr(EX_NUM);
-		e->num = v;
-		e->type = (wide || v > 0xffffffffULL) ? &T_U64 : (uns ? &T_U32 : &T_INT);
-		return e;
+		value = strtoull(cursor_1, NULL, 0);
+		free(cursor_1);
+		parser->p++;
+		expression = new_expr(EX_NUM);
+		expression->num = value;
+		expression->type = (wide || value > 0xffffffffULL) ? &T_U64 : (uns ? &T_U32 : &T_INT);
+		return expression;
 	}
-	if(t->kind == TK_STR)
-	{
+	if(token->kind == TK_STR) {
 		Buf joined = {0};
-		while(ptok(p)->kind == TK_STR)
-		{
-			char *part = decode_string(ptok(p)->v);
+		while(ptok(parser)->kind == TK_STR) {
+			char *part = decode_string(ptok(parser)->v);
 			bputs(&joined, part);
 			free(part);
-			p->p++;
+			parser->p++;
 		}
-		e = new_expr(EX_STR);
-		e->str = joined.s ? joined.s : xstrdup("");
-		e->type = ptr_to(&T_CHAR);
-		return e;
+		expression = new_expr(EX_STR);
+		expression->str = joined.s ? joined.s : xstrdup("");
+		expression->type = ptr_to(&T_CHAR);
+		return expression;
 	}
-	if(t->kind == TK_CHAR)
-	{
-		const char *q = t->v + 1;
-		char c = decode_escape(&q);
-		p->p++;
-		e = new_expr(EX_NUM);
-		e->num = (unsigned char)c;
-		e->type = &T_INT;
-		return e;
+	if(token->kind == TK_CHAR) {
+		const char *cursor_1 = token->v + 1;
+		char character = decode_escape(&cursor_1);
+		parser->p++;
+		expression = new_expr(EX_NUM);
+		expression->num = (unsigned char)character;
+		expression->type = &T_INT;
+		return expression;
 	}
-	if(t->kind == TK_ID)
-	{
-		p->p++;
-		e = new_expr(EX_ID);
-		e->str = t->v;
-		return e;
+	if(token->kind == TK_ID) {
+		parser->p++;
+		expression = new_expr(EX_ID);
+		expression->str = token->v;
+		return expression;
 	}
-	perr(p, "expected expression");
+	perr(parser, "expected expression");
 	return NULL;
 }
 
-static Expr *parse_postfix(Parser *p)
+static Expr *parse_postfix(Parser *parser)
 {
-	Expr *e = parse_primary(p);
-	for(;;)
-	{
-		if(paccept(p, "("))
-		{
-			Expr *c = new_expr(EX_CALL);
-			c->left = e;
-			if(!paccept(p, ")"))
-				for(;;)
-				{
-					Expr *a = parse_expr(p, 1);
-					ARR_GROW(c->args, c->nargs, c->capargs, Expr *);
-					c->args[c->nargs++] = a;
-					if(paccept(p, ")"))
+	Expr *expression = parse_primary(parser);
+	for(;;) {
+		if(paccept(parser, "(")) {
+			Expr *call_expression = new_expr(EX_CALL);
+			call_expression->left = expression;
+			if(!paccept(parser, ")"))
+				for(;;) {
+					Expr *expression_1 = parse_expr(parser, 1);
+					ARR_GROW(call_expression->args, call_expression->nargs, call_expression->capargs, Expr *);
+					call_expression->args[call_expression->nargs++] = expression_1;
+					if(paccept(parser, ")"))
 						break;
-					pexpect(p, ",");
+					pexpect(parser, ",");
 				}
-			e = c;
+			expression = call_expression;
 			continue;
 		}
-		if(paccept(p, "["))
-		{
-			Expr *x = new_expr(EX_INDEX);
-			x->left = e;
-			x->right = parse_expr(p, 1);
-			pexpect(p, "]");
-			e = x;
+		if(paccept(parser, "[")) {
+			Expr *expression_2 = new_expr(EX_INDEX);
+			expression_2->left = expression;
+			expression_2->right = parse_expr(parser, 1);
+			pexpect(parser, "]");
+			expression = expression_2;
 			continue;
 		}
-		if(paccept(p, "."))
-		{
-			Expr *x = new_expr(EX_MEMBER);
-			x->left = e;
-			x->str = pexpect_id(p, false);
-			e = x;
+		if(paccept(parser, ".")) {
+			Expr *expression_2 = new_expr(EX_MEMBER);
+			expression_2->left = expression;
+			expression_2->str = pexpect_id(parser, false);
+			expression = expression_2;
 			continue;
 		}
-		if(paccept(p, "->"))
-		{
-			Expr *x = new_expr(EX_PTRMEMBER);
-			x->left = e;
-			x->str = pexpect_id(p, false);
-			e = x;
+		if(paccept(parser, "->")) {
+			Expr *expression_2 = new_expr(EX_PTRMEMBER);
+			expression_2->left = expression;
+			expression_2->str = pexpect_id(parser, false);
+			expression = expression_2;
 			continue;
 		}
-		if(paccept(p, "++"))
-		{
-			Expr *x = new_expr(EX_UNARY);
-			x->op = "post++";
-			x->left = e;
-			e = x;
+		if(paccept(parser, "++")) {
+			Expr *expression_2 = new_expr(EX_UNARY);
+			expression_2->op = "post++";
+			expression_2->left = expression;
+			expression = expression_2;
 			continue;
 		}
-		if(paccept(p, "--"))
-		{
-			Expr *x = new_expr(EX_UNARY);
-			x->op = "post--";
-			x->left = e;
-			e = x;
+		if(paccept(parser, "--")) {
+			Expr *expression_2 = new_expr(EX_UNARY);
+			expression_2->op = "post--";
+			expression_2->left = expression;
+			expression = expression_2;
 			continue;
 		}
 		break;
 	}
-	return e;
+	return expression;
 }
 
-static Expr *parse_unary(Parser *p)
+static Expr *parse_unary(Parser *parser)
 {
-	if(peq(p, "("))
-	{
-		size_t save = p->p;
+	if(peq(parser, "(")) {
+		size_t save = parser->p;
 		CType *cast_type;
-		Expr *e;
-
-		p->p++;
-		if(type_start(p))
-		{
-			cast_type = parse_type(p);
-			while(paccept(p, "*"))
+		Expr *expression_1;
+		parser->p++;
+		if(type_start(parser)) {
+			cast_type = parse_type(parser);
+			while(paccept(parser, "*"))
 				cast_type = ptr_to(cast_type);
-			if(paccept(p, ")"))
-			{
-				e = new_expr(EX_UNARY);
-				e->op = "cast";
-				e->type = cast_type;
-				e->left = parse_unary(p);
-				return e;
+			if(paccept(parser, ")")) {
+				expression_1 = new_expr(EX_UNARY);
+				expression_1->op = "cast";
+				expression_1->type = cast_type;
+				expression_1->left = parse_unary(parser);
+				return expression_1;
 			}
 		}
-		p->p = save;
+		parser->p = save;
 	}
-	if(peq(p, "++") || peq(p, "--"))
-	{
-		Expr *e = new_expr(EX_UNARY);
-		e->op = ptok(p)->v;
-		p->p++;
-		e->left = parse_unary(p);
-		return e;
+	if(peq(parser, "++") || peq(parser, "--")) {
+		Expr *expression_1 = new_expr(EX_UNARY);
+		expression_1->op = ptok(parser)->v;
+		parser->p++;
+		expression_1->left = parse_unary(parser);
+		return expression_1;
 	}
-	if(peq(p, "!") || peq(p, "~") || peq(p, "-") || peq(p, "+") || peq(p, "&") || peq(p, "*"))
-	{
-		Expr *e = new_expr(EX_UNARY);
-		e->op = ptok(p)->v;
-		p->p++;
-		e->left = parse_unary(p);
-		return e;
+	if(peq(parser, "!") || peq(parser, "~") || peq(parser, "-") || peq(parser, "+") || peq(parser, "&") || peq(parser, "*")) {
+		Expr *expression_1 = new_expr(EX_UNARY);
+		expression_1->op = ptok(parser)->v;
+		parser->p++;
+		expression_1->left = parse_unary(parser);
+		return expression_1;
 	}
-	if(paccept(p, "sizeof"))
-	{
-		Expr *e = new_expr(EX_SIZEOF);
-
-		pexpect(p, "(");
-		if(type_start(p))
-		{
-			e->sizeof_type = parse_type(p);
-			while(paccept(p, "*"))
-				e->sizeof_type = ptr_to(e->sizeof_type);
+	if(paccept(parser, "sizeof")) {
+		Expr *expression_1 = new_expr(EX_SIZEOF);
+		pexpect(parser, "(");
+		if(type_start(parser)) {
+			expression_1->sizeof_type = parse_type(parser);
+			while(paccept(parser, "*"))
+				expression_1->sizeof_type = ptr_to(expression_1->sizeof_type);
 		} else {
-			e->left = parse_expr(p, 1);
+			expression_1->left = parse_expr(parser, 1);
 		}
-		pexpect(p, ")");
-		return e;
+		pexpect(parser, ")");
+		return expression_1;
 	}
-	return parse_postfix(p);
+	return parse_postfix(parser);
 }
 
-static int prec(const char *s)
+static int prec(const char *string)
 {
-	if(!strcmp(s, "=") || !strcmp(s, "+=") || !strcmp(s, "-=") ||
-	   !strcmp(s, "*=") || !strcmp(s, "/=") || !strcmp(s, "%=") ||
-	   !strcmp(s, "&=") || !strcmp(s, "|=") || !strcmp(s, "^=") ||
-	   !strcmp(s, "<<=") || !strcmp(s, ">>="))
+	if(!strcmp(string, "=") || !strcmp(string, "+=") || !strcmp(string, "-=") ||
+	   !strcmp(string, "*=") || !strcmp(string, "/=") || !strcmp(string, "%=") ||
+	   !strcmp(string, "&=") || !strcmp(string, "|=") || !strcmp(string, "^=") ||
+	   !strcmp(string, "<<=") || !strcmp(string, ">>="))
 		return 1;
-	if(!strcmp(s, "||"))
+	if(!strcmp(string, "||"))
 		return 2;
-	if(!strcmp(s, "&&"))
+	if(!strcmp(string, "&&"))
 		return 3;
-	if(!strcmp(s, "|"))
+	if(!strcmp(string, "|"))
 		return 4;
-	if(!strcmp(s, "^"))
+	if(!strcmp(string, "^"))
 		return 5;
-	if(!strcmp(s, "&"))
+	if(!strcmp(string, "&"))
 		return 6;
-	if(!strcmp(s, "==") || !strcmp(s, "!="))
+	if(!strcmp(string, "==") || !strcmp(string, "!="))
 		return 7;
-	if(!strcmp(s, "<") || !strcmp(s, "<=") || !strcmp(s, ">") || !strcmp(s, ">="))
+	if(!strcmp(string, "<") || !strcmp(string, "<=") || !strcmp(string, ">") || !strcmp(string, ">="))
 		return 8;
-	if(!strcmp(s, "<<") || !strcmp(s, ">>"))
+	if(!strcmp(string, "<<") || !strcmp(string, ">>"))
 		return 9;
-	if(!strcmp(s, "+") || !strcmp(s, "-"))
+	if(!strcmp(string, "+") || !strcmp(string, "-"))
 		return 10;
-	if(!strcmp(s, "*") || !strcmp(s, "/") || !strcmp(s, "%"))
+	if(!strcmp(string, "*") || !strcmp(string, "/") || !strcmp(string, "%"))
 		return 11;
 	return 0;
 }
 
-static Expr *parse_expr(Parser *p, int minprec)
+static Expr *parse_expr(Parser *parser, int minprec)
 {
-	Expr *lhs = parse_unary(p);
-	for(;;)
-	{
-		int pr = prec(ptok(p)->v);
-		char *op;
-		Expr *rhs, *e;
+	Expr *lhs = parse_unary(parser);
+	for(;;) {
+		int precedence = prec(ptok(parser)->v);
+		char *operator;
+		Expr *rhs, *expression;
 		bool right;
-		if(pr < minprec)
+		if(precedence < minprec)
 			break;
-		op = ptok(p)->v;
-		p->p++;
-		right = (!strcmp(op, "=") || !strcmp(op, "+=") || !strcmp(op, "-=") ||
-			 !strcmp(op, "*=") || !strcmp(op, "/=") || !strcmp(op, "%=") ||
-			 !strcmp(op, "&=") || !strcmp(op, "|=") || !strcmp(op, "^=") ||
-			 !strcmp(op, "<<=") || !strcmp(op, ">>="));
-		rhs = parse_expr(p, right ? pr : pr + 1);
-		e = new_expr(EX_BINARY);
-		e->op = op;
-		e->left = lhs;
-		e->right = rhs;
-		lhs = e;
+		operator = ptok(parser)->v;
+		parser->p++;
+		right = (!strcmp(operator, "=") || !strcmp(operator, "+=") || !strcmp(operator, "-=") ||
+			 !strcmp(operator, "*=") || !strcmp(operator, "/=") || !strcmp(operator, "%=") ||
+			 !strcmp(operator, "&=") || !strcmp(operator, "|=") || !strcmp(operator, "^=") ||
+			 !strcmp(operator, "<<=") || !strcmp(operator, ">>="));
+		rhs = parse_expr(parser, right ? precedence : precedence + 1);
+		expression = new_expr(EX_BINARY);
+		expression->op = operator;
+		expression->left = lhs;
+		expression->right = rhs;
+		lhs = expression;
 	}
 	return lhs;
 }
 
-static Expr *parse_initializer(Parser *p)
+static Expr *parse_initializer(Parser *parser)
 {
-	Expr *e;
-
-	if(!paccept(p, "{"))
-		return parse_expr(p, 1);
-	e = new_expr(EX_INITLIST);
-	if(paccept(p, "}"))
-		return e;
-	for(;;)
-	{
-		Expr *item = parse_initializer(p);
-
-		ARR_GROW(e->args, e->nargs, e->capargs, Expr *);
-		e->args[e->nargs++] = item;
-		if(paccept(p, "}"))
+	Expr *expression;
+	if(!paccept(parser, "{"))
+		return parse_expr(parser, 1);
+	expression = new_expr(EX_INITLIST);
+	if(paccept(parser, "}"))
+		return expression;
+	for(;;) {
+		Expr *item = parse_initializer(parser);
+		ARR_GROW(expression->args, expression->nargs, expression->capargs, Expr *);
+		expression->args[expression->nargs++] = item;
+		if(paccept(parser, "}"))
 			break;
-		pexpect(p, ",");
-		if(paccept(p, "}"))
+		pexpect(parser, ",");
+		if(paccept(parser, "}"))
 			break;
 	}
-	return e;
+	return expression;
 }
 
-static bool eval_const_expr(Expr *e, long *value)
+static bool eval_const_expr(Expr *expression, long *value)
 {
-	long a, b;
-
-	if(!e)
+	long array, boundary;
+	if(!expression)
 		return false;
-	if(e->kind == EX_NUM)
-	{
-		*value = (long)e->num;
+	if(expression->kind == EX_NUM) {
+		*value = (long)expression->num;
 		return true;
 	}
-	if(e->kind == EX_ID && !strcmp(e->str, "NULL"))
-	{
+	if(expression->kind == EX_ID && !strcmp(expression->str, "NULL")) {
 		*value = 0;
 		return true;
 	}
-	if(e->kind == EX_UNARY && eval_const_expr(e->left, &a))
-	{
-		if(!strcmp(e->op, "+") || !strcmp(e->op, "cast"))
-			*value = a;
-		else if(!strcmp(e->op, "-"))
-			*value = -a;
-		else if(!strcmp(e->op, "~"))
-			*value = ~a;
-		else if(!strcmp(e->op, "!"))
-			*value = !a;
+	if(expression->kind == EX_UNARY && eval_const_expr(expression->left, &array)) {
+		if(!strcmp(expression->op, "+") || !strcmp(expression->op, "cast"))
+			*value = array;
+		else if(!strcmp(expression->op, "-"))
+			*value = -array;
+		else if(!strcmp(expression->op, "~"))
+			*value = ~array;
+		else if(!strcmp(expression->op, "!"))
+			*value = !array;
 		else
 			return false;
 		return true;
 	}
-	if(e->kind != EX_BINARY || !eval_const_expr(e->left, &a) ||
-	   !eval_const_expr(e->right, &b))
+	if(expression->kind != EX_BINARY || !eval_const_expr(expression->left, &array) ||
+	   !eval_const_expr(expression->right, &boundary))
 		return false;
-	if(!strcmp(e->op, "+"))
-		*value = a + b;
-	else if(!strcmp(e->op, "-"))
-		*value = a - b;
-	else if(!strcmp(e->op, "*"))
-		*value = a * b;
-	else if(!strcmp(e->op, "/"))
-	{
-		if(!b)
+	if(!strcmp(expression->op, "+"))
+		*value = array + boundary;
+	else if(!strcmp(expression->op, "-"))
+		*value = array - boundary;
+	else if(!strcmp(expression->op, "*"))
+		*value = array * boundary;
+	else if(!strcmp(expression->op, "/")) {
+		if(!boundary)
 			return false;
-		*value = a / b;
-	} else if(!strcmp(e->op, "%"))
+		*value = array / boundary;
+	} else if(!strcmp(expression->op, "%"))
 	{
-		if(!b)
+		if(!boundary)
 			return false;
-		*value = a % b;
-	} else if(!strcmp(e->op, "<<"))
-		*value = a << b;
-	else if(!strcmp(e->op, ">>"))
-		*value = a >> b;
-	else if(!strcmp(e->op, "&"))
-		*value = a & b;
-	else if(!strcmp(e->op, "|"))
-		*value = a | b;
-	else if(!strcmp(e->op, "^"))
-		*value = a ^ b;
+		*value = array % boundary;
+	} else if(!strcmp(expression->op, "<<"))
+		*value = array << boundary;
+	else if(!strcmp(expression->op, ">>"))
+		*value = array >> boundary;
+	else if(!strcmp(expression->op, "&"))
+		*value = array & boundary;
+	else if(!strcmp(expression->op, "|"))
+		*value = array | boundary;
+	else if(!strcmp(expression->op, "^"))
+		*value = array ^ boundary;
 	else
 		return false;
 	return true;
 }
 
-static void infer_array_bound(Parser *p, CType *type, Expr *initializer)
+static void infer_array_bound(Parser *parser, CType *type, Expr *initializer)
 {
 	if(!type || type->kind != TY_ARRAY || type->count != 0)
 		return;
@@ -1812,262 +1649,224 @@ static void infer_array_bound(Parser *p, CType *type, Expr *initializer)
 		(type->base->kind == TY_CHAR || type->base->kind == TY_U8))
 		type->count = (long)strlen(initializer->str) + 1;
 	else
-		perr(p, "array with omitted length requires an initializer");
+		perr(parser, "array with omitted length requires an initializer");
 }
-
 static Stmt *parse_stmt(Parser *p);
 
-static Stmt *parse_block(Parser *p)
+static Stmt *parse_block(Parser *parser)
 {
-	Stmt *s = new_stmt(ST_BLOCK);
-	pexpect(p, "{");
-	while(!paccept(p, "}"))
-	{
-		Stmt *x;
-
-		if(type_start(p))
-		{
-			CType *b = parse_type(p);
-
-			for(;;)
-			{
-				Declarator q = parse_declarator(p, b, false);
-				Decl *d = new_decl();
-
+	Stmt *statement = new_stmt(ST_BLOCK);
+	pexpect(parser, "{");
+	while(!paccept(parser, "}")) {
+		Stmt *statement_1;
+		if(type_start(parser)) {
+			CType *base_type = parse_type(parser);
+			for(;;) {
+				Declarator q = parse_declarator(parser, base_type, false);
+				Decl *declaration = new_decl();
 				if(q.function)
-					perr(p, "nested function unsupported");
-				d->name = q.name;
-				d->type = q.type;
-				if(paccept(p, "="))
-					d->init = parse_initializer(p);
-				infer_array_bound(p, d->type, d->init);
-				x = new_stmt(ST_DECL);
-				x->decl = d;
-				ARR_GROW(s->children, s->nchildren, s->capchildren, Stmt *);
-				s->children[s->nchildren++] = x;
-				if(!paccept(p, ","))
+					perr(parser, "nested function unsupported");
+				declaration->name = q.name;
+				declaration->type = q.type;
+				if(paccept(parser, "="))
+					declaration->init = parse_initializer(parser);
+				infer_array_bound(parser, declaration->type, declaration->init);
+				statement_1 = new_stmt(ST_DECL);
+				statement_1->decl = declaration;
+				ARR_GROW(statement->children, statement->nchildren, statement->capchildren, Stmt *);
+				statement->children[statement->nchildren++] = statement_1;
+				if(!paccept(parser, ","))
 					break;
 			}
-			pexpect(p, ";");
+			pexpect(parser, ";");
 			continue;
 		}
-		x = parse_stmt(p);
-		ARR_GROW(s->children, s->nchildren, s->capchildren, Stmt *);
-		s->children[s->nchildren++] = x;
+		statement_1 = parse_stmt(parser);
+		ARR_GROW(statement->children, statement->nchildren, statement->capchildren, Stmt *);
+		statement->children[statement->nchildren++] = statement_1;
 	}
-	return s;
+	return statement;
 }
 
-static Stmt *parse_stmt(Parser *p)
+static Stmt *parse_stmt(Parser *parser)
 {
-	Stmt *s;
-	if(peq(p, "{"))
-		return parse_block(p);
-	if(paccept(p, "if"))
-	{
-		s = new_stmt(ST_IF);
-		pexpect(p, "(");
-		s->cond = parse_expr(p, 1);
-		pexpect(p, ")");
-		s->yes = parse_stmt(p);
-		if(paccept(p, "else"))
-			s->no = parse_stmt(p);
-		return s;
+	Stmt *statement;
+	if(peq(parser, "{"))
+		return parse_block(parser);
+	if(paccept(parser, "if")) {
+		statement = new_stmt(ST_IF);
+		pexpect(parser, "(");
+		statement->cond = parse_expr(parser, 1);
+		pexpect(parser, ")");
+		statement->yes = parse_stmt(parser);
+		if(paccept(parser, "else"))
+			statement->no = parse_stmt(parser);
+		return statement;
 	}
-	if(paccept(p, "while"))
-	{
-		s = new_stmt(ST_WHILE);
-		pexpect(p, "(");
-		s->cond = parse_expr(p, 1);
-		pexpect(p, ")");
-		s->body = parse_stmt(p);
-		return s;
+	if(paccept(parser, "while")) {
+		statement = new_stmt(ST_WHILE);
+		pexpect(parser, "(");
+		statement->cond = parse_expr(parser, 1);
+		pexpect(parser, ")");
+		statement->body = parse_stmt(parser);
+		return statement;
 	}
-	if(paccept(p, "for"))
-	{
-		s = new_stmt(ST_FOR);
-		pexpect(p, "(");
-		if(!paccept(p, ";"))
-		{
-			if(type_start(p))
-			{
-				CType *b = parse_type(p);
-				Declarator q = parse_declarator(p, b, false);
-				Decl *d = new_decl();
+	if(paccept(parser, "for")) {
+		statement = new_stmt(ST_FOR);
+		pexpect(parser, "(");
+		if(!paccept(parser, ";")) {
+			if(type_start(parser)) {
+				CType *base_type = parse_type(parser);
+				Declarator q = parse_declarator(parser, base_type, false);
+				Decl *declaration = new_decl();
 				if(q.function)
-					perr(p, "function declaration in for initializer unsupported");
-				d->name = q.name;
-				d->type = q.type;
-				if(paccept(p, "="))
-					d->init = parse_initializer(p);
-				infer_array_bound(p, d->type, d->init);
-				pexpect(p, ";");
-				s->init = new_stmt(ST_DECL);
-				s->init->decl = d;
+					perr(parser, "function declaration in for initializer unsupported");
+				declaration->name = q.name;
+				declaration->type = q.type;
+				if(paccept(parser, "="))
+					declaration->init = parse_initializer(parser);
+				infer_array_bound(parser, declaration->type, declaration->init);
+				pexpect(parser, ";");
+				statement->init = new_stmt(ST_DECL);
+				statement->init->decl = declaration;
 			} else {
-				s->init = new_stmt(ST_EXPR);
-				s->init->expr = parse_expr(p, 1);
-				pexpect(p, ";");
+				statement->init = new_stmt(ST_EXPR);
+				statement->init->expr = parse_expr(parser, 1);
+				pexpect(parser, ";");
 			}
 		}
-		if(!paccept(p, ";"))
-		{
-			s->cond = parse_expr(p, 1);
-			pexpect(p, ";");
+		if(!paccept(parser, ";")) {
+			statement->cond = parse_expr(parser, 1);
+			pexpect(parser, ";");
 		}
-		if(!paccept(p, ")"))
-		{
-			s->post = parse_expr(p, 1);
-			pexpect(p, ")");
+		if(!paccept(parser, ")")) {
+			statement->post = parse_expr(parser, 1);
+			pexpect(parser, ")");
 		}
-		s->body = parse_stmt(p);
-		return s;
+		statement->body = parse_stmt(parser);
+		return statement;
 	}
-	if(paccept(p, "switch"))
-	{
-		s = new_stmt(ST_SWITCH);
-		pexpect(p, "(");
-		s->cond = parse_expr(p, 1);
-		pexpect(p, ")");
-		s->body = parse_stmt(p);
-		return s;
+	if(paccept(parser, "switch")) {
+		statement = new_stmt(ST_SWITCH);
+		pexpect(parser, "(");
+		statement->cond = parse_expr(parser, 1);
+		pexpect(parser, ")");
+		statement->body = parse_stmt(parser);
+		return statement;
 	}
-	if(paccept(p, "case"))
-	{
-		s = new_stmt(ST_CASE);
-		s->expr = parse_expr(p, 1);
-		pexpect(p, ":");
-		return s;
+	if(paccept(parser, "case")) {
+		statement = new_stmt(ST_CASE);
+		statement->expr = parse_expr(parser, 1);
+		pexpect(parser, ":");
+		return statement;
 	}
-	if(paccept(p, "default"))
-	{
-		s = new_stmt(ST_DEFAULT);
-		pexpect(p, ":");
-		return s;
+	if(paccept(parser, "default")) {
+		statement = new_stmt(ST_DEFAULT);
+		pexpect(parser, ":");
+		return statement;
 	}
-	if(paccept(p, "return"))
-	{
-		s = new_stmt(ST_RETURN);
-		if(!paccept(p, ";"))
-		{
-			s->expr = parse_expr(p, 1);
-			pexpect(p, ";");
+	if(paccept(parser, "return")) {
+		statement = new_stmt(ST_RETURN);
+		if(!paccept(parser, ";")) {
+			statement->expr = parse_expr(parser, 1);
+			pexpect(parser, ";");
 		}
-		return s;
+		return statement;
 	}
-	if(paccept(p, "break"))
-	{
-		pexpect(p, ";");
+	if(paccept(parser, "break")) {
+		pexpect(parser, ";");
 		return new_stmt(ST_BREAK);
 	}
-	if(paccept(p, "continue"))
-	{
-		pexpect(p, ";");
+	if(paccept(parser, "continue")) {
+		pexpect(parser, ";");
 		return new_stmt(ST_CONTINUE);
 	}
-	if(paccept(p, "asm") || paccept(p, "__asm__"))
-	{
+	if(paccept(parser, "asm") || paccept(parser, "__asm__")) {
 		Buf text = {0};
-
-		s = new_stmt(ST_ASM);
-		paccept(p, "volatile");
-		paccept(p, "__volatile__");
-		pexpect(p, "(");
-		if(ptok(p)->kind != TK_STR)
-			perr(p, "inline asm requires a string literal");
-		while(ptok(p)->kind == TK_STR)
-		{
-			char *part = decode_string(ptok(p)->v);
-
+		statement = new_stmt(ST_ASM);
+		paccept(parser, "volatile");
+		paccept(parser, "__volatile__");
+		pexpect(parser, "(");
+		if(ptok(parser)->kind != TK_STR)
+			perr(parser, "inline asm requires a string literal");
+		while(ptok(parser)->kind == TK_STR) {
+			char *part = decode_string(ptok(parser)->v);
 			bputs(&text, part);
 			free(part);
-			p->p++;
+			parser->p++;
 		}
-		if(paccept(p, ":"))
-		{
-			if(!peq(p, ")") && !peq(p, ":"))
-			{
-				for(;;)
-				{
+		if(paccept(parser, ":")) {
+			if(!peq(parser, ")") && !peq(parser, ":")) {
+				for(;;) {
 					char *constraint;
 					Expr *output;
-
-					if(ptok(p)->kind != TK_STR)
-						perr(p, "asm output constraint must be a string");
-					constraint = decode_string(ptok(p)->v);
-					p->p++;
-					pexpect(p, "(");
-					output = parse_expr(p, 1);
-					pexpect(p, ")");
-					ARR_GROW(s->asm_constraints, s->nasm_outputs, s->capasm_constraints, char *);
-					s->asm_constraints[s->nasm_outputs] = constraint;
-					ARR_GROW(s->asm_outputs, s->nasm_outputs, s->capasm_outputs, Expr *);
-					s->asm_outputs[s->nasm_outputs] = output;
-					s->nasm_outputs++;
-					if(!paccept(p, ","))
+					if(ptok(parser)->kind != TK_STR)
+						perr(parser, "asm output constraint must be a string");
+					constraint = decode_string(ptok(parser)->v);
+					parser->p++;
+					pexpect(parser, "(");
+					output = parse_expr(parser, 1);
+					pexpect(parser, ")");
+					ARR_GROW(statement->asm_constraints, statement->nasm_outputs, statement->capasm_constraints, char *);
+					statement->asm_constraints[statement->nasm_outputs] = constraint;
+					ARR_GROW(statement->asm_outputs, statement->nasm_outputs, statement->capasm_outputs, Expr *);
+					statement->asm_outputs[statement->nasm_outputs] = output;
+					statement->nasm_outputs++;
+					if(!paccept(parser, ","))
 						break;
 				}
 			}
 			//Inputs and clobbers are parsed only when empty for now.
-			if(paccept(p, ":"))
-			{
-				if(!peq(p, ")") && !peq(p, ":"))
-					perr(p, "asm inputs are not supported yet");
-				paccept(p, ":");
+			if(paccept(parser, ":")) {
+				if(!peq(parser, ")") && !peq(parser, ":"))
+					perr(parser, "asm inputs are not supported yet");
+				paccept(parser, ":");
 			}
 		}
-		pexpect(p, ")");
-		pexpect(p, ";");
-		s->asm_text = text.s ? text.s : xstrdup("");
-		return s;
+		pexpect(parser, ")");
+		pexpect(parser, ";");
+		statement->asm_text = text.s ? text.s : xstrdup("");
+		return statement;
 	}
-	if(paccept(p, ";"))
+	if(paccept(parser, ";"))
 		return new_stmt(ST_EMPTY);
-	s = new_stmt(ST_EXPR);
-	s->expr = parse_expr(p, 1);
-	pexpect(p, ";");
-	return s;
+	statement = new_stmt(ST_EXPR);
+	statement->expr = parse_expr(parser, 1);
+	pexpect(parser, ";");
+	return statement;
 }
 
-static void parse_program(Tokens *ts, Program *prog)
+static void parse_program(Tokens *token_stream, Program *prog)
 {
-	Parser p = {ts, 0, prog};
-
-	while(ptok(&p)->kind != TK_EOF)
-	{
+	Parser p = {token_stream, 0, prog};
+	while(ptok(&p)->kind != TK_EOF) {
 		bool is_typedef = false;
 		bool is_extern = false;
 		bool is_static = false;
 		bool is_inline = false;
-		CType *b;
+		CType *base_type;
 		Declarator q;
-		Decl *d;
-
-		for(;;)
-		{
-			if(paccept(&p, "typedef") || paccept(&p, "TD"))
-			{
+		Decl *declaration;
+		for(;;) {
+			if(paccept(&p, "typedef") || paccept(&p, "TD")) {
 				if(is_typedef)
 					perr(&p, "duplicate typedef specifier");
 				is_typedef = true;
 				continue;
 			}
-			if(paccept(&p, "extern"))
-			{
+			if(paccept(&p, "extern")) {
 				if(is_extern)
 					perr(&p, "duplicate extern specifier");
 				is_extern = true;
 				continue;
 			}
-			if(paccept(&p, "static") || paccept(&p, "SC"))
-			{
+			if(paccept(&p, "static") || paccept(&p, "SC")) {
 				if(is_static)
 					perr(&p, "duplicate static specifier");
 				is_static = true;
 				continue;
 			}
-			if(paccept(&p, "inline") || paccept(&p, "IL"))
-			{
+			if(paccept(&p, "inline") || paccept(&p, "IL")) {
 				if(is_inline)
 					perr(&p, "duplicate inline specifier");
 				is_inline = true;
@@ -2079,16 +1878,14 @@ static void parse_program(Tokens *ts, Program *prog)
 			perr(&p, "declaration cannot be both extern and static");
 		if(is_typedef && (is_extern || is_static || is_inline))
 			perr(&p, "typedef cannot be combined with extern, static, or inline");
-		b = parse_type(&p);
-		if(paccept(&p, ";"))
-		{
+		base_type = parse_type(&p);
+		if(paccept(&p, ";")) {
 			if(is_typedef || is_extern || is_static || is_inline)
 				perr(&p, "declaration specifier requires a declarator");
 			continue;
 		}
-		q = parse_declarator(&p, b, false);
-		if(is_typedef)
-		{
+		q = parse_declarator(&p, base_type, false);
+		if(is_typedef) {
 			if(q.function)
 				perr(&p, "function typedefs are not supported yet");
 			pexpect(&p, ";");
@@ -2097,43 +1894,38 @@ static void parse_program(Tokens *ts, Program *prog)
 		}
 		if(is_inline && !q.function)
 			perr(&p, "inline can only be used on a function");
-		d = new_decl();
-		d->name = q.name;
-		d->type = q.type;
-		d->params = q.params;
-		d->nparams = q.nparams;
-		d->capparams = q.capparams;
-		d->variadic = q.variadic;
-		d->is_extern = is_extern;
-		d->is_static = is_static;
-		d->is_inline = is_inline;
-		if(q.function)
-		{
+		declaration = new_decl();
+		declaration->name = q.name;
+		declaration->type = q.type;
+		declaration->params = q.params;
+		declaration->nparams = q.nparams;
+		declaration->capparams = q.capparams;
+		declaration->variadic = q.variadic;
+		declaration->is_extern = is_extern;
+		declaration->is_static = is_static;
+		declaration->is_inline = is_inline;
+		if(q.function) {
 			if(paccept(&p, ";"))
-				d->prototype = true;
-			else
-			{
+				declaration->prototype = true;
+			else {
 				if(is_extern)
 					perr(&p, "extern function cannot have a body");
-				d->body = parse_block(&p);
+				declaration->body = parse_block(&p);
 			}
 		} else {
-			if(paccept(&p, "="))
-			{
+			if(paccept(&p, "=")) {
 				if(is_extern)
 					perr(&p, "extern object cannot have an initializer");
-				d->init = parse_initializer(&p);
+				declaration->init = parse_initializer(&p);
 			}
-			infer_array_bound(&p, d->type, d->init);
+			infer_array_bound(&p, declaration->type, declaration->init);
 			pexpect(&p, ";");
 		}
 		ARR_GROW(prog->a, prog->n, prog->cap, Decl *);
-		prog->a[prog->n++] = d;
+		prog->a[prog->n++] = declaration;
 	}
 }
-
 //Code generation
-
 typedef enum
 {
 	SY_LOCAL,
@@ -2156,7 +1948,6 @@ typedef struct
 	char *value;
 	char label[32];
 } StringLit;
-
 typedef struct
 {
 	Program *prog;
@@ -2180,97 +1971,99 @@ typedef struct
 	size_t ncontinues, capcontinues;
 } Gen;
 
-static long align_up(long v, long a)
+static long align_up(long value, long array)
 {
-	return (v + a - 1) / a * a;
+	return (value + array - 1) / array * array;
 }
-static void emit(Gen *g, const char *fmt, ...)
+
+static void emit(Gen *generator, const char *fmt, ...)
 {
-	va_list ap, aq;
-	int n;
-	va_start(ap, fmt);
-	va_copy(aq, ap);
-	n = vsnprintf(NULL, 0, fmt, aq);
-	va_end(aq);
-	bneed(&g->out, (size_t)n + 1);
-	vsnprintf(g->out.s + g->out.n, g->out.cap - g->out.n, fmt, ap);
-	va_end(ap);
-	g->out.n += (size_t)n;
-	bputs(&g->out, "\n");
+	va_list argument_list, copied_argument_list;
+	int count;
+	va_start(argument_list, fmt);
+	va_copy(copied_argument_list, argument_list);
+	count = vsnprintf(NULL, 0, fmt, copied_argument_list);
+	va_end(copied_argument_list);
+	bneed(&generator->out, (size_t)count + 1);
+	vsnprintf(generator->out.s + generator->out.n, generator->out.cap - generator->out.n, fmt, argument_list);
+	va_end(argument_list);
+	generator->out.n += (size_t)count;
+	bputs(&generator->out, "\n");
 }
-static char *new_label(Gen *g, const char *prefix)
+
+static char *new_label(Gen *generator, const char *prefix)
 {
-	char z[128];
-	snprintf(z, sizeof(z), "%s%ld", prefix, ++g->label);
-	return xstrdup(z);
+	char label_buffer_size[128];
+	snprintf(label_buffer_size, sizeof(label_buffer_size), "%s%ld", prefix, ++generator->label);
+	return xstrdup(label_buffer_size);
 }
-static Symbol *find_local(Gen *g, const char *n)
+
+static Symbol *find_local(Gen *generator, const char *count)
 {
-	size_t i;
-	for(i = 0; i < g->nlocals; i++)
-		if(!strcmp(g->locals[i].name, n))
-			return &g->locals[i];
+	size_t index;
+	for(index = 0; index < generator->nlocals; index++)
+		if(!strcmp(generator->locals[index].name, count))
+			return &generator->locals[index];
 	return NULL;
 }
-static Symbol *find_global(Gen *g, const char *n)
-{
-	size_t i;
-	Symbol *external = NULL;
 
-	for(i = 0; i < g->nglobals; i++)
-	{
-		if(strcmp(g->globals[i].name, n))
+static Symbol *find_global(Gen *generator, const char *count)
+{
+	size_t index;
+	Symbol *external = NULL;
+	for(index = 0; index < generator->nglobals; index++) {
+		if(strcmp(generator->globals[index].name, count))
 			continue;
-		if(g->globals[i].kind == SY_GLOBAL)
-			return &g->globals[i];
-		external = &g->globals[i];
+		if(generator->globals[index].kind == SY_GLOBAL)
+			return &generator->globals[index];
+		external = &generator->globals[index];
 	}
 	return external;
 }
-static Decl *find_func(Gen *g, const char *n)
+
+static Decl *find_func(Gen *generator, const char *count)
 {
-	size_t i;
-	for(i = 0; i < g->nfuncs; i++)
-		if(!strcmp(g->funcs[i]->name, n))
-			return g->funcs[i];
+	size_t index;
+	for(index = 0; index < generator->nfuncs; index++)
+		if(!strcmp(generator->funcs[index]->name, count))
+			return generator->funcs[index];
 	return NULL;
 }
 
-static Symbol lookup(Gen *g, const char *n)
+static Symbol lookup(Gen *generator, const char *count)
 {
-	Symbol *s = find_local(g, n);
-	Decl *f;
+	Symbol *s = find_local(generator, count);
+	Decl *function_declaration;
 	if(s)
 		return *s;
-	s = find_global(g, n);
+	s = find_global(generator, count);
 	if(s)
 		return *s;
-	if(!strcmp(n, "NULL"))
-		return (Symbol){(char *)n, &T_U64, SY_CONST, 0, NULL};
-	if(!strcmp(n, "ExposureMask"))
-		return (Symbol){(char *)n, &T_U64, SY_CONST, 1L << 15, NULL};
-	if(!strcmp(n, "KeyPressMask"))
-		return (Symbol){(char *)n, &T_U64, SY_CONST, 1L << 0, NULL};
-	if(!strcmp(n, "KeyPress"))
-		return (Symbol){(char *)n, &T_U64, SY_CONST, 2, NULL};
-	if(!strcmp(n, "stderr"))
-		return (Symbol){(char *)n, ptr_to(&T_VOID), SY_EXTERN_GLOBAL, 0, NULL};
-	f = find_func(g, n);
-	if(f)
-		return (Symbol){(char *)n, f->type, SY_FUNCTION, 0, f};
-	return (Symbol){(char *)n, &T_U64, SY_EXTERN_FUNCTION, 0, NULL};
+	if(!strcmp(count, "NULL"))
+		return (Symbol){(char *)count, &T_U64, SY_CONST, 0, NULL};
+	if(!strcmp(count, "ExposureMask"))
+		return (Symbol){(char *)count, &T_U64, SY_CONST, 1L << 15, NULL};
+	if(!strcmp(count, "KeyPressMask"))
+		return (Symbol){(char *)count, &T_U64, SY_CONST, 1L << 0, NULL};
+	if(!strcmp(count, "KeyPress"))
+		return (Symbol){(char *)count, &T_U64, SY_CONST, 2, NULL};
+	if(!strcmp(count, "stderr"))
+		return (Symbol){(char *)count, ptr_to(&T_VOID), SY_EXTERN_GLOBAL, 0, NULL};
+	function_declaration = find_func(generator, count);
+	if(function_declaration)
+		return (Symbol){(char *)count, function_declaration->type, SY_FUNCTION, 0, function_declaration};
+	return (Symbol){(char *)count, &T_U64, SY_EXTERN_FUNCTION, 0, NULL};
 }
 
-static CType *expr_type(Gen *g, Expr *e)
+static CType *expr_type(Gen *generator, Expr *expression)
 {
-	CType *t;
-	if(e->type)
-		return e->type;
-	switch(e->kind)
-	{
+	CType *type_1;
+	if(expression->type)
+		return expression->type;
+	switch(expression->kind) {
 	case EX_ID:
 	{
-		Symbol s = lookup(g, e->str);
+		Symbol s = lookup(generator, expression->str);
 		return s.type;
 	}
 	case EX_STR:
@@ -2278,47 +2071,45 @@ static CType *expr_type(Gen *g, Expr *e)
 	case EX_NUM:
 		return &T_U64;
 	case EX_UNARY:
-		if(!strcmp(e->op, "&"))
-			return ptr_to(expr_type(g, e->left));
-		if(!strcmp(e->op, "*"))
-		{
-			t = expr_type(g, e->left);
-			return t->base ? t->base : &T_U64;
+		if(!strcmp(expression->op, "&"))
+			return ptr_to(expr_type(generator, expression->left));
+		if(!strcmp(expression->op, "*")) {
+			type_1 = expr_type(generator, expression->left);
+			return type_1->base ? type_1->base : &T_U64;
 		}
-		return expr_type(g, e->left);
+		return expr_type(generator, expression->left);
 	case EX_INDEX:
-		t = expr_type(g, e->left);
-		return t->base ? t->base : &T_U64;
+		type_1 = expr_type(generator, expression->left);
+		return type_1->base ? type_1->base : &T_U64;
 	case EX_MEMBER:
 	case EX_PTRMEMBER:
 	{
 		StructMember *member;
-		t = expr_type(g, e->left);
-		if(e->kind == EX_PTRMEMBER)
-			t = t && t->kind == TY_PTR ? t->base : NULL;
-		member = find_struct_member(t, e->str);
+		type_1 = expr_type(generator, expression->left);
+		if(expression->kind == EX_PTRMEMBER)
+			type_1 = type_1 && type_1->kind == TY_PTR ? type_1->base : NULL;
+		member = find_struct_member(type_1, expression->str);
 		if(!member)
-			fatal("unknown struct member %s", e->str);
+			fatal("unknown struct member %s", expression->str);
 		return member->type;
 	}
 	case EX_SIZEOF:
 		return &T_U64;
 	case EX_BINARY:
-		if(!strcmp(e->op, "==") || !strcmp(e->op, "!=") || !strcmp(e->op, "<") || !strcmp(e->op, "<=") || !strcmp(e->op, ">") || !strcmp(e->op, ">=") || !strcmp(e->op, "&&") || !strcmp(e->op, "||"))
+		if(!strcmp(expression->op, "==") || !strcmp(expression->op, "!=") || !strcmp(expression->op, "<") || !strcmp(expression->op, "<=") || !strcmp(expression->op, ">") || !strcmp(expression->op, ">=") || !strcmp(expression->op, "&&") || !strcmp(expression->op, "||"))
 			return &T_INT;
-		if(!strcmp(e->op, "=") || !strcmp(e->op, "+=") || !strcmp(e->op, "-=") ||
-		   !strcmp(e->op, "*=") || !strcmp(e->op, "/="))
-			return expr_type(g, e->left);
-		if(expr_type(g, e->left)->kind == TY_DOUBLE ||
-		   expr_type(g, e->right)->kind == TY_DOUBLE)
+		if(!strcmp(expression->op, "=") || !strcmp(expression->op, "+=") || !strcmp(expression->op, "-=") ||
+		   !strcmp(expression->op, "*=") || !strcmp(expression->op, "/="))
+			return expr_type(generator, expression->left);
+		if(expr_type(generator, expression->left)->kind == TY_DOUBLE ||
+		   expr_type(generator, expression->right)->kind == TY_DOUBLE)
 			return &T_DOUBLE;
-		return expr_type(g, e->left);
+		return expr_type(generator, expression->left);
 	case EX_CALL:
-		if(e->left->kind == EX_ID)
-		{
-			Decl *f = find_func(g, e->left->str);
-			if(f)
-				return f->type;
+		if(expression->left->kind == EX_ID) {
+			Decl *function_declaration = find_func(generator, expression->left->str);
+			if(function_declaration)
+				return function_declaration->type;
 		}
 		return &T_U64;
 	case EX_INITLIST:
@@ -2327,62 +2118,64 @@ static CType *expr_type(Gen *g, Expr *e)
 	return &T_U64;
 }
 
-static char *intern_string(Gen *g, const char *v)
+static char *intern_string(Gen *generator, const char *value_1)
 {
-	size_t i, j, n;
-	for(i = 0; i < g->nstrings; i++)
-		if(!strcmp(g->strings[i].value, v))
-			return g->strings[i].label;
-	ARR_GROW(g->strings, g->nstrings, g->capstrings, StringLit);
-	g->strings[g->nstrings].value = xstrdup(v);
-	snprintf(g->strings[g->nstrings].label, sizeof(g->strings[g->nstrings].label), ".LC%zu", g->nstrings);
-	bprintf(&g->ro, "%s:\n    .byte ", g->strings[g->nstrings].label);
-	n = strlen(v);
-	for(j = 0; j < n; j++)
-		bprintf(&g->ro, "%u, ", (unsigned char)v[j]);
-	bputs(&g->ro, "0\n");
-	return g->strings[g->nstrings++].label;
+	size_t index, inner_index, length;
+	for(index = 0; index < generator->nstrings; index++)
+		if(!strcmp(generator->strings[index].value, value_1))
+			return generator->strings[index].label;
+	ARR_GROW(generator->strings, generator->nstrings, generator->capstrings, StringLit);
+	generator->strings[generator->nstrings].value = xstrdup(value_1);
+	snprintf(generator->strings[generator->nstrings].label, sizeof(generator->strings[generator->nstrings].label), ".LC%zu", generator->nstrings);
+	bprintf(&generator->ro, "%s:\n    .byte ", generator->strings[generator->nstrings].label);
+	length = strlen(value_1);
+	for(inner_index = 0; inner_index < length; inner_index++)
+		bprintf(&generator->ro, "%u, ", (unsigned char)value_1[inner_index]);
+	bputs(&generator->ro, "0\n");
+	return generator->strings[generator->nstrings++].label;
 }
-
 static void gen_expr(Gen *, Expr *);
 static CType *gen_addr(Gen *, Expr *);
 
-static void pushreg(Gen *g, const char *r)
+static void pushreg(Gen *generator, const char *register_name)
 {
-	emit(g, "    push %s", r);
-	g->tempdepth += 8;
+	emit(generator, "    push %s", register_name);
+	generator->tempdepth += 8;
 }
-static void popreg(Gen *g, const char *r)
+
+static void popreg(Gen *generator, const char *register_name)
 {
-	emit(g, "    pop %s", r);
-	g->tempdepth -= 8;
+	emit(generator, "    pop %s", register_name);
+	generator->tempdepth -= 8;
 }
-static void load_rax(Gen *g, CType *t)
+
+static void load_rax(Gen *generator, CType *type)
 {
-	if(t->kind == TY_ARRAY || t->kind == TY_STRUCT ||
-	   t->kind == TY_XEVENT || t->kind == TY_VALIST)
+	if(type->kind == TY_ARRAY || type->kind == TY_STRUCT ||
+	   type->kind == TY_XEVENT || type->kind == TY_VALIST)
 		return;
-	if(t->kind == TY_CHAR || t->kind == TY_U8)
-		emit(g, "    movzx eax, byte ptr [rax]");
-	else if(t->kind == TY_SHORT || t->kind == TY_U16)
-		emit(g, "    movzx eax, word ptr [rax]");
-	else if(t->kind == TY_INT)
-		emit(g, "    movsxd rax, dword ptr [rax]");
-	else if(t->kind == TY_U32)
-		emit(g, "    mov eax, dword ptr [rax]");
+	if(type->kind == TY_CHAR || type->kind == TY_U8)
+		emit(generator, "    movzx eax, byte ptr [rax]");
+	else if(type->kind == TY_SHORT || type->kind == TY_U16)
+		emit(generator, "    movzx eax, word ptr [rax]");
+	else if(type->kind == TY_INT)
+		emit(generator, "    movsxd rax, dword ptr [rax]");
+	else if(type->kind == TY_U32)
+		emit(generator, "    mov eax, dword ptr [rax]");
 	else
-		emit(g, "    mov rax, qword ptr [rax]");
+		emit(generator, "    mov rax, qword ptr [rax]");
 }
-static void store_rcx(Gen *g, CType *t)
+
+static void store_rcx(Gen *generator, CType *type)
 {
-	if(t->kind == TY_CHAR || t->kind == TY_U8)
-		emit(g, "    mov byte ptr [rcx], al");
-	else if(t->kind == TY_SHORT || t->kind == TY_U16)
-		emit(g, "    mov word ptr [rcx], ax");
-	else if(t->kind == TY_INT || t->kind == TY_U32)
-		emit(g, "    mov dword ptr [rcx], eax");
+	if(type->kind == TY_CHAR || type->kind == TY_U8)
+		emit(generator, "    mov byte ptr [rcx], al");
+	else if(type->kind == TY_SHORT || type->kind == TY_U16)
+		emit(generator, "    mov word ptr [rcx], ax");
+	else if(type->kind == TY_INT || type->kind == TY_U32)
+		emit(generator, "    mov dword ptr [rcx], eax");
 	else
-		emit(g, "    mov qword ptr [rcx], rax");
+		emit(generator, "    mov qword ptr [rcx], rax");
 }
 
 static bool is_double_type(CType *type)
@@ -2390,520 +2183,473 @@ static bool is_double_type(CType *type)
 	return type && type->kind == TY_DOUBLE;
 }
 
-static void integer_bits_to_double(Gen *g)
+static void integer_bits_to_double(Gen *generator)
 {
-	emit(g, "    cvtsi2sd xmm0, rax");
-	emit(g, "    movq rax, xmm0");
+	emit(generator, "    cvtsi2sd xmm0, rax");
+	emit(generator, "    movq rax, xmm0");
 }
 
-static void gen_expr_as_double(Gen *g, Expr *expression)
+static void gen_expr_as_double(Gen *generator, Expr *expression)
 {
-	CType *source = expr_type(g, expression);
-
-	gen_expr(g, expression);
+	CType *source = expr_type(generator, expression);
+	gen_expr(generator, expression);
 	if(!is_double_type(source))
-		integer_bits_to_double(g);
+		integer_bits_to_double(generator);
 }
 
-static void load_extern_global(Gen *g, const char *name, CType *t)
+static void load_extern_global(Gen *generator, const char *name, CType *type)
 {
-	if(t->kind == TY_CHAR || t->kind == TY_U8)
-		emit(g, "    movzx eax, byte ptr [rip+%s]", name);
-	else if(t->kind == TY_SHORT || t->kind == TY_U16)
-		emit(g, "    movzx eax, word ptr [rip+%s]", name);
-	else if(t->kind == TY_INT)
-		emit(g, "    movsxd rax, dword ptr [rip+%s]", name);
-	else if(t->kind == TY_U32)
-		emit(g, "    mov eax, dword ptr [rip+%s]", name);
+	if(type->kind == TY_CHAR || type->kind == TY_U8)
+		emit(generator, "    movzx eax, byte ptr [rip+%s]", name);
+	else if(type->kind == TY_SHORT || type->kind == TY_U16)
+		emit(generator, "    movzx eax, word ptr [rip+%s]", name);
+	else if(type->kind == TY_INT)
+		emit(generator, "    movsxd rax, dword ptr [rip+%s]", name);
+	else if(type->kind == TY_U32)
+		emit(generator, "    mov eax, dword ptr [rip+%s]", name);
 	else
-		emit(g, "    mov rax, qword ptr [rip+%s]", name);
+		emit(generator, "    mov rax, qword ptr [rip+%s]", name);
 }
 
-static CType *gen_addr(Gen *g, Expr *e)
+static CType *gen_addr(Gen *generator, Expr *expression)
 {
-	CType *t;
-	if(e->kind == EX_ID)
-	{
-		Symbol s = lookup(g, e->str);
-		if(s.kind == SY_LOCAL)
-		{
-			emit(g, "    lea rax, [rbp-%ld]", s.off);
+	CType *type_1;
+	if(expression->kind == EX_ID) {
+		Symbol s = lookup(generator, expression->str);
+		if(s.kind == SY_LOCAL) {
+			emit(generator, "    lea rax, [rbp-%ld]", s.off);
 			return s.type;
 		}
-		if(s.kind == SY_GLOBAL)
-		{
-			emit(g, "    lea rax, [rip+%s]", s.name);
+		if(s.kind == SY_GLOBAL) {
+			emit(generator, "    lea rax, [rip+%s]", s.name);
 			return s.type;
 		}
-		fatal("%s is not assignable", e->str);
+		fatal("%s is not assignable", expression->str);
 	}
-	if(e->kind == EX_UNARY && !strcmp(e->op, "*"))
-	{
-		gen_expr(g, e->left);
-		t = expr_type(g, e->left);
-		return t->base ? t->base : &T_U64;
+	if(expression->kind == EX_UNARY && !strcmp(expression->op, "*")) {
+		gen_expr(generator, expression->left);
+		type_1 = expr_type(generator, expression->left);
+		return type_1->base ? type_1->base : &T_U64;
 	}
-	if(e->kind == EX_INDEX)
-	{
-		gen_expr(g, e->left);
-		pushreg(g, "rax");
-		gen_expr(g, e->right);
-		t = expr_type(g, e->left);
-		t = t->base ? t->base : &T_U64;
-		if(type_size(t) != 1)
-			emit(g, "    imul rax, %ld", type_size(t));
-		popreg(g, "rcx");
-		emit(g, "    add rax, rcx");
-		return t;
+	if(expression->kind == EX_INDEX) {
+		gen_expr(generator, expression->left);
+		pushreg(generator, "rax");
+		gen_expr(generator, expression->right);
+		type_1 = expr_type(generator, expression->left);
+		type_1 = type_1->base ? type_1->base : &T_U64;
+		if(type_size(type_1) != 1)
+			emit(generator, "    imul rax, %ld", type_size(type_1));
+		popreg(generator, "rcx");
+		emit(generator, "    add rax, rcx");
+		return type_1;
 	}
-	if(e->kind == EX_MEMBER || e->kind == EX_PTRMEMBER)
-	{
+	if(expression->kind == EX_MEMBER || expression->kind == EX_PTRMEMBER) {
 		StructMember *member;
 		CType *owner;
-		if(e->kind == EX_MEMBER)
-		{
-			gen_addr(g, e->left);
-			owner = expr_type(g, e->left);
+		if(expression->kind == EX_MEMBER) {
+			gen_addr(generator, expression->left);
+			owner = expr_type(generator, expression->left);
 		} else {
-			gen_expr(g, e->left);
-			owner = expr_type(g, e->left);
+			gen_expr(generator, expression->left);
+			owner = expr_type(generator, expression->left);
 			owner = owner && owner->kind == TY_PTR ? owner->base : NULL;
 		}
-		member = find_struct_member(owner, e->str);
+		member = find_struct_member(owner, expression->str);
 		if(!member)
-			fatal("unknown struct member %s", e->str);
+			fatal("unknown struct member %s", expression->str);
 		if(member->offset)
-			emit(g, "    add rax, %ld", member->offset);
+			emit(generator, "    add rax, %ld", member->offset);
 		return member->type;
 	}
 	fatal("expression is not an lvalue");
 	return &T_U64;
 }
 
-static void gen_binary(Gen *g, Expr *e)
+static void gen_binary(Gen *generator, Expr *expression)
 {
-	const char *op = e->op;
-	CType *t;
-	bool floating = is_double_type(expr_type(g, e->left)) ||
-			is_double_type(expr_type(g, e->right));
-
-	if(!strcmp(op, "="))
-	{
-		t = gen_addr(g, e->left);
-		pushreg(g, "rax");
-		if(is_double_type(t))
-			gen_expr_as_double(g, e->right);
-		else
-		{
-			gen_expr(g, e->right);
-			if(is_double_type(expr_type(g, e->right)))
-			{
-				emit(g, "    movq xmm0, rax");
-				emit(g, "    cvttsd2si rax, xmm0");
+	const char *operator = expression->op;
+	CType *type;
+	bool floating = is_double_type(expr_type(generator, expression->left)) ||
+			is_double_type(expr_type(generator, expression->right));
+	if(!strcmp(operator, "=")) {
+		type = gen_addr(generator, expression->left);
+		pushreg(generator, "rax");
+		if(is_double_type(type))
+			gen_expr_as_double(generator, expression->right);
+		else {
+			gen_expr(generator, expression->right);
+			if(is_double_type(expr_type(generator, expression->right))) {
+				emit(generator, "    movq xmm0, rax");
+				emit(generator, "    cvttsd2si rax, xmm0");
 			}
 		}
-		popreg(g, "rcx");
-		store_rcx(g, t);
+		popreg(generator, "rcx");
+		store_rcx(generator, type);
 		return;
 	}
-	if(!strcmp(op, "+=") || !strcmp(op, "-=") || !strcmp(op, "*=") || !strcmp(op, "/="))
-	{
-		t = gen_addr(g, e->left);
-		pushreg(g, "rax");
-		load_rax(g, t);
-		if(is_double_type(t))
-		{
-			pushreg(g, "rax");
-			gen_expr_as_double(g, e->right);
-			popreg(g, "rcx");
-			emit(g, "    movq xmm0, rcx");
-			emit(g, "    movq xmm1, rax");
-			if(!strcmp(op, "+="))
-				emit(g, "    addsd xmm0, xmm1");
-			else if(!strcmp(op, "-="))
-				emit(g, "    subsd xmm0, xmm1");
-			else if(!strcmp(op, "*="))
-				emit(g, "    mulsd xmm0, xmm1");
+	if(!strcmp(operator, "+=") || !strcmp(operator, "-=") || !strcmp(operator, "*=") || !strcmp(operator, "/=")) {
+		type = gen_addr(generator, expression->left);
+		pushreg(generator, "rax");
+		load_rax(generator, type);
+		if(is_double_type(type)) {
+			pushreg(generator, "rax");
+			gen_expr_as_double(generator, expression->right);
+			popreg(generator, "rcx");
+			emit(generator, "    movq xmm0, rcx");
+			emit(generator, "    movq xmm1, rax");
+			if(!strcmp(operator, "+="))
+				emit(generator, "    addsd xmm0, xmm1");
+			else if(!strcmp(operator, "-="))
+				emit(generator, "    subsd xmm0, xmm1");
+			else if(!strcmp(operator, "*="))
+				emit(generator, "    mulsd xmm0, xmm1");
 			else
-				emit(g, "    divsd xmm0, xmm1");
-			emit(g, "    movq rax, xmm0");
+				emit(generator, "    divsd xmm0, xmm1");
+			emit(generator, "    movq rax, xmm0");
 		} else {
-			pushreg(g, "rax");
-			gen_expr(g, e->right);
-			popreg(g, "rcx");
-			if(!strcmp(op, "+="))
-				emit(g, "    add rax, rcx");
-			else if(!strcmp(op, "-="))
-			{
-				emit(g, "    sub rcx, rax");
-				emit(g, "    mov rax, rcx");
-			} else if(!strcmp(op, "*="))
-				emit(g, "    imul rax, rcx");
-			else
-			{
-				emit(g, "    mov r10, rax");
-				emit(g, "    mov rax, rcx");
-				emit(g, "    cqo");
-				emit(g, "    idiv r10");
+			pushreg(generator, "rax");
+			gen_expr(generator, expression->right);
+			popreg(generator, "rcx");
+			if(!strcmp(operator, "+="))
+				emit(generator, "    add rax, rcx");
+			else if(!strcmp(operator, "-=")) {
+				emit(generator, "    sub rcx, rax");
+				emit(generator, "    mov rax, rcx");
+			} else if(!strcmp(operator, "*="))
+				emit(generator, "    imul rax, rcx");
+			else {
+				emit(generator, "    mov r10, rax");
+				emit(generator, "    mov rax, rcx");
+				emit(generator, "    cqo");
+				emit(generator, "    idiv r10");
 			}
 		}
-		popreg(g, "rcx");
-		store_rcx(g, t);
+		popreg(generator, "rcx");
+		store_rcx(generator, type);
 		return;
 	}
-	if(!strcmp(op, "&&") || !strcmp(op, "||"))
-	{
-		char *a = new_label(g, ".Llogic"), *d = new_label(g, ".Llogicdone");
-		gen_expr(g, e->left);
-		emit(g, "    test rax, rax");
-		if(!strcmp(op, "&&"))
-			emit(g, "    jz %s", a);
+	if(!strcmp(operator, "&&") || !strcmp(operator, "||")) {
+		char *array = new_label(generator, ".Llogic"), *value = new_label(generator, ".Llogicdone");
+		gen_expr(generator, expression->left);
+		emit(generator, "    test rax, rax");
+		if(!strcmp(operator, "&&"))
+			emit(generator, "    jz %s", array);
 		else
-			emit(g, "    jnz %s", a);
-		gen_expr(g, e->right);
-		emit(g, "    test rax, rax");
-		emit(g, "    setne al");
-		emit(g, "    movzx rax, al");
-		emit(g, "    jmp %s", d);
-		emit(g, "%s:", a);
-		if(!strcmp(op, "&&"))
-			emit(g, "    xor eax, eax");
+			emit(generator, "    jnz %s", array);
+		gen_expr(generator, expression->right);
+		emit(generator, "    test rax, rax");
+		emit(generator, "    setne al");
+		emit(generator, "    movzx rax, al");
+		emit(generator, "    jmp %s", value);
+		emit(generator, "%s:", array);
+		if(!strcmp(operator, "&&"))
+			emit(generator, "    xor eax, eax");
 		else
-			emit(g, "    mov eax, 1");
-		emit(g, "%s:", d);
+			emit(generator, "    mov eax, 1");
+		emit(generator, "%s:", value);
 		return;
 	}
-	if(floating && (!strcmp(op, "+") || !strcmp(op, "-") || !strcmp(op, "*") || !strcmp(op, "/")))
-	{
-		gen_expr_as_double(g, e->left);
-		pushreg(g, "rax");
-		gen_expr_as_double(g, e->right);
-		popreg(g, "rcx");
-		emit(g, "    movq xmm0, rcx");
-		emit(g, "    movq xmm1, rax");
-		if(!strcmp(op, "+"))
-			emit(g, "    addsd xmm0, xmm1");
-		else if(!strcmp(op, "-"))
-			emit(g, "    subsd xmm0, xmm1");
-		else if(!strcmp(op, "*"))
-			emit(g, "    mulsd xmm0, xmm1");
+	if(floating && (!strcmp(operator, "+") || !strcmp(operator, "-") || !strcmp(operator, "*") || !strcmp(operator, "/"))) {
+		gen_expr_as_double(generator, expression->left);
+		pushreg(generator, "rax");
+		gen_expr_as_double(generator, expression->right);
+		popreg(generator, "rcx");
+		emit(generator, "    movq xmm0, rcx");
+		emit(generator, "    movq xmm1, rax");
+		if(!strcmp(operator, "+"))
+			emit(generator, "    addsd xmm0, xmm1");
+		else if(!strcmp(operator, "-"))
+			emit(generator, "    subsd xmm0, xmm1");
+		else if(!strcmp(operator, "*"))
+			emit(generator, "    mulsd xmm0, xmm1");
 		else
-			emit(g, "    divsd xmm0, xmm1");
-		emit(g, "    movq rax, xmm0");
+			emit(generator, "    divsd xmm0, xmm1");
+		emit(generator, "    movq rax, xmm0");
 		return;
 	}
-	gen_expr(g, e->left);
-	pushreg(g, "rax");
-	gen_expr(g, e->right);
-	popreg(g, "rcx");
-	if(!strcmp(op, "+"))
-		emit(g, "    add rax, rcx");
-	else if(!strcmp(op, "-"))
+	gen_expr(generator, expression->left);
+	pushreg(generator, "rax");
+	gen_expr(generator, expression->right);
+	popreg(generator, "rcx");
+	if(!strcmp(operator, "+"))
+		emit(generator, "    add rax, rcx");
+	else if(!strcmp(operator, "-")) {
+		emit(generator, "    sub rcx, rax");
+		emit(generator, "    mov rax, rcx");
+	} else if(!strcmp(operator, "*"))
+		emit(generator, "    imul rax, rcx");
+	else if(!strcmp(operator, "/") || !strcmp(operator, "%")) {
+		emit(generator, "    mov r10, rax");
+		emit(generator, "    mov rax, rcx");
+		emit(generator, "    cqo");
+		emit(generator, "    idiv r10");
+		if(!strcmp(operator, "%"))
+			emit(generator, "    mov rax, rdx");
+	} else if(!strcmp(operator, "&"))
+		emit(generator, "    and rax, rcx");
+	else if(!strcmp(operator, "|"))
+		emit(generator, "    or rax, rcx");
+	else if(!strcmp(operator, "^"))
+		emit(generator, "    xor rax, rcx");
+	else if(!strcmp(operator, "<<") || !strcmp(operator, ">>")) {
+		emit(generator, "    mov rdx, rax");
+		emit(generator, "    mov rax, rcx");
+		emit(generator, "    mov rcx, rdx");
+		emit(generator, !strcmp(operator, "<<") ? "    shl rax, cl" : "    sar rax, cl");
+	} else if(!strcmp(operator, "==") || !strcmp(operator, "!=") || !strcmp(operator, "<") || !strcmp(operator, "<=") || !strcmp(operator, ">") || !strcmp(operator, ">="))
 	{
-		emit(g, "    sub rcx, rax");
-		emit(g, "    mov rax, rcx");
-	} else if(!strcmp(op, "*"))
-		emit(g, "    imul rax, rcx");
-	else if(!strcmp(op, "/") || !strcmp(op, "%"))
-	{
-		emit(g, "    mov r10, rax");
-		emit(g, "    mov rax, rcx");
-		emit(g, "    cqo");
-		emit(g, "    idiv r10");
-		if(!strcmp(op, "%"))
-			emit(g, "    mov rax, rdx");
-	} else if(!strcmp(op, "&"))
-		emit(g, "    and rax, rcx");
-	else if(!strcmp(op, "|"))
-		emit(g, "    or rax, rcx");
-	else if(!strcmp(op, "^"))
-		emit(g, "    xor rax, rcx");
-	else if(!strcmp(op, "<<") || !strcmp(op, ">>"))
-	{
-		emit(g, "    mov rdx, rax");
-		emit(g, "    mov rax, rcx");
-		emit(g, "    mov rcx, rdx");
-		emit(g, !strcmp(op, "<<") ? "    shl rax, cl" : "    sar rax, cl");
-	} else if(!strcmp(op, "==") || !strcmp(op, "!=") || !strcmp(op, "<") || !strcmp(op, "<=") || !strcmp(op, ">") || !strcmp(op, ">="))
-	{
-		const char *cc = !strcmp(op, "==") ? "e" : !strcmp(op, "!=") ? "ne"
-						   : !strcmp(op, "<")	     ? "l"
-						   : !strcmp(op, "<=")	     ? "le"
-						   : !strcmp(op, ">")	     ? "g"
+		const char *condition_code = !strcmp(operator, "==") ? "e" : !strcmp(operator, "!=") ? "ne"
+						   : !strcmp(operator, "<")	     ? "l"
+						   : !strcmp(operator, "<=")	     ? "le"
+						   : !strcmp(operator, ">")	     ? "g"
 									     : "ge";
-		emit(g, "    cmp rcx, rax");
-		emit(g, "    set%s al", cc);
-		emit(g, "    movzx rax, al");
+		emit(generator, "    cmp rcx, rax");
+		emit(generator, "    set%s al", condition_code);
+		emit(generator, "    movzx rax, al");
 	} else
-		fatal("unsupported operator %s", op);
+		fatal("unsupported operator %s", operator);
 }
 
-static const char *call_name(const char *n)
+static const char *call_name(const char *argument_count)
 {
-	if(!strcmp(n, "DefaultScreen"))
+	if(!strcmp(argument_count, "DefaultScreen"))
 		return "XDefaultScreen";
-	if(!strcmp(n, "RootWindow"))
+	if(!strcmp(argument_count, "RootWindow"))
 		return "XRootWindow";
-	if(!strcmp(n, "BlackPixel"))
+	if(!strcmp(argument_count, "BlackPixel"))
 		return "XBlackPixel";
-	if(!strcmp(n, "WhitePixel"))
+	if(!strcmp(argument_count, "WhitePixel"))
 		return "XWhitePixel";
-	return n;
+	return argument_count;
 }
 
-static void gen_call(Gen *g, Expr *e)
+static void gen_call(Gen *generator, Expr *expression)
 {
-	size_t i, n = e->nargs;
+	size_t index, argument_count = expression->nargs;
 	long nstack, pad, cleanup;
 	const char *name;
 	static const char *regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 	bool has_double = false;
-
-	if(e->left->kind != EX_ID)
+	if(expression->left->kind != EX_ID)
 		fatal("only direct calls supported");
-	name = e->left->str;
-	if(!strcmp(name, "va_start"))
-	{
+	name = expression->left->str;
+	if(!strcmp(name, "va_start")) {
 		Symbol ap;
 		long named;
-		if(!g->current || !g->current->variadic || n != 2 || e->args[0]->kind != EX_ID)
+		if(!generator->current || !generator->current->variadic || argument_count != 2 || expression->args[0]->kind != EX_ID)
 			fatal("bad va_start");
-		ap = lookup(g, e->args[0]->str);
-		named = (long)(g->current->nparams < 6 ? g->current->nparams : 6);
-		emit(g, "    lea rax, [rbp-%ld]", ap.off);
-		emit(g, "    mov dword ptr [rax], %ld", named * 8);
-		emit(g, "    mov dword ptr [rax+4], 48");
-		emit(g, "    lea rcx, [rbp+16]");
-		emit(g, "    mov qword ptr [rax+8], rcx");
-		emit(g, "    lea rcx, [rbp-%ld]", g->vaoff);
-		emit(g, "    mov qword ptr [rax+16], rcx");
-		emit(g, "    xor eax, eax");
+		ap = lookup(generator, expression->args[0]->str);
+		named = (long)(generator->current->nparams < 6 ? generator->current->nparams : 6);
+		emit(generator, "    lea rax, [rbp-%ld]", ap.off);
+		emit(generator, "    mov dword ptr [rax], %ld", named * 8);
+		emit(generator, "    mov dword ptr [rax+4], 48");
+		emit(generator, "    lea rcx, [rbp+16]");
+		emit(generator, "    mov qword ptr [rax+8], rcx");
+		emit(generator, "    lea rcx, [rbp-%ld]", generator->vaoff);
+		emit(generator, "    mov qword ptr [rax+16], rcx");
+		emit(generator, "    xor eax, eax");
 		return;
 	}
-	if(!strcmp(name, "va_end"))
-	{
-		emit(g, "    xor eax, eax");
+	if(!strcmp(name, "va_end")) {
+		emit(generator, "    xor eax, eax");
 		return;
 	}
-	for(i = 0; i < n; i++)
-		if(is_double_type(expr_type(g, e->args[i])))
+	for(index = 0; index < argument_count; index++)
+		if(is_double_type(expr_type(generator, expression->args[index])))
 			has_double = true;
 	name = call_name(name);
-	if(has_double)
-	{
+	if(has_double) {
 		size_t integer_count = 0, double_count = 0;
-		for(i = 0; i < n; i++)
-		{
-			if(is_double_type(expr_type(g, e->args[i])))
+		for(index = 0; index < argument_count; index++) {
+			if(is_double_type(expr_type(generator, expression->args[index])))
 				double_count++;
 			else
 				integer_count++;
 		}
 		if(integer_count > 6 || double_count > 8)
 			fatal("native calls with floating arguments currently support 6 integer and 8 double register arguments");
-		pad = (16 - ((g->tempdepth + (long)n * 8) % 16)) % 16;
-		if(pad)
-		{
-			emit(g, "    sub rsp, %ld", pad);
-			g->tempdepth += pad;
+		pad = (16 - ((generator->tempdepth + (long)argument_count * 8) % 16)) % 16;
+		if(pad) {
+			emit(generator, "    sub rsp, %ld", pad);
+			generator->tempdepth += pad;
 		}
-		for(i = n; i > 0; i--)
-		{
-			if(is_double_type(expr_type(g, e->args[i - 1])))
-				gen_expr_as_double(g, e->args[i - 1]);
+		for(index = argument_count; index > 0; index--) {
+			if(is_double_type(expr_type(generator, expression->args[index - 1])))
+				gen_expr_as_double(generator, expression->args[index - 1]);
 			else
-				gen_expr(g, e->args[i - 1]);
-			pushreg(g, "rax");
+				gen_expr(generator, expression->args[index - 1]);
+			pushreg(generator, "rax");
 		}
 		integer_count = double_count = 0;
-		for(i = 0; i < n; i++)
-		{
-			if(is_double_type(expr_type(g, e->args[i])))
-			{
-				popreg(g, "rax");
-				emit(g, "    movq xmm%zu, rax", double_count++);
+		for(index = 0; index < argument_count; index++) {
+			if(is_double_type(expr_type(generator, expression->args[index]))) {
+				popreg(generator, "rax");
+				emit(generator, "    movq xmm%zu, rax", double_count++);
 			} else {
-				popreg(g, regs[integer_count++]);
+				popreg(generator, regs[integer_count++]);
 			}
 		}
-		emit(g, "    mov eax, %zu", double_count);
-		emit(g, "    call %s@PLT", name);
-		if(pad)
-		{
-			emit(g, "    add rsp, %ld", pad);
-			g->tempdepth -= pad;
+		emit(generator, "    mov eax, %zu", double_count);
+		emit(generator, "    call %s@PLT", name);
+		if(pad) {
+			emit(generator, "    add rsp, %ld", pad);
+			generator->tempdepth -= pad;
 		}
-		if(is_double_type(expr_type(g, e)))
-			emit(g, "    movq rax, xmm0");
+		if(is_double_type(expr_type(generator, expression)))
+			emit(generator, "    movq rax, xmm0");
 		return;
 	}
-	nstack = (long)(n > 6 ? n - 6 : 0);
-	pad = (16 - ((g->tempdepth + nstack * 8) % 16)) % 16;
-	if(pad)
-	{
-		emit(g, "    sub rsp, %ld", pad);
-		g->tempdepth += pad;
+	nstack = (long)(argument_count > 6 ? argument_count - 6 : 0);
+	pad = (16 - ((generator->tempdepth + nstack * 8) % 16)) % 16;
+	if(pad) {
+		emit(generator, "    sub rsp, %ld", pad);
+		generator->tempdepth += pad;
 	}
-	for(i = n; i > 0; i--)
-	{
-		gen_expr(g, e->args[i - 1]);
-		pushreg(g, "rax");
+	for(index = argument_count; index > 0; index--) {
+		gen_expr(generator, expression->args[index - 1]);
+		pushreg(generator, "rax");
 	}
-	for(i = 0; i < n && i < 6; i++)
-		popreg(g, regs[i]);
-	emit(g, "    xor eax, eax");
-	emit(g, "    call %s@PLT", name);
+	for(index = 0; index < argument_count && index < 6; index++)
+		popreg(generator, regs[index]);
+	emit(generator, "    xor eax, eax");
+	emit(generator, "    call %s@PLT", name);
 	cleanup = nstack * 8 + pad;
-	if(cleanup)
-	{
-		emit(g, "    add rsp, %ld", cleanup);
-		g->tempdepth -= cleanup;
+	if(cleanup) {
+		emit(generator, "    add rsp, %ld", cleanup);
+		generator->tempdepth -= cleanup;
 	}
-	if(is_double_type(expr_type(g, e)))
-		emit(g, "    movq rax, xmm0");
+	if(is_double_type(expr_type(generator, expression)))
+		emit(generator, "    movq rax, xmm0");
 }
 
-static void gen_incdec(Gen *g, Expr *e)
+static void gen_incdec(Gen *generator, Expr *expression)
 {
-	CType *t = gen_addr(g, e->left);
+	CType *type = gen_addr(generator, expression->left);
 	long step = 1;
-	bool postfix = !strcmp(e->op, "post++") ||
-		       !strcmp(e->op, "post--");
-	bool decrement = !strcmp(e->op, "--") ||
-			 !strcmp(e->op, "post--");
-
-	if(t->kind == TY_PTR && t->base)
-	{
-		step = type_size(t->base);
+	bool postfix = !strcmp(expression->op, "post++") ||
+		       !strcmp(expression->op, "post--");
+	bool decrement = !strcmp(expression->op, "--") ||
+			 !strcmp(expression->op, "post--");
+	if(type->kind == TY_PTR && type->base) {
+		step = type_size(type->base);
 		if(step <= 0)
 			step = 1;
 	}
-
-	pushreg(g, "rax");
-	load_rax(g, t);
+	pushreg(generator, "rax");
+	load_rax(generator, type);
 	if(postfix)
-		pushreg(g, "rax");
+		pushreg(generator, "rax");
 	if(decrement)
-		emit(g, "    sub rax, %ld", step);
+		emit(generator, "    sub rax, %ld", step);
 	else
-		emit(g, "    add rax, %ld", step);
-	if(postfix)
-	{
-		popreg(g, "rdx");
-		popreg(g, "rcx");
-		store_rcx(g, t);
-		emit(g, "    mov rax, rdx");
+		emit(generator, "    add rax, %ld", step);
+	if(postfix) {
+		popreg(generator, "rdx");
+		popreg(generator, "rcx");
+		store_rcx(generator, type);
+		emit(generator, "    mov rax, rdx");
 	} else {
-		popreg(g, "rcx");
-		store_rcx(g, t);
+		popreg(generator, "rcx");
+		store_rcx(generator, type);
 	}
 }
 
-static void gen_expr(Gen *g, Expr *e)
+static void gen_expr(Gen *generator, Expr *expression)
 {
-	CType *t;
+	CType *type_1;
 	char *lab;
 	Symbol s;
-	switch(e->kind)
-	{
+	switch(expression->kind) {
 	case EX_NUM:
-		if(is_double_type(e->type))
-		{
+		if(is_double_type(expression->type)) {
 			union
 			{
 				double d;
 				uint64_t u;
 			} bits;
-			bits.d = e->fnum;
-			emit(g, "    mov rax, %llu", (unsigned long long)bits.u);
+			bits.d = expression->fnum;
+			emit(generator, "    mov rax, %llu", (unsigned long long)bits.u);
 		} else
-			emit(g, "    mov rax, %llu", e->num);
+			emit(generator, "    mov rax, %llu", expression->num);
 		return;
 	case EX_STR:
-		lab = intern_string(g, e->str);
-		emit(g, "    lea rax, [rip+%s]", lab);
+		lab = intern_string(generator, expression->str);
+		emit(generator, "    lea rax, [rip+%s]", lab);
 		return;
 	case EX_ID:
-		s = lookup(g, e->str);
-		if(s.kind == SY_CONST)
-		{
-			emit(g, "    mov rax, %ld", s.off);
+		s = lookup(generator, expression->str);
+		if(s.kind == SY_CONST) {
+			emit(generator, "    mov rax, %ld", s.off);
 			return;
 		}
-		if(s.kind == SY_EXTERN_GLOBAL)
-		{
-			load_extern_global(g, s.name, s.type);
+		if(s.kind == SY_EXTERN_GLOBAL) {
+			load_extern_global(generator, s.name, s.type);
 			return;
 		}
-		if(s.kind == SY_FUNCTION || s.kind == SY_EXTERN_FUNCTION)
-		{
-			emit(g, "    lea rax, [rip+%s]", s.name);
+		if(s.kind == SY_FUNCTION || s.kind == SY_EXTERN_FUNCTION) {
+			emit(generator, "    lea rax, [rip+%s]", s.name);
 			return;
 		}
-		t = gen_addr(g, e);
-		load_rax(g, t);
+		type_1 = gen_addr(generator, expression);
+		load_rax(generator, type_1);
 		return;
 	case EX_SIZEOF:
-		emit(g, "    mov rax, %ld", type_size(e->sizeof_type ? e->sizeof_type : expr_type(g, e->left)));
+		emit(generator, "    mov rax, %ld", type_size(expression->sizeof_type ? expression->sizeof_type : expr_type(generator, expression->left)));
 		return;
 	case EX_UNARY:
-		if(!strcmp(e->op, "++") || !strcmp(e->op, "--") ||
-		   !strcmp(e->op, "post++") || !strcmp(e->op, "post--"))
+		if(!strcmp(expression->op, "++") || !strcmp(expression->op, "--") ||
+		   !strcmp(expression->op, "post++") || !strcmp(expression->op, "post--"))
 		{
-			gen_incdec(g, e);
-		} else if(!strcmp(e->op, "cast"))
+			gen_incdec(generator, expression);
+		} else if(!strcmp(expression->op, "cast"))
 		{
-			CType *source = expr_type(g, e->left);
-			gen_expr(g, e->left);
-			if(e->type->kind == TY_DOUBLE)
-			{
+			CType *source = expr_type(generator, expression->left);
+			gen_expr(generator, expression->left);
+			if(expression->type->kind == TY_DOUBLE) {
 				if(!is_double_type(source))
-					integer_bits_to_double(g);
+					integer_bits_to_double(generator);
 			} else {
-				if(is_double_type(source))
-				{
-					emit(g, "    movq xmm0, rax");
-					emit(g, "    cvttsd2si rax, xmm0");
+				if(is_double_type(source)) {
+					emit(generator, "    movq xmm0, rax");
+					emit(generator, "    cvttsd2si rax, xmm0");
 				}
-				if(e->type->kind == TY_CHAR || e->type->kind == TY_U8)
-					emit(g, "    movzx eax, al");
-				else if(e->type->kind == TY_SHORT || e->type->kind == TY_U16)
-					emit(g, "    movzx eax, ax");
-				else if(e->type->kind == TY_INT)
-					emit(g, "    movsxd rax, eax");
-				else if(e->type->kind == TY_U32)
-					emit(g, "    mov eax, eax");
+				if(expression->type->kind == TY_CHAR || expression->type->kind == TY_U8)
+					emit(generator, "    movzx eax, al");
+				else if(expression->type->kind == TY_SHORT || expression->type->kind == TY_U16)
+					emit(generator, "    movzx eax, ax");
+				else if(expression->type->kind == TY_INT)
+					emit(generator, "    movsxd rax, eax");
+				else if(expression->type->kind == TY_U32)
+					emit(generator, "    mov eax, eax");
 			}
-		} else if(!strcmp(e->op, "&"))
-			gen_addr(g, e->left);
-		else if(!strcmp(e->op, "*"))
-		{
-			gen_expr(g, e->left);
-			load_rax(g, expr_type(g, e));
+		} else if(!strcmp(expression->op, "&"))
+			gen_addr(generator, expression->left);
+		else if(!strcmp(expression->op, "*")) {
+			gen_expr(generator, expression->left);
+			load_rax(generator, expr_type(generator, expression));
 		} else {
-			gen_expr(g, e->left);
-			if(!strcmp(e->op, "!"))
-			{
-				emit(g, "    test rax, rax");
-				emit(g, "    sete al");
-				emit(g, "    movzx rax, al");
-			} else if(!strcmp(e->op, "~"))
-				emit(g, "    not rax");
-			else if(!strcmp(e->op, "-"))
-				emit(g, "    neg rax");
+			gen_expr(generator, expression->left);
+			if(!strcmp(expression->op, "!")) {
+				emit(generator, "    test rax, rax");
+				emit(generator, "    sete al");
+				emit(generator, "    movzx rax, al");
+			} else if(!strcmp(expression->op, "~"))
+				emit(generator, "    not rax");
+			else if(!strcmp(expression->op, "-"))
+				emit(generator, "    neg rax");
 		}
 		return;
 	case EX_INDEX:
 	case EX_MEMBER:
 	case EX_PTRMEMBER:
-		t = gen_addr(g, e);
-		load_rax(g, t);
+		type_1 = gen_addr(generator, expression);
+		load_rax(generator, type_1);
 		return;
 	case EX_BINARY:
-		gen_binary(g, e);
+		gen_binary(generator, expression);
 		return;
 	case EX_CALL:
-		gen_call(g, e);
+		gen_call(generator, expression);
 		return;
 	case EX_INITLIST:
 		fatal("initializer list used as an expression");
@@ -2912,135 +2658,127 @@ static void gen_expr(Gen *g, Expr *e)
 	fatal("unsupported expression");
 }
 
-static long collect_locals(Gen *g, Stmt *s, long off)
+static long collect_locals(Gen *generator, Stmt *statement, long off)
 {
-	size_t i;
-	Decl *d;
-	if(!s)
+	size_t index;
+	Decl *declaration;
+	if(!statement)
 		return off;
-	if(s->kind == ST_DECL)
-	{
-		d = s->decl;
-		if(find_local(g, d->name))
-			fatal("duplicate local %s", d->name);
-		off = align_up(off, type_align(d->type));
-		off += type_size(d->type) > 0 ? type_size(d->type) : 1;
-		ARR_GROW(g->locals, g->nlocals, g->caplocals, Symbol);
-		g->locals[g->nlocals++] = (Symbol){d->name, d->type, SY_LOCAL, off, NULL};
-	} else if(s->kind == ST_BLOCK)
-		for(i = 0; i < s->nchildren; i++)
-			off = collect_locals(g, s->children[i], off);
-	else if(s->kind == ST_IF)
-	{
-		off = collect_locals(g, s->yes, off);
-		off = collect_locals(g, s->no, off);
-	} else if(s->kind == ST_WHILE)
-		off = collect_locals(g, s->body, off);
-	else if(s->kind == ST_FOR)
-	{
-		off = collect_locals(g, s->init, off);
-		off = collect_locals(g, s->body, off);
+	if(statement->kind == ST_DECL) {
+		declaration = statement->decl;
+		if(find_local(generator, declaration->name))
+			fatal("duplicate local %s", declaration->name);
+		off = align_up(off, type_align(declaration->type));
+		off += type_size(declaration->type) > 0 ? type_size(declaration->type) : 1;
+		ARR_GROW(generator->locals, generator->nlocals, generator->caplocals, Symbol);
+		generator->locals[generator->nlocals++] = (Symbol){declaration->name, declaration->type, SY_LOCAL, off, NULL};
+	} else if(statement->kind == ST_BLOCK)
+		for(index = 0; index < statement->nchildren; index++)
+			off = collect_locals(generator, statement->children[index], off);
+	else if(statement->kind == ST_IF) {
+		off = collect_locals(generator, statement->yes, off);
+		off = collect_locals(generator, statement->no, off);
+	} else if(statement->kind == ST_WHILE)
+		off = collect_locals(generator, statement->body, off);
+	else if(statement->kind == ST_FOR) {
+		off = collect_locals(generator, statement->init, off);
+		off = collect_locals(generator, statement->body, off);
 	}
 	return off;
 }
 
-static void gen_stmt(Gen *g, Stmt *s)
+static void gen_stmt(Gen *generator, Stmt *statement)
 {
-	size_t i;
+	size_t index;
 	Symbol *x;
-	char *a, *d;
-	if(!s)
+	char *array, *value;
+	if(!statement)
 		return;
-	switch(s->kind)
-	{
+	switch(statement->kind) {
 	case ST_BLOCK:
-		for(i = 0; i < s->nchildren; i++)
-			gen_stmt(g, s->children[i]);
+		for(index = 0; index < statement->nchildren; index++)
+			gen_stmt(generator, statement->children[index]);
 		return;
 	case ST_DECL:
-		if(s->decl->init)
-		{
-			x = find_local(g, s->decl->name);
+		if(statement->decl->init) {
+			x = find_local(generator, statement->decl->name);
 			if(is_double_type(x->type))
-				gen_expr_as_double(g, s->decl->init);
+				gen_expr_as_double(generator, statement->decl->init);
 			else
-				gen_expr(g, s->decl->init);
-			emit(g, "    lea rcx, [rbp-%ld]", x->off);
-			store_rcx(g, x->type);
+				gen_expr(generator, statement->decl->init);
+			emit(generator, "    lea rcx, [rbp-%ld]", x->off);
+			store_rcx(generator, x->type);
 		}
 		return;
 	case ST_EXPR:
-		gen_expr(g, s->expr);
+		gen_expr(generator, statement->expr);
 		return;
 	case ST_EMPTY:
 		return;
 	case ST_RETURN:
-		if(s->expr)
-		{
-			if(g->current && is_double_type(g->current->type))
-			{
-				gen_expr_as_double(g, s->expr);
-				emit(g, "    movq xmm0, rax");
+		if(statement->expr) {
+			if(generator->current && is_double_type(generator->current->type)) {
+				gen_expr_as_double(generator, statement->expr);
+				emit(generator, "    movq xmm0, rax");
 			} else
-				gen_expr(g, s->expr);
+				gen_expr(generator, statement->expr);
 		} else
-			emit(g, "    xor eax, eax");
-		emit(g, "    jmp %s", g->retlabel);
+			emit(generator, "    xor eax, eax");
+		emit(generator, "    jmp %s", generator->retlabel);
 		return;
 	case ST_IF:
-		a = new_label(g, ".Lelse");
-		d = new_label(g, ".Lifend");
-		gen_expr(g, s->cond);
-		emit(g, "    test rax, rax");
-		emit(g, "    jz %s", a);
-		gen_stmt(g, s->yes);
-		emit(g, "    jmp %s", d);
-		emit(g, "%s:", a);
-		gen_stmt(g, s->no);
-		emit(g, "%s:", d);
+		array = new_label(generator, ".Lelse");
+		value = new_label(generator, ".Lifend");
+		gen_expr(generator, statement->cond);
+		emit(generator, "    test rax, rax");
+		emit(generator, "    jz %s", array);
+		gen_stmt(generator, statement->yes);
+		emit(generator, "    jmp %s", value);
+		emit(generator, "%s:", array);
+		gen_stmt(generator, statement->no);
+		emit(generator, "%s:", value);
 		return;
 	case ST_WHILE:
-		a = new_label(g, ".Lwhile");
-		d = new_label(g, ".Lwend");
-		ARR_GROW(g->breaks, g->nbreaks, g->capbreaks, char *);
-		g->breaks[g->nbreaks++] = d;
-		ARR_GROW(g->continues, g->ncontinues, g->capcontinues, char *);
-		g->continues[g->ncontinues++] = a;
-		emit(g, "%s:", a);
-		gen_expr(g, s->cond);
-		emit(g, "    test rax, rax");
-		emit(g, "    jz %s", d);
-		gen_stmt(g, s->body);
-		emit(g, "    jmp %s", a);
-		emit(g, "%s:", d);
-		g->nbreaks--;
-		g->ncontinues--;
+		array = new_label(generator, ".Lwhile");
+		value = new_label(generator, ".Lwend");
+		ARR_GROW(generator->breaks, generator->nbreaks, generator->capbreaks, char *);
+		generator->breaks[generator->nbreaks++] = value;
+		ARR_GROW(generator->continues, generator->ncontinues, generator->capcontinues, char *);
+		generator->continues[generator->ncontinues++] = array;
+		emit(generator, "%s:", array);
+		gen_expr(generator, statement->cond);
+		emit(generator, "    test rax, rax");
+		emit(generator, "    jz %s", value);
+		gen_stmt(generator, statement->body);
+		emit(generator, "    jmp %s", array);
+		emit(generator, "%s:", value);
+		generator->nbreaks--;
+		generator->ncontinues--;
 		return;
 	case ST_FOR:
 	{
-		char *c = new_label(g, ".Lforcond");
-		char *n = new_label(g, ".Lfornext");
-		d = new_label(g, ".Lforend");
-		gen_stmt(g, s->init);
-		ARR_GROW(g->breaks, g->nbreaks, g->capbreaks, char *);
-		g->breaks[g->nbreaks++] = d;
-		ARR_GROW(g->continues, g->ncontinues, g->capcontinues, char *);
-		g->continues[g->ncontinues++] = n;
-		emit(g, "%s:", c);
-		if(s->cond)
-		{
-			gen_expr(g, s->cond);
-			emit(g, "    test rax, rax");
-			emit(g, "    jz %s", d);
+		char *character = new_label(generator, ".Lforcond");
+		char *count = new_label(generator, ".Lfornext");
+		value = new_label(generator, ".Lforend");
+		gen_stmt(generator, statement->init);
+		ARR_GROW(generator->breaks, generator->nbreaks, generator->capbreaks, char *);
+		generator->breaks[generator->nbreaks++] = value;
+		ARR_GROW(generator->continues, generator->ncontinues, generator->capcontinues, char *);
+		generator->continues[generator->ncontinues++] = count;
+		emit(generator, "%s:", character);
+		if(statement->cond) {
+			gen_expr(generator, statement->cond);
+			emit(generator, "    test rax, rax");
+			emit(generator, "    jz %s", value);
 		}
-		gen_stmt(g, s->body);
-		emit(g, "%s:", n);
-		if(s->post)
-			gen_expr(g, s->post);
-		emit(g, "    jmp %s", c);
-		emit(g, "%s:", d);
-		g->nbreaks--;
-		g->ncontinues--;
+		gen_stmt(generator, statement->body);
+		emit(generator, "%s:", count);
+		if(statement->post)
+			gen_expr(generator, statement->post);
+		emit(generator, "    jmp %s", character);
+		emit(generator, "%s:", value);
+		generator->nbreaks--;
+		generator->ncontinues--;
 		return;
 	}
 	case ST_SWITCH:
@@ -3049,132 +2787,119 @@ static void gen_stmt(Gen *g, Stmt *s)
 		fatal("switch is supported by the i386 object backend only");
 		return;
 	case ST_BREAK:
-		if(!g->nbreaks)
+		if(!generator->nbreaks)
 			fatal("break outside loop");
-		emit(g, "    jmp %s", g->breaks[g->nbreaks - 1]);
+		emit(generator, "    jmp %s", generator->breaks[generator->nbreaks - 1]);
 		return;
 	case ST_CONTINUE:
-		if(!g->ncontinues)
+		if(!generator->ncontinues)
 			fatal("continue outside loop");
-		emit(g, "    jmp %s", g->continues[g->ncontinues - 1]);
+		emit(generator, "    jmp %s", generator->continues[generator->ncontinues - 1]);
 		return;
 	case ST_ASM:
-		if(!strcmp(s->asm_text, "hlt") || !strcmp(s->asm_text, "cli") ||
-		   !strcmp(s->asm_text, "sti") || !strcmp(s->asm_text, "nop") ||
-		   !strcmp(s->asm_text, "cld") || !strcmp(s->asm_text, "std") ||
-		   !strcmp(s->asm_text, "int3") || !strcmp(s->asm_text, "pause") ||
-		   !strcmp(s->asm_text, "ud2"))
-			emit(g, "    %s", s->asm_text);
+		if(!strcmp(statement->asm_text, "hlt") || !strcmp(statement->asm_text, "cli") ||
+		   !strcmp(statement->asm_text, "sti") || !strcmp(statement->asm_text, "nop") ||
+		   !strcmp(statement->asm_text, "cld") || !strcmp(statement->asm_text, "std") ||
+		   !strcmp(statement->asm_text, "int3") || !strcmp(statement->asm_text, "pause") ||
+		   !strcmp(statement->asm_text, "ud2"))
+			emit(generator, "    %s", statement->asm_text);
 		else
-			fatal("unsupported inline asm instruction: %s", s->asm_text);
+			fatal("unsupported inline asm instruction: %s", statement->asm_text);
 		return;
 	}
 }
 
-static void gen_function(Gen *g, Decl *d)
+static void gen_function(Gen *generator, Decl *declaration)
 {
-	size_t i;
+	size_t index;
 	long off = 0;
 	static const char *regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 	Symbol *s;
-	g->current = d;
-	g->nlocals = 0;
-	g->tempdepth = 0;
-	g->vaoff = 0;
-	for(i = 0; i < d->nparams; i++)
-	{
+	generator->current = declaration;
+	generator->nlocals = 0;
+	generator->tempdepth = 0;
+	generator->vaoff = 0;
+	for(index = 0; index < declaration->nparams; index++) {
 		off = align_up(off, 8) + 8;
-		ARR_GROW(g->locals, g->nlocals, g->caplocals, Symbol);
-		g->locals[g->nlocals++] = (Symbol){d->params[i].name, d->params[i].type, SY_LOCAL, off, NULL};
+		ARR_GROW(generator->locals, generator->nlocals, generator->caplocals, Symbol);
+		generator->locals[generator->nlocals++] = (Symbol){declaration->params[index].name, declaration->params[index].type, SY_LOCAL, off, NULL};
 	}
-	off = collect_locals(g, d->body, off);
-	if(d->variadic)
-	{
+	off = collect_locals(generator, declaration->body, off);
+	if(declaration->variadic) {
 		off = align_up(off, 16) + 176;
-		g->vaoff = off;
+		generator->vaoff = off;
 	}
-	g->frame = align_up(off, 16);
-	snprintf(g->retlabel, sizeof(g->retlabel), ".Lreturn_%s_%ld", d->name, ++g->label);
-	emit(g, ".text");
-	if(!d->is_static)
-		emit(g, ".globl %s", d->name);
-	emit(g, ".type %s, @function", d->name);
-	emit(g, "%s:", d->name);
-	emit(g, "    push rbp");
-	emit(g, "    mov rbp, rsp");
-	if(g->frame)
-		emit(g, "    sub rsp, %ld", g->frame);
+	generator->frame = align_up(off, 16);
+	snprintf(generator->retlabel, sizeof(generator->retlabel), ".Lreturn_%s_%ld", declaration->name, ++generator->label);
+	emit(generator, ".text");
+	if(!declaration->is_static)
+		emit(generator, ".globl %s", declaration->name);
+	emit(generator, ".type %s, @function", declaration->name);
+	emit(generator, "%s:", declaration->name);
+	emit(generator, "    push rbp");
+	emit(generator, "    mov rbp, rsp");
+	if(generator->frame)
+		emit(generator, "    sub rsp, %ld", generator->frame);
 	{
 		size_t integer_parameter = 0;
 		size_t double_parameter = 0;
-
-		for(i = 0; i < d->nparams; i++)
-		{
-			s = find_local(g, d->params[i].name);
-			if(is_double_type(d->params[i].type))
-			{
+		for(index = 0; index < declaration->nparams; index++) {
+			s = find_local(generator, declaration->params[index].name);
+			if(is_double_type(declaration->params[index].type)) {
 				if(double_parameter >= 8)
 					fatal("native functions currently support up to 8 double register parameters");
-				emit(g, "    movq rax, xmm%zu", double_parameter++);
-				emit(g, "    mov qword ptr [rbp-%ld], rax", s->off);
+				emit(generator, "    movq rax, xmm%zu", double_parameter++);
+				emit(generator, "    mov qword ptr [rbp-%ld], rax", s->off);
 			} else if(integer_parameter < 6)
 			{
-				emit(g, "    mov qword ptr [rbp-%ld], %s", s->off, regs[integer_parameter++]);
+				emit(generator, "    mov qword ptr [rbp-%ld], %s", s->off, regs[integer_parameter++]);
 			} else {
-				emit(g, "    mov rax, qword ptr [rbp+%zu]", 16 + (integer_parameter - 6) * 8);
-				emit(g, "    mov qword ptr [rbp-%ld], rax", s->off);
+				emit(generator, "    mov rax, qword ptr [rbp+%zu]", 16 + (integer_parameter - 6) * 8);
+				emit(generator, "    mov qword ptr [rbp-%ld], rax", s->off);
 				integer_parameter++;
 			}
 		}
 	}
-	if(d->variadic)
-		for(i = 0; i < 6; i++)
-			emit(g, "    mov qword ptr [rbp-%ld], %s", g->vaoff - (long)i * 8, regs[i]);
-	gen_stmt(g, d->body);
-	emit(g, "    xor eax, eax");
-	emit(g, "%s:", g->retlabel);
-	emit(g, "    leave");
-	emit(g, "    ret");
-	emit(g, ".size %s, .-%s", d->name, d->name);
+	if(declaration->variadic)
+		for(index = 0; index < 6; index++)
+			emit(generator, "    mov qword ptr [rbp-%ld], %s", generator->vaoff - (long)index * 8, regs[index]);
+	gen_stmt(generator, declaration->body);
+	emit(generator, "    xor eax, eax");
+	emit(generator, "%s:", generator->retlabel);
+	emit(generator, "    leave");
+	emit(generator, "    ret");
+	emit(generator, ".size %s, .-%s", declaration->name, declaration->name);
 }
 
-static char *generate(Program *p)
+static char *generate(Program *pointer)
 {
 	Gen g = {0};
-	size_t i;
-	Decl *d;
-
-	g.prog = p;
-	for(i = 0; i < p->n; i++)
-	{
-		d = p->a[i];
-		if(d->body || d->prototype)
-		{
+	size_t index;
+	Decl *declaration;
+	g.prog = pointer;
+	for(index = 0; index < pointer->n; index++) {
+		declaration = pointer->a[index];
+		if(declaration->body || declaration->prototype) {
 			ARR_GROW(g.funcs, g.nfuncs, g.capfuncs, Decl *);
-			g.funcs[g.nfuncs++] = d;
+			g.funcs[g.nfuncs++] = declaration;
 		} else {
 			ARR_GROW(g.globals, g.nglobals, g.capglobals, Symbol);
 			g.globals[g.nglobals++] = (Symbol){
-				d->name, d->type, d->is_extern ? SY_EXTERN_GLOBAL : SY_GLOBAL, 0, NULL};
+				declaration->name, declaration->type, declaration->is_extern ? SY_EXTERN_GLOBAL : SY_GLOBAL, 0, NULL};
 		}
 	}
 	emit(&g, ".intel_syntax noprefix");
 	emit(&g, ".text");
-	for(i = 0; i < p->n; i++)
-		if(p->a[i]->body)
-			gen_function(&g, p->a[i]);
-	if(g.nglobals)
-	{
+	for(index = 0; index < pointer->n; index++)
+		if(pointer->a[index]->body)
+			gen_function(&g, pointer->a[index]);
+	if(g.nglobals) {
 		bool emitted_bss = false;
-
-		for(i = 0; i < g.nglobals; i++)
-		{
-			Symbol *sym = &g.globals[i];
-
+		for(index = 0; index < g.nglobals; index++) {
+			Symbol *sym = &g.globals[index];
 			if(sym->kind != SY_GLOBAL)
 				continue;
-			if(!emitted_bss)
-			{
+			if(!emitted_bss) {
 				emit(&g, ".bss");
 				emitted_bss = true;
 			}
@@ -3184,31 +2909,26 @@ static char *generate(Program *p)
 			emit(&g, "    .zero %ld", type_size(sym->type) > 0 ? type_size(sym->type) : 1);
 		}
 	}
-	if(g.ro.n)
-	{
+	if(g.ro.n) {
 		emit(&g, ".section .rodata");
 		bputn(&g.out, g.ro.s, g.ro.n);
 	}
 	emit(&g, ".section .note.GNU-stack,\"\",@progbits");
 	return g.out.s;
 }
-
 //assembler
-
 typedef enum
 {
 	ASEC_TEXT,
 	ASEC_RODATA,
 	ASEC_BSS
 } ASection;
-
 typedef struct
 {
 	char *name;
 	ASection section;
 	uint64_t offset;
 } ALabel;
-
 typedef enum
 {
 	FIX_REL32_SYMBOL,
@@ -3216,7 +2936,6 @@ typedef enum
 	FIX_RIP32_OBJECT,
 	FIX_RIP32_GOT
 } FixKind;
-
 typedef struct
 {
 	FixKind kind;
@@ -3224,7 +2943,6 @@ typedef struct
 	char *name;
 	long aux;
 } Fixup;
-
 typedef struct
 {
 	char *name;
@@ -3235,7 +2953,6 @@ typedef struct
 	uint64_t plt_offset;
 	uint32_t string_offset;
 } Import;
-
 typedef struct
 {
 	Buf text;
@@ -3259,132 +2976,124 @@ static uint64_t ualign(uint64_t value, uint64_t alignment)
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
-static void put_u8(Buf *b, uint8_t value)
+static void put_u8(Buf *buffer, uint8_t value)
 {
-	bputn(b, (char *)&value, 1);
+	bputn(buffer, (char *)&value, 1);
 }
 
-static void put_u32(Buf *b, uint32_t value)
+static void put_u32(Buf *buffer, uint32_t value)
 {
 	uint8_t bytes[4];
-
 	bytes[0] = (uint8_t)value;
 	bytes[1] = (uint8_t)(value >> 8);
 	bytes[2] = (uint8_t)(value >> 16);
 	bytes[3] = (uint8_t)(value >> 24);
-	bputn(b, (char *)bytes, sizeof(bytes));
+	bputn(buffer, (char *)bytes, sizeof(bytes));
 }
 
-static void put_u64(Buf *b, uint64_t value)
+static void put_u64(Buf *buffer, uint64_t value)
 {
 	uint8_t bytes[8];
-	int i;
-
-	for(i = 0; i < 8; i++)
-		bytes[i] = (uint8_t)(value >> (i * 8));
-	bputn(b, (char *)bytes, sizeof(bytes));
+	int index;
+	for(index = 0; index < 8; index++)
+		bytes[index] = (uint8_t)(value >> (index * 8));
+	bputn(buffer, (char *)bytes, sizeof(bytes));
 }
 
-static void patch_u32(Buf *b, uint64_t offset, uint32_t value)
+static void patch_u32(Buf *buffer, uint64_t offset, uint32_t value)
 {
-	if(offset + 4 > b->n)
+	if(offset + 4 > buffer->n)
 		fatal("internal: patch outside code buffer");
-	b->s[offset + 0] = (char)value;
-	b->s[offset + 1] = (char)(value >> 8);
-	b->s[offset + 2] = (char)(value >> 16);
-	b->s[offset + 3] = (char)(value >> 24);
+	buffer->s[offset + 0] = (char)value;
+	buffer->s[offset + 1] = (char)(value >> 8);
+	buffer->s[offset + 2] = (char)(value >> 16);
+	buffer->s[offset + 3] = (char)(value >> 24);
 }
 
-static Buf *current_buffer(AsmImage *a)
+static Buf *current_buffer(AsmImage *array)
 {
-	if(a->section == ASEC_TEXT)
-		return &a->text;
-	if(a->section == ASEC_RODATA)
-		return &a->rodata;
+	if(array->section == ASEC_TEXT)
+		return &array->text;
+	if(array->section == ASEC_RODATA)
+		return &array->rodata;
 	fatal("internal: attempted to emit bytes into BSS");
 	return NULL;
 }
 
-static uint64_t current_offset(AsmImage *a)
+static uint64_t current_offset(AsmImage *array)
 {
-	if(a->section == ASEC_TEXT)
-		return a->text.n;
-	if(a->section == ASEC_RODATA)
-		return a->rodata.n;
-	return a->bss_size;
+	if(array->section == ASEC_TEXT)
+		return array->text.n;
+	if(array->section == ASEC_RODATA)
+		return array->rodata.n;
+	return array->bss_size;
 }
 
-static void add_label(AsmImage *a, const char *name)
+static void add_label(AsmImage *array, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < a->nlabels; i++)
-		if(!strcmp(a->labels[i].name, name))
+	size_t index;
+	for(index = 0; index < array->nlabels; index++)
+		if(!strcmp(array->labels[index].name, name))
 			fatal("duplicate assembly label %s", name);
-	ARR_GROW(a->labels, a->nlabels, a->caplabels, ALabel);
-	a->labels[a->nlabels].name = xstrdup(name);
-	a->labels[a->nlabels].section = a->section;
-	a->labels[a->nlabels].offset = current_offset(a);
-	a->nlabels++;
+	ARR_GROW(array->labels, array->nlabels, array->caplabels, ALabel);
+	array->labels[array->nlabels].name = xstrdup(name);
+	array->labels[array->nlabels].section = array->section;
+	array->labels[array->nlabels].offset = current_offset(array);
+	array->nlabels++;
 }
 
-static ALabel *find_label(AsmImage *a, const char *name)
+static ALabel *find_label(AsmImage *array, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < a->nlabels; i++)
-		if(!strcmp(a->labels[i].name, name))
-			return &a->labels[i];
+	size_t index;
+	for(index = 0; index < array->nlabels; index++)
+		if(!strcmp(array->labels[index].name, name))
+			return &array->labels[index];
 	return NULL;
 }
 
-static Import *find_import(AsmImage *a, const char *name)
+static Import *find_import(AsmImage *array, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < a->nimports; i++)
-		if(!strcmp(a->imports[i].name, name))
-			return &a->imports[i];
+	size_t index;
+	for(index = 0; index < array->nimports; index++)
+		if(!strcmp(array->imports[index].name, name))
+			return &array->imports[index];
 	return NULL;
 }
 
-static Import *add_import(AsmImage *a, const char *name, bool object)
+static Import *add_import(AsmImage *array, const char *name, bool object)
 {
-	Import *import = find_import(a, name);
-
-	if(import)
-	{
+	Import *import = find_import(array, name);
+	if(import) {
 		if(object)
 			import->object = true;
 		return import;
 	}
-	ARR_GROW(a->imports, a->nimports, a->capimports, Import);
-	import = &a->imports[a->nimports++];
+	ARR_GROW(array->imports, array->nimports, array->capimports, Import);
+	import = &array->imports[array->nimports++];
 	memset(import, 0, sizeof(*import));
 	import->name = xstrdup(name);
 	import->object = object;
 	return import;
 }
 
-static void add_fixup(AsmImage *a, FixKind kind, uint64_t offset, const char *name, long aux)
+static void add_fixup(AsmImage *array, FixKind kind, uint64_t offset, const char *name, long aux)
 {
-	ARR_GROW(a->fixups, a->nfixups, a->capfixups, Fixup);
-	a->fixups[a->nfixups].kind = kind;
-	a->fixups[a->nfixups].offset = offset;
-	a->fixups[a->nfixups].name = name ? xstrdup(name) : NULL;
-	a->fixups[a->nfixups].aux = aux;
-	a->nfixups++;
+	ARR_GROW(array->fixups, array->nfixups, array->capfixups, Fixup);
+	array->fixups[array->nfixups].kind = kind;
+	array->fixups[array->nfixups].offset = offset;
+	array->fixups[array->nfixups].name = name ? xstrdup(name) : NULL;
+	array->fixups[array->nfixups].aux = aux;
+	array->nfixups++;
 }
 
 static int register_number(const char *name)
 {
 	static const char *names[] = {
 		"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
-	int i;
-
-	for(i = 0; i < 16; i++)
-		if(!strcmp(name, names[i]))
-			return i;
+	int index;
+	for(index = 0; index < 16; index++)
+		if(!strcmp(name, names[index]))
+			return index;
 	return -1;
 }
 
@@ -3392,7 +3101,6 @@ static int xmm_number(const char *name)
 {
 	char *end;
 	long number;
-
 	if(strncmp(name, "xmm", 3))
 		return -1;
 	number = strtol(name + 3, &end, 10);
@@ -3401,11 +3109,10 @@ static int xmm_number(const char *name)
 	return (int)number;
 }
 
-static void emit_rex(Buf *b, bool w, int reg, int index, int base)
+static void emit_rex(Buf *buffer, bool wide_operand, int reg, int index, int base)
 {
 	uint8_t rex = 0x40;
-
-	if(w)
+	if(wide_operand)
 		rex |= 8;
 	if(reg & 8)
 		rex |= 4;
@@ -3414,81 +3121,77 @@ static void emit_rex(Buf *b, bool w, int reg, int index, int base)
 	if(base & 8)
 		rex |= 1;
 	if(rex != 0x40)
-		put_u8(b, rex);
+		put_u8(buffer, rex);
 }
 
-static void emit_modrm(Buf *b, int mod, int reg, int rm)
+static void emit_modrm(Buf *buffer, int mod, int reg, int rm_operand)
 {
-	put_u8(b, (uint8_t)((mod << 6) | ((reg & 7) << 3) | (rm & 7)));
+	put_u8(buffer, (uint8_t)((mod << 6) | ((reg & 7) << 3) | (rm_operand & 7)));
 }
 
-static void emit_reg_reg(Buf *b, uint8_t opcode, int destination, int source)
+static void emit_reg_reg(Buf *buffer, uint8_t opcode, int destination, int source)
 {
-	emit_rex(b, true, source, 0, destination);
-	put_u8(b, opcode);
-	emit_modrm(b, 3, source, destination);
+	emit_rex(buffer, true, source, 0, destination);
+	put_u8(buffer, opcode);
+	emit_modrm(buffer, 3, source, destination);
 }
 
-static void emit_memory_operand(Buf *b, int reg, int base, long displacement)
+static void emit_memory_operand(Buf *buffer, int reg, int base, long displacement)
 {
 	int mod;
-
 	if(displacement == 0 && (base & 7) != 5)
 		mod = 0;
 	else if(displacement >= -128 && displacement <= 127)
 		mod = 1;
 	else
 		mod = 2;
-	emit_modrm(b, mod, reg, base);
+	emit_modrm(buffer, mod, reg, base);
 	if((base & 7) == 4)
-		put_u8(b, 0x24);
+		put_u8(buffer, 0x24);
 	if(mod == 1)
-		put_u8(b, (uint8_t)displacement);
+		put_u8(buffer, (uint8_t)displacement);
 	else if(mod == 2 || (mod == 0 && (base & 7) == 5))
-		put_u32(b, (uint32_t)displacement);
+		put_u32(buffer, (uint32_t)displacement);
 }
 
-static void emit_mov_memory_register(Buf *b, int base, long displacement, int source, int size)
+static void emit_mov_memory_register(Buf *buffer, int base, long displacement, int source, int size)
 {
-	if(size == 8)
-	{
-		emit_rex(b, true, source, 0, base);
-		put_u8(b, 0x89);
+	if(size == 8) {
+		emit_rex(buffer, true, source, 0, base);
+		put_u8(buffer, 0x89);
 	} else if(size == 4)
 	{
-		emit_rex(b, false, source, 0, base);
-		put_u8(b, 0x89);
+		emit_rex(buffer, false, source, 0, base);
+		put_u8(buffer, 0x89);
 	} else {
-		emit_rex(b, false, source, 0, base);
-		put_u8(b, 0x88);
+		emit_rex(buffer, false, source, 0, base);
+		put_u8(buffer, 0x88);
 	}
-	emit_memory_operand(b, source, base, displacement);
+	emit_memory_operand(buffer, source, base, displacement);
 }
 
-static void emit_mov_register_memory(Buf *b, int destination, int base, long displacement, int size)
+static void emit_mov_register_memory(Buf *buffer, int destination, int base, long displacement, int size)
 {
-	if(size == 8)
-	{
-		emit_rex(b, true, destination, 0, base);
-		put_u8(b, 0x8b);
+	if(size == 8) {
+		emit_rex(buffer, true, destination, 0, base);
+		put_u8(buffer, 0x8b);
 	} else {
-		emit_rex(b, false, destination, 0, base);
-		put_u8(b, 0x8b);
+		emit_rex(buffer, false, destination, 0, base);
+		put_u8(buffer, 0x8b);
 	}
-	emit_memory_operand(b, destination, base, displacement);
+	emit_memory_operand(buffer, destination, base, displacement);
 }
 
-static void emit_lea_memory(Buf *b, int destination, int base, long displacement)
+static void emit_lea_memory(Buf *buffer, int destination, int base, long displacement)
 {
-	emit_rex(b, true, destination, 0, base);
-	put_u8(b, 0x8d);
-	emit_memory_operand(b, destination, base, displacement);
+	emit_rex(buffer, true, destination, 0, base);
+	put_u8(buffer, 0x8d);
+	emit_memory_operand(buffer, destination, base, displacement);
 }
 
 static char *trim(char *line)
 {
 	char *end;
-
 	while(*line && isspace((unsigned char)*line))
 		line++;
 	end = line + strlen(line);
@@ -3497,272 +3200,231 @@ static char *trim(char *line)
 	return line;
 }
 
-static void emit_relative_fixup(AsmImage *a, uint8_t opcode, const char *name, bool conditional, uint8_t condition)
+static void emit_relative_fixup(AsmImage *array, uint8_t opcode, const char *name, bool conditional, uint8_t condition)
 {
-	Buf *b = &a->text;
-
-	if(conditional)
-	{
-		put_u8(b, 0x0f);
-		put_u8(b, condition);
+	Buf *buffer = &array->text;
+	if(conditional) {
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, condition);
 	} else {
-		put_u8(b, opcode);
+		put_u8(buffer, opcode);
 	}
-	add_fixup(a, FIX_REL32_SYMBOL, b->n, name, 0);
-	put_u32(b, 0);
+	add_fixup(array, FIX_REL32_SYMBOL, buffer->n, name, 0);
+	put_u32(buffer, 0);
 }
 
-static void assemble_instruction(AsmImage *a, char *line)
+static void assemble_instruction(AsmImage *array, char *line)
 {
-	Buf *b = current_buffer(a);
+	Buf *buffer = current_buffer(array);
 	char left[128], right[128], name[256], reg1[32], reg2[32];
 	long long signed_value;
 	unsigned long long unsigned_value;
 	long displacement;
-	int r1, r2;
-
-	if(!strcmp(line, "push rbp"))
-	{
-		put_u8(b, 0x55);
+	int first_register, second_register;
+	if(!strcmp(line, "push rbp")) {
+		put_u8(buffer, 0x55);
 		return;
 	}
-	if(!strcmp(line, "leave"))
-	{
-		put_u8(b, 0xc9);
+	if(!strcmp(line, "leave")) {
+		put_u8(buffer, 0xc9);
 		return;
 	}
-	if(!strcmp(line, "ret"))
-	{
-		put_u8(b, 0xc3);
+	if(!strcmp(line, "ret")) {
+		put_u8(buffer, 0xc3);
 		return;
 	}
-	if(!strcmp(line, "hlt"))
-	{
-		put_u8(b, 0xf4);
+	if(!strcmp(line, "hlt")) {
+		put_u8(buffer, 0xf4);
 		return;
 	}
-	if(!strcmp(line, "cli"))
-	{
-		put_u8(b, 0xfa);
+	if(!strcmp(line, "cli")) {
+		put_u8(buffer, 0xfa);
 		return;
 	}
-	if(!strcmp(line, "sti"))
-	{
-		put_u8(b, 0xfb);
+	if(!strcmp(line, "sti")) {
+		put_u8(buffer, 0xfb);
 		return;
 	}
-	if(!strcmp(line, "nop"))
-	{
-		put_u8(b, 0x90);
+	if(!strcmp(line, "nop")) {
+		put_u8(buffer, 0x90);
 		return;
 	}
-	if(!strcmp(line, "cld"))
-	{
-		put_u8(b, 0xfc);
+	if(!strcmp(line, "cld")) {
+		put_u8(buffer, 0xfc);
 		return;
 	}
-	if(!strcmp(line, "std"))
-	{
-		put_u8(b, 0xfd);
+	if(!strcmp(line, "std")) {
+		put_u8(buffer, 0xfd);
 		return;
 	}
-	if(!strcmp(line, "int3"))
-	{
-		put_u8(b, 0xcc);
+	if(!strcmp(line, "int3")) {
+		put_u8(buffer, 0xcc);
 		return;
 	}
-	if(!strcmp(line, "pause"))
-	{
-		put_u8(b, 0xf3);
-		put_u8(b, 0x90);
+	if(!strcmp(line, "pause")) {
+		put_u8(buffer, 0xf3);
+		put_u8(buffer, 0x90);
 		return;
 	}
-	if(!strcmp(line, "ud2"))
-	{
-		put_u8(b, 0x0f);
-		put_u8(b, 0x0b);
+	if(!strcmp(line, "ud2")) {
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0x0b);
 		return;
 	}
-	if(!strcmp(line, "cqo"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x99);
+	if(!strcmp(line, "cqo")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x99);
 		return;
 	}
-	if(!strcmp(line, "xor eax, eax"))
-	{
-		put_u8(b, 0x31);
-		put_u8(b, 0xc0);
+	if(!strcmp(line, "xor eax, eax")) {
+		put_u8(buffer, 0x31);
+		put_u8(buffer, 0xc0);
 		return;
 	}
-	if(!strcmp(line, "test rax, rax"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x85);
-		put_u8(b, 0xc0);
+	if(!strcmp(line, "test rax, rax")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x85);
+		put_u8(buffer, 0xc0);
 		return;
 	}
-	if(!strcmp(line, "cmp rcx, rax"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x39);
-		put_u8(b, 0xc1);
+	if(!strcmp(line, "cmp rcx, rax")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x39);
+		put_u8(buffer, 0xc1);
 		return;
 	}
-	if(!strcmp(line, "movzx eax, byte ptr [rax]"))
-	{
-		put_u8(b, 0x0f);
-		put_u8(b, 0xb6);
-		put_u8(b, 0x00);
+	if(!strcmp(line, "movzx eax, byte ptr [rax]")) {
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xb6);
+		put_u8(buffer, 0x00);
 		return;
 	}
-	if(!strcmp(line, "movzx eax, word ptr [rax]"))
-	{
-		put_u8(b, 0x0f);
-		put_u8(b, 0xb7);
-		put_u8(b, 0x00);
+	if(!strcmp(line, "movzx eax, word ptr [rax]")) {
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xb7);
+		put_u8(buffer, 0x00);
 		return;
 	}
-	if(!strcmp(line, "mov eax, dword ptr [rax]"))
-	{
-		put_u8(b, 0x8b);
-		put_u8(b, 0x00);
+	if(!strcmp(line, "mov eax, dword ptr [rax]")) {
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x00);
 		return;
 	}
-	if(!strcmp(line, "movsxd rax, dword ptr [rax]"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x63);
-		put_u8(b, 0x00);
+	if(!strcmp(line, "movsxd rax, dword ptr [rax]")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x63);
+		put_u8(buffer, 0x00);
 		return;
 	}
-	if(!strcmp(line, "mov rax, qword ptr [rax]"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x00);
+	if(!strcmp(line, "mov rax, qword ptr [rax]")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x00);
 		return;
 	}
-	if(!strcmp(line, "mov byte ptr [rcx], al"))
-	{
-		put_u8(b, 0x88);
-		put_u8(b, 0x01);
+	if(!strcmp(line, "mov byte ptr [rcx], al")) {
+		put_u8(buffer, 0x88);
+		put_u8(buffer, 0x01);
 		return;
 	}
-	if(!strcmp(line, "mov word ptr [rcx], ax"))
-	{
-		put_u8(b, 0x66);
-		put_u8(b, 0x89);
-		put_u8(b, 0x01);
+	if(!strcmp(line, "mov word ptr [rcx], ax")) {
+		put_u8(buffer, 0x66);
+		put_u8(buffer, 0x89);
+		put_u8(buffer, 0x01);
 		return;
 	}
-	if(!strcmp(line, "mov dword ptr [rcx], eax"))
-	{
-		put_u8(b, 0x89);
-		put_u8(b, 0x01);
+	if(!strcmp(line, "mov dword ptr [rcx], eax")) {
+		put_u8(buffer, 0x89);
+		put_u8(buffer, 0x01);
 		return;
 	}
-	if(!strcmp(line, "mov qword ptr [rcx], rax"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x89);
-		put_u8(b, 0x01);
+	if(!strcmp(line, "mov qword ptr [rcx], rax")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x89);
+		put_u8(buffer, 0x01);
 		return;
 	}
-	if(!strcmp(line, "movzx rax, al"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x0f);
-		put_u8(b, 0xb6);
-		put_u8(b, 0xc0);
+	if(!strcmp(line, "movzx rax, al")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xb6);
+		put_u8(buffer, 0xc0);
 		return;
 	}
-	if(!strcmp(line, "movzx eax, al"))
-	{
-		put_u8(b, 0x0f);
-		put_u8(b, 0xb6);
-		put_u8(b, 0xc0);
+	if(!strcmp(line, "movzx eax, al")) {
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xb6);
+		put_u8(buffer, 0xc0);
 		return;
 	}
-	if(!strcmp(line, "movzx eax, ax"))
-	{
-		put_u8(b, 0x0f);
-		put_u8(b, 0xb7);
-		put_u8(b, 0xc0);
+	if(!strcmp(line, "movzx eax, ax")) {
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xb7);
+		put_u8(buffer, 0xc0);
 		return;
 	}
-	if(!strcmp(line, "movsxd rax, eax"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x63);
-		put_u8(b, 0xc0);
+	if(!strcmp(line, "movsxd rax, eax")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x63);
+		put_u8(buffer, 0xc0);
 		return;
 	}
-	if(!strcmp(line, "mov eax, eax"))
-	{
-		put_u8(b, 0x89);
-		put_u8(b, 0xc0);
+	if(!strcmp(line, "mov eax, eax")) {
+		put_u8(buffer, 0x89);
+		put_u8(buffer, 0xc0);
 		return;
 	}
-	if(sscanf(line, "movq %31[^,], %31s", reg1, reg2) == 2)
-	{
-		int xd = xmm_number(reg1);
-		int xs = xmm_number(reg2);
-		r1 = register_number(reg1);
-		r2 = register_number(reg2);
-		if(xd >= 0 && r2 >= 0)
-		{
-			put_u8(b, 0x66);
-			emit_rex(b, true, xd, 0, r2);
-			put_u8(b, 0x0f);
-			put_u8(b, 0x6e);
-			emit_modrm(b, 3, xd, r2);
+	if(sscanf(line, "movq %31[^,], %31s", reg1, reg2) == 2) {
+		int destination_xmm = xmm_number(reg1);
+		int source_xmm = xmm_number(reg2);
+		first_register = register_number(reg1);
+		second_register = register_number(reg2);
+		if(destination_xmm >= 0 && second_register >= 0) {
+			put_u8(buffer, 0x66);
+			emit_rex(buffer, true, destination_xmm, 0, second_register);
+			put_u8(buffer, 0x0f);
+			put_u8(buffer, 0x6e);
+			emit_modrm(buffer, 3, destination_xmm, second_register);
 			return;
 		}
-		if(r1 >= 0 && xs >= 0)
-		{
-			put_u8(b, 0x66);
-			emit_rex(b, true, xs, 0, r1);
-			put_u8(b, 0x0f);
-			put_u8(b, 0x7e);
-			emit_modrm(b, 3, xs, r1);
+		if(first_register >= 0 && source_xmm >= 0) {
+			put_u8(buffer, 0x66);
+			emit_rex(buffer, true, source_xmm, 0, first_register);
+			put_u8(buffer, 0x0f);
+			put_u8(buffer, 0x7e);
+			emit_modrm(buffer, 3, source_xmm, first_register);
 			return;
 		}
 	}
-	if(sscanf(line, "cvtsi2sd %31[^,], %31s", reg1, reg2) == 2)
-	{
-		int xd = xmm_number(reg1);
-		r2 = register_number(reg2);
-		if(xd >= 0 && r2 >= 0)
-		{
-			put_u8(b, 0xf2);
-			emit_rex(b, true, xd, 0, r2);
-			put_u8(b, 0x0f);
-			put_u8(b, 0x2a);
-			emit_modrm(b, 3, xd, r2);
+	if(sscanf(line, "cvtsi2sd %31[^,], %31s", reg1, reg2) == 2) {
+		int destination_xmm = xmm_number(reg1);
+		second_register = register_number(reg2);
+		if(destination_xmm >= 0 && second_register >= 0) {
+			put_u8(buffer, 0xf2);
+			emit_rex(buffer, true, destination_xmm, 0, second_register);
+			put_u8(buffer, 0x0f);
+			put_u8(buffer, 0x2a);
+			emit_modrm(buffer, 3, destination_xmm, second_register);
 			return;
 		}
 	}
-	if(sscanf(line, "cvttsd2si %31[^,], %31s", reg1, reg2) == 2)
-	{
-		r1 = register_number(reg1);
-		int xs = xmm_number(reg2);
-		if(r1 >= 0 && xs >= 0)
-		{
-			put_u8(b, 0xf2);
-			emit_rex(b, true, r1, 0, xs);
-			put_u8(b, 0x0f);
-			put_u8(b, 0x2c);
-			emit_modrm(b, 3, r1, xs);
+	if(sscanf(line, "cvttsd2si %31[^,], %31s", reg1, reg2) == 2) {
+		first_register = register_number(reg1);
+		int source_xmm = xmm_number(reg2);
+		if(first_register >= 0 && source_xmm >= 0) {
+			put_u8(buffer, 0xf2);
+			emit_rex(buffer, true, first_register, 0, source_xmm);
+			put_u8(buffer, 0x0f);
+			put_u8(buffer, 0x2c);
+			emit_modrm(buffer, 3, first_register, source_xmm);
 			return;
 		}
 	}
 	{
 		char mnemonic[16];
-		if(sscanf(line, "%15s %31[^,], %31s", mnemonic, reg1, reg2) == 3)
-		{
-			int xd = xmm_number(reg1);
-			int xs = xmm_number(reg2);
+		if(sscanf(line, "%15s %31[^,], %31s", mnemonic, reg1, reg2) == 3) {
+			int destination_xmm = xmm_number(reg1);
+			int source_xmm = xmm_number(reg2);
 			uint8_t opcode = 0;
 			if(!strcmp(mnemonic, "addsd"))
 				opcode = 0x58;
@@ -3772,448 +3434,398 @@ static void assemble_instruction(AsmImage *a, char *line)
 				opcode = 0x59;
 			else if(!strcmp(mnemonic, "divsd"))
 				opcode = 0x5e;
-			if(opcode && xd >= 0 && xs >= 0)
-			{
-				put_u8(b, 0xf2);
-				emit_rex(b, false, xd, 0, xs);
-				put_u8(b, 0x0f);
-				put_u8(b, opcode);
-				emit_modrm(b, 3, xd, xs);
+			if(opcode && destination_xmm >= 0 && source_xmm >= 0) {
+				put_u8(buffer, 0xf2);
+				emit_rex(buffer, false, destination_xmm, 0, source_xmm);
+				put_u8(buffer, 0x0f);
+				put_u8(buffer, opcode);
+				emit_modrm(buffer, 3, destination_xmm, source_xmm);
 				return;
 			}
 		}
 	}
-	if(!strcmp(line, "not rax"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0xf7);
-		put_u8(b, 0xd0);
+	if(!strcmp(line, "not rax")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0xf7);
+		put_u8(buffer, 0xd0);
 		return;
 	}
-	if(!strcmp(line, "neg rax"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0xf7);
-		put_u8(b, 0xd8);
+	if(!strcmp(line, "neg rax")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0xf7);
+		put_u8(buffer, 0xd8);
 		return;
 	}
-	if(!strcmp(line, "idiv r10"))
-	{
-		put_u8(b, 0x49);
-		put_u8(b, 0xf7);
-		put_u8(b, 0xfa);
+	if(!strcmp(line, "idiv r10")) {
+		put_u8(buffer, 0x49);
+		put_u8(buffer, 0xf7);
+		put_u8(buffer, 0xfa);
 		return;
 	}
-	if(!strcmp(line, "shl rax, cl"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0xd3);
-		put_u8(b, 0xe0);
+	if(!strcmp(line, "shl rax, cl")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0xd3);
+		put_u8(buffer, 0xe0);
 		return;
 	}
-	if(!strcmp(line, "sar rax, cl"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0xd3);
-		put_u8(b, 0xf8);
+	if(!strcmp(line, "sar rax, cl")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0xd3);
+		put_u8(buffer, 0xf8);
 		return;
 	}
-	if(!strncmp(line, "set", 3) && strstr(line, " al"))
-	{
+	if(!strncmp(line, "set", 3) && strstr(line, " al")) {
 		uint8_t condition;
-		char cc[8];
-
-		if(sscanf(line, "set%7s al", cc) != 1)
+		char condition_code[8];
+		if(sscanf(line, "set%7s al", condition_code) != 1)
 			fatal("internal assembler: %s", line);
-		if(!strcmp(cc, "e"))
+		if(!strcmp(condition_code, "e"))
 			condition = 0x94;
-		else if(!strcmp(cc, "ne"))
+		else if(!strcmp(condition_code, "ne"))
 			condition = 0x95;
-		else if(!strcmp(cc, "l"))
+		else if(!strcmp(condition_code, "l"))
 			condition = 0x9c;
-		else if(!strcmp(cc, "le"))
+		else if(!strcmp(condition_code, "le"))
 			condition = 0x9e;
-		else if(!strcmp(cc, "g"))
+		else if(!strcmp(condition_code, "g"))
 			condition = 0x9f;
-		else if(!strcmp(cc, "ge"))
+		else if(!strcmp(condition_code, "ge"))
 			condition = 0x9d;
 		else
-			fatal("unsupported condition code %s", cc);
-		put_u8(b, 0x0f);
-		put_u8(b, condition);
-		put_u8(b, 0xc0);
+			fatal("unsupported condition code %s", condition_code);
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, condition);
+		put_u8(buffer, 0xc0);
 		return;
 	}
 	if(sscanf(line, "push %31s", reg1) == 1 &&
 	   register_number(reg1) >= 0)
 	{
-		r1 = register_number(reg1);
-		if(r1 >= 8)
-			put_u8(b, 0x41);
-		put_u8(b, (uint8_t)(0x50 + (r1 & 7)));
+		first_register = register_number(reg1);
+		if(first_register >= 8)
+			put_u8(buffer, 0x41);
+		put_u8(buffer, (uint8_t)(0x50 + (first_register & 7)));
 		return;
 	}
 	if(sscanf(line, "pop %31s", reg1) == 1 &&
 	   register_number(reg1) >= 0)
 	{
-		r1 = register_number(reg1);
-		if(r1 >= 8)
-			put_u8(b, 0x41);
-		put_u8(b, (uint8_t)(0x58 + (r1 & 7)));
+		first_register = register_number(reg1);
+		if(first_register >= 8)
+			put_u8(buffer, 0x41);
+		put_u8(buffer, (uint8_t)(0x58 + (first_register & 7)));
 		return;
 	}
-	if(sscanf(line, "jmp %255s", name) == 1)
-	{
-		emit_relative_fixup(a, 0xe9, name, false, 0);
+	if(sscanf(line, "jmp %255s", name) == 1) {
+		emit_relative_fixup(array, 0xe9, name, false, 0);
 		return;
 	}
-	if(sscanf(line, "jz %255s", name) == 1)
-	{
-		emit_relative_fixup(a, 0, name, true, 0x84);
+	if(sscanf(line, "jz %255s", name) == 1) {
+		emit_relative_fixup(array, 0, name, true, 0x84);
 		return;
 	}
-	if(sscanf(line, "jnz %255s", name) == 1)
-	{
-		emit_relative_fixup(a, 0, name, true, 0x85);
+	if(sscanf(line, "jnz %255s", name) == 1) {
+		emit_relative_fixup(array, 0, name, true, 0x85);
 		return;
 	}
-	if(sscanf(line, "call %255s", name) == 1)
-	{
+	if(sscanf(line, "call %255s", name) == 1) {
 		char *suffix = strstr(name, "@PLT");
-
 		if(suffix)
 			*suffix = 0;
-		put_u8(b, 0xe8);
-		add_fixup(a, FIX_REL32_SYMBOL, b->n, name, 0);
-		put_u32(b, 0);
-		add_import(a, name, false);
+		put_u8(buffer, 0xe8);
+		add_fixup(array, FIX_REL32_SYMBOL, buffer->n, name, 0);
+		put_u32(buffer, 0);
+		add_import(array, name, false);
 		return;
 	}
-	if(sscanf(line, "mov %31[^,], %31s", reg1, reg2) == 2)
-	{
-		r1 = register_number(reg1);
-		r2 = register_number(reg2);
-		if(r1 >= 0 && r2 >= 0)
-		{
-			emit_reg_reg(b, 0x89, r1, r2);
+	if(sscanf(line, "mov %31[^,], %31s", reg1, reg2) == 2) {
+		first_register = register_number(reg1);
+		second_register = register_number(reg2);
+		if(first_register >= 0 && second_register >= 0) {
+			emit_reg_reg(buffer, 0x89, first_register, second_register);
 			return;
 		}
 	}
-	if(sscanf(line, "mov rax, %llu", &unsigned_value) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0xb8);
-		put_u64(b, (uint64_t)unsigned_value);
+	if(sscanf(line, "mov rax, %llu", &unsigned_value) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0xb8);
+		put_u64(buffer, (uint64_t)unsigned_value);
 		return;
 	}
-	if(sscanf(line, "mov eax, %lld", &signed_value) == 1)
-	{
-		put_u8(b, 0xb8);
-		put_u32(b, (uint32_t)signed_value);
+	if(sscanf(line, "mov eax, %lld", &signed_value) == 1) {
+		put_u8(buffer, 0xb8);
+		put_u32(buffer, (uint32_t)signed_value);
 		return;
 	}
-	if(sscanf(line, "lea %31[^,], [rbp-%ld]", reg1, &displacement) == 2)
-	{
-		r1 = register_number(reg1);
-		if(r1 < 0)
+	if(sscanf(line, "lea %31[^,], [rbp-%ld]", reg1, &displacement) == 2) {
+		first_register = register_number(reg1);
+		if(first_register < 0)
 			fatal("bad register in %s", line);
-		emit_lea_memory(b, r1, 5, -displacement);
+		emit_lea_memory(buffer, first_register, 5, -displacement);
 		return;
 	}
-	if(sscanf(line, "lea %31[^,], [rbp+%ld]", reg1, &displacement) == 2)
-	{
-		r1 = register_number(reg1);
-		if(r1 < 0)
+	if(sscanf(line, "lea %31[^,], [rbp+%ld]", reg1, &displacement) == 2) {
+		first_register = register_number(reg1);
+		if(first_register < 0)
 			fatal("bad register in %s", line);
-		emit_lea_memory(b, r1, 5, displacement);
+		emit_lea_memory(buffer, first_register, 5, displacement);
 		return;
 	}
-	if(sscanf(line, "lea rax, [rip+%255[^]]]", name) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x8d);
-		put_u8(b, 0x05);
-		add_fixup(a, FIX_RIP32_SYMBOL, b->n, name, 0);
-		put_u32(b, 0);
+	if(sscanf(line, "lea rax, [rip+%255[^]]]", name) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8d);
+		put_u8(buffer, 0x05);
+		add_fixup(array, FIX_RIP32_SYMBOL, buffer->n, name, 0);
+		put_u32(buffer, 0);
 		return;
 	}
-	if(sscanf(line, "movzx eax, byte ptr [rip+%255[^]]]", name) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x05);
-		add_fixup(a, FIX_RIP32_OBJECT, b->n, name, 0);
-		put_u32(b, 0);
-		put_u8(b, 0x0f);
-		put_u8(b, 0xb6);
-		put_u8(b, 0x00);
-		add_import(a, name, true);
+	if(sscanf(line, "movzx eax, byte ptr [rip+%255[^]]]", name) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x05);
+		add_fixup(array, FIX_RIP32_OBJECT, buffer->n, name, 0);
+		put_u32(buffer, 0);
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xb6);
+		put_u8(buffer, 0x00);
+		add_import(array, name, true);
 		return;
 	}
-	if(sscanf(line, "movzx eax, word ptr [rip+%255[^]]]", name) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x05);
-		add_fixup(a, FIX_RIP32_OBJECT, b->n, name, 0);
-		put_u32(b, 0);
-		put_u8(b, 0x0f);
-		put_u8(b, 0xb7);
-		put_u8(b, 0x00);
-		add_import(a, name, true);
+	if(sscanf(line, "movzx eax, word ptr [rip+%255[^]]]", name) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x05);
+		add_fixup(array, FIX_RIP32_OBJECT, buffer->n, name, 0);
+		put_u32(buffer, 0);
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xb7);
+		put_u8(buffer, 0x00);
+		add_import(array, name, true);
 		return;
 	}
-	if(sscanf(line, "movsxd rax, dword ptr [rip+%255[^]]]", name) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x05);
-		add_fixup(a, FIX_RIP32_OBJECT, b->n, name, 0);
-		put_u32(b, 0);
-		put_u8(b, 0x48);
-		put_u8(b, 0x63);
-		put_u8(b, 0x00);
-		add_import(a, name, true);
+	if(sscanf(line, "movsxd rax, dword ptr [rip+%255[^]]]", name) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x05);
+		add_fixup(array, FIX_RIP32_OBJECT, buffer->n, name, 0);
+		put_u32(buffer, 0);
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x63);
+		put_u8(buffer, 0x00);
+		add_import(array, name, true);
 		return;
 	}
-	if(sscanf(line, "mov eax, dword ptr [rip+%255[^]]]", name) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x05);
-		add_fixup(a, FIX_RIP32_OBJECT, b->n, name, 0);
-		put_u32(b, 0);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x00);
-		add_import(a, name, true);
+	if(sscanf(line, "mov eax, dword ptr [rip+%255[^]]]", name) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x05);
+		add_fixup(array, FIX_RIP32_OBJECT, buffer->n, name, 0);
+		put_u32(buffer, 0);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x00);
+		add_import(array, name, true);
 		return;
 	}
-	if(sscanf(line, "mov rax, qword ptr [rip+%255[^]]]", name) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x05);
-		add_fixup(a, FIX_RIP32_OBJECT, b->n, name, 0);
-		put_u32(b, 0);
-		put_u8(b, 0x48);
-		put_u8(b, 0x8b);
-		put_u8(b, 0x00);
-		add_import(a, name, true);
+	if(sscanf(line, "mov rax, qword ptr [rip+%255[^]]]", name) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x05);
+		add_fixup(array, FIX_RIP32_OBJECT, buffer->n, name, 0);
+		put_u32(buffer, 0);
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x8b);
+		put_u8(buffer, 0x00);
+		add_import(array, name, true);
 		return;
 	}
-	if(sscanf(line, "mov rax, qword ptr [rbp+%ld]", &displacement) == 1)
-	{
-		emit_mov_register_memory(b, 0, 5, displacement, 8);
+	if(sscanf(line, "mov rax, qword ptr [rbp+%ld]", &displacement) == 1) {
+		emit_mov_register_memory(buffer, 0, 5, displacement, 8);
 		return;
 	}
-	if(sscanf(line, "mov qword ptr [rbp-%ld], %31s", &displacement, reg1) == 2)
-	{
-		r1 = register_number(reg1);
-		if(r1 < 0)
+	if(sscanf(line, "mov qword ptr [rbp-%ld], %31s", &displacement, reg1) == 2) {
+		first_register = register_number(reg1);
+		if(first_register < 0)
 			fatal("bad register in %s", line);
-		emit_mov_memory_register(b, 5, -displacement, r1, 8);
+		emit_mov_memory_register(buffer, 5, -displacement, first_register, 8);
 		return;
 	}
-	if(sscanf(line, "mov qword ptr [rax+%ld], %31s", &displacement, reg1) == 2)
-	{
-		r1 = register_number(reg1);
-		if(r1 < 0)
+	if(sscanf(line, "mov qword ptr [rax+%ld], %31s", &displacement, reg1) == 2) {
+		first_register = register_number(reg1);
+		if(first_register < 0)
 			fatal("bad register in %s", line);
-		emit_mov_memory_register(b, 0, displacement, r1, 8);
+		emit_mov_memory_register(buffer, 0, displacement, first_register, 8);
 		return;
 	}
-	if(sscanf(line, "mov qword ptr [rax], %31s", reg1) == 1)
-	{
-		r1 = register_number(reg1);
-		if(r1 < 0)
+	if(sscanf(line, "mov qword ptr [rax], %31s", reg1) == 1) {
+		first_register = register_number(reg1);
+		if(first_register < 0)
 			fatal("bad register in %s", line);
-		emit_mov_memory_register(b, 0, 0, r1, 8);
+		emit_mov_memory_register(buffer, 0, 0, first_register, 8);
 		return;
 	}
-	if(sscanf(line, "mov dword ptr [rax+%ld], %lld", &displacement, &signed_value) == 2)
-	{
-		put_u8(b, 0xc7);
-		emit_memory_operand(b, 0, 0, displacement);
-		put_u32(b, (uint32_t)signed_value);
+	if(sscanf(line, "mov dword ptr [rax+%ld], %lld", &displacement, &signed_value) == 2) {
+		put_u8(buffer, 0xc7);
+		emit_memory_operand(buffer, 0, 0, displacement);
+		put_u32(buffer, (uint32_t)signed_value);
 		return;
 	}
-	if(sscanf(line, "mov dword ptr [rax], %lld", &signed_value) == 1)
-	{
-		put_u8(b, 0xc7);
-		emit_memory_operand(b, 0, 0, 0);
-		put_u32(b, (uint32_t)signed_value);
+	if(sscanf(line, "mov dword ptr [rax], %lld", &signed_value) == 1) {
+		put_u8(buffer, 0xc7);
+		emit_memory_operand(buffer, 0, 0, 0);
+		put_u32(buffer, (uint32_t)signed_value);
 		return;
 	}
 	if(sscanf(line, "sub rsp, %lld", &signed_value) == 1 ||
 	   sscanf(line, "add rsp, %lld", &signed_value) == 1)
 	{
 		bool add = !strncmp(line, "add", 3);
-
-		put_u8(b, 0x48);
-		if(signed_value >= -128 && signed_value <= 127)
-		{
-			put_u8(b, 0x83);
-			put_u8(b, add ? 0xc4 : 0xec);
-			put_u8(b, (uint8_t)signed_value);
+		put_u8(buffer, 0x48);
+		if(signed_value >= -128 && signed_value <= 127) {
+			put_u8(buffer, 0x83);
+			put_u8(buffer, add ? 0xc4 : 0xec);
+			put_u8(buffer, (uint8_t)signed_value);
 		} else {
-			put_u8(b, 0x81);
-			put_u8(b, add ? 0xc4 : 0xec);
-			put_u32(b, (uint32_t)signed_value);
+			put_u8(buffer, 0x81);
+			put_u8(buffer, add ? 0xc4 : 0xec);
+			put_u32(buffer, (uint32_t)signed_value);
 		}
 		return;
 	}
-	if(sscanf(line, "imul rax, %lld", &signed_value) == 1)
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x69);
-		put_u8(b, 0xc0);
-		put_u32(b, (uint32_t)signed_value);
+	if(sscanf(line, "imul rax, %lld", &signed_value) == 1) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x69);
+		put_u8(buffer, 0xc0);
+		put_u32(buffer, (uint32_t)signed_value);
 		return;
 	}
 	if(sscanf(line, "add rax, %lld", &signed_value) == 1 ||
 	   sscanf(line, "sub rax, %lld", &signed_value) == 1)
 	{
 		bool add = !strncmp(line, "add", 3);
-
-		put_u8(b, 0x48);
-		if(signed_value >= -128 && signed_value <= 127)
-		{
-			put_u8(b, 0x83);
-			put_u8(b, add ? 0xc0 : 0xe8);
-			put_u8(b, (uint8_t)signed_value);
+		put_u8(buffer, 0x48);
+		if(signed_value >= -128 && signed_value <= 127) {
+			put_u8(buffer, 0x83);
+			put_u8(buffer, add ? 0xc0 : 0xe8);
+			put_u8(buffer, (uint8_t)signed_value);
 		} else {
-			put_u8(b, add ? 0x05 : 0x2d);
-			put_u32(b, (uint32_t)signed_value);
+			put_u8(buffer, add ? 0x05 : 0x2d);
+			put_u32(buffer, (uint32_t)signed_value);
 		}
 		return;
 	}
-	if(!strcmp(line, "add rax, rcx"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x01);
-		put_u8(b, 0xc8);
+	if(!strcmp(line, "add rax, rcx")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x01);
+		put_u8(buffer, 0xc8);
 		return;
 	}
-	if(!strcmp(line, "sub rcx, rax"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x29);
-		put_u8(b, 0xc1);
+	if(!strcmp(line, "sub rcx, rax")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x29);
+		put_u8(buffer, 0xc1);
 		return;
 	}
-	if(!strcmp(line, "imul rax, rcx"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x0f);
-		put_u8(b, 0xaf);
-		put_u8(b, 0xc1);
+	if(!strcmp(line, "imul rax, rcx")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x0f);
+		put_u8(buffer, 0xaf);
+		put_u8(buffer, 0xc1);
 		return;
 	}
-	if(!strcmp(line, "and rax, rcx"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x21);
-		put_u8(b, 0xc8);
+	if(!strcmp(line, "and rax, rcx")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x21);
+		put_u8(buffer, 0xc8);
 		return;
 	}
-	if(!strcmp(line, "or rax, rcx"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x09);
-		put_u8(b, 0xc8);
+	if(!strcmp(line, "or rax, rcx")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x09);
+		put_u8(buffer, 0xc8);
 		return;
 	}
-	if(!strcmp(line, "xor rax, rcx"))
-	{
-		put_u8(b, 0x48);
-		put_u8(b, 0x31);
-		put_u8(b, 0xc8);
+	if(!strcmp(line, "xor rax, rcx")) {
+		put_u8(buffer, 0x48);
+		put_u8(buffer, 0x31);
+		put_u8(buffer, 0xc8);
 		return;
 	}
-
 	if(sscanf(line, "%127[^,], %127s", left, right) == 2)
 		fatal("unsupported internal assembly instruction: %s, %s", left, right);
 	fatal("unsupported internal assembly instruction: %s", line);
 }
 
-static void align_assembly_section(AsmImage *a, uint64_t alignment)
+static void align_assembly_section(AsmImage *array, uint64_t alignment)
 {
-	if(a->section == ASEC_BSS)
-	{
-		a->bss_size = ualign(a->bss_size, alignment);
+	if(array->section == ASEC_BSS) {
+		array->bss_size = ualign(array->bss_size, alignment);
 		return;
 	}
-	while(current_buffer(a)->n % alignment)
-		put_u8(current_buffer(a), 0);
+	while(current_buffer(array)->n % alignment)
+		put_u8(current_buffer(array), 0);
 }
 
-static void parse_byte_directive(Buf *b, const char *line)
+static void parse_byte_directive(Buf *buffer, const char *line)
 {
-	const char *p = line + 5;
-
-	while(*p)
-	{
+	const char *position = line + 5;
+	while(*position) {
 		char *end;
 		unsigned long value;
-
-		while(*p == ' ' || *p == '\t' || *p == ',')
-			p++;
-		if(!*p)
+		while(*position == ' ' || *position == '\t' || *position == ',')
+			position++;
+		if(!*position)
 			break;
-		value = strtoul(p, &end, 0);
-		if(end == p || value > 255)
+		value = strtoul(position, &end, 0);
+		if(end == position || value > 255)
 			fatal("bad .byte directive");
-		put_u8(b, (uint8_t)value);
-		p = end;
+		put_u8(buffer, (uint8_t)value);
+		position = end;
 	}
 }
 
-static void add_startup(AsmImage *a)
+static void add_startup(AsmImage *array)
 {
-	Buf *b = &a->text;
-
-	a->section = ASEC_TEXT;
-	add_label(a, "_start");
-	put_u8(b, 0x31);
-	put_u8(b, 0xed);
-	put_u8(b, 0x48);
-	put_u8(b, 0x8b);
-	put_u8(b, 0x3c);
-	put_u8(b, 0x24);
-	put_u8(b, 0x48);
-	put_u8(b, 0x8d);
-	put_u8(b, 0x74);
-	put_u8(b, 0x24);
-	put_u8(b, 0x08);
-	put_u8(b, 0x48);
-	put_u8(b, 0x83);
-	put_u8(b, 0xe4);
-	put_u8(b, 0xf0);
-	put_u8(b, 0xe8);
-	add_fixup(a, FIX_REL32_SYMBOL, b->n, "main", 0);
-	put_u32(b, 0);
-	put_u8(b, 0x89);
-	put_u8(b, 0xc7);
-	put_u8(b, 0xb8);
-	put_u32(b, 60);
-	put_u8(b, 0x0f);
-	put_u8(b, 0x05);
+	Buf *buffer = &array->text;
+	array->section = ASEC_TEXT;
+	add_label(array, "_start");
+	put_u8(buffer, 0x31);
+	put_u8(buffer, 0xed);
+	put_u8(buffer, 0x48);
+	put_u8(buffer, 0x8b);
+	put_u8(buffer, 0x3c);
+	put_u8(buffer, 0x24);
+	put_u8(buffer, 0x48);
+	put_u8(buffer, 0x8d);
+	put_u8(buffer, 0x74);
+	put_u8(buffer, 0x24);
+	put_u8(buffer, 0x08);
+	put_u8(buffer, 0x48);
+	put_u8(buffer, 0x83);
+	put_u8(buffer, 0xe4);
+	put_u8(buffer, 0xf0);
+	put_u8(buffer, 0xe8);
+	add_fixup(array, FIX_REL32_SYMBOL, buffer->n, "main", 0);
+	put_u32(buffer, 0);
+	put_u8(buffer, 0x89);
+	put_u8(buffer, 0xc7);
+	put_u8(buffer, 0xb8);
+	put_u32(buffer, 60);
+	put_u8(buffer, 0x0f);
+	put_u8(buffer, 0x05);
 }
 
-static void internal_assemble(const char *assembly, AsmImage *a)
+static void internal_assemble(const char *assembly, AsmImage *array)
 {
 	char *copy = xstrdup(assembly);
 	char *save = NULL;
 	char *raw;
-
-	memset(a, 0, sizeof(*a));
-	add_startup(a);
+	memset(array, 0, sizeof(*array));
+	add_startup(array);
 	for(raw = strtok_r(copy, "\n", &save); raw;
 	    raw = strtok_r(NULL, "\n", &save))
 	{
 		char *line = trim(raw);
 		size_t length;
-
 		if(!*line)
 			continue;
 		if(!strncmp(line, ".intel_syntax", 13) ||
@@ -4222,123 +3834,106 @@ static void internal_assemble(const char *assembly, AsmImage *a)
 		   !strncmp(line, ".size", 5) ||
 		   !strncmp(line, ".section .note", 14))
 			continue;
-		if(!strcmp(line, ".text"))
-		{
-			a->section = ASEC_TEXT;
+		if(!strcmp(line, ".text")) {
+			array->section = ASEC_TEXT;
 			continue;
 		}
-		if(!strcmp(line, ".bss"))
-		{
-			a->section = ASEC_BSS;
+		if(!strcmp(line, ".bss")) {
+			array->section = ASEC_BSS;
 			continue;
 		}
-		if(!strcmp(line, ".section .rodata"))
-		{
-			a->section = ASEC_RODATA;
+		if(!strcmp(line, ".section .rodata")) {
+			array->section = ASEC_RODATA;
 			continue;
 		}
-		if(!strncmp(line, ".align ", 7))
-		{
-			align_assembly_section(a, strtoull(line + 7, NULL, 0));
+		if(!strncmp(line, ".align ", 7)) {
+			align_assembly_section(array, strtoull(line + 7, NULL, 0));
 			continue;
 		}
-		if(!strncmp(line, ".zero ", 6))
-		{
+		if(!strncmp(line, ".zero ", 6)) {
 			uint64_t count = strtoull(line + 6, NULL, 0);
-
-			if(a->section == ASEC_BSS)
-				a->bss_size += count;
+			if(array->section == ASEC_BSS)
+				array->bss_size += count;
 			else
 				while(count--)
-					put_u8(current_buffer(a), 0);
+					put_u8(current_buffer(array), 0);
 			continue;
 		}
-		if(!strncmp(line, ".byte", 5))
-		{
-			parse_byte_directive(current_buffer(a), line);
+		if(!strncmp(line, ".byte", 5)) {
+			parse_byte_directive(current_buffer(array), line);
 			continue;
 		}
 		length = strlen(line);
-		if(length && line[length - 1] == ':')
-		{
+		if(length && line[length - 1] == ':') {
 			line[length - 1] = 0;
-			add_label(a, line);
+			add_label(array, line);
 			continue;
 		}
-		if(a->section != ASEC_TEXT)
+		if(array->section != ASEC_TEXT)
 			fatal("instruction outside text section: %s", line);
-		assemble_instruction(a, line);
+		assemble_instruction(array, line);
 	}
 	free(copy);
 }
 
-static void append_plt(AsmImage *a)
+static void append_plt(AsmImage *array)
 {
-	Buf *b = &a->text;
-	size_t i;
+	Buf *buffer = &array->text;
+	size_t index;
 	uint32_t relocation_index = 0;
-
-	while(b->n & 15)
-		put_u8(b, 0x90);
-	a->plt0_offset = b->n;
-	put_u8(b, 0xff);
-	put_u8(b, 0x35);
-	add_fixup(a, FIX_RIP32_GOT, b->n, NULL, 1);
-	put_u32(b, 0);
-	put_u8(b, 0xff);
-	put_u8(b, 0x25);
-	add_fixup(a, FIX_RIP32_GOT, b->n, NULL, 2);
-	put_u32(b, 0);
-	put_u8(b, 0x0f);
-	put_u8(b, 0x1f);
-	put_u8(b, 0x40);
-	put_u8(b, 0x00);
-	for(i = 0; i < a->nimports; i++)
-	{
-		Import *import = &a->imports[i];
-
+	while(buffer->n & 15)
+		put_u8(buffer, 0x90);
+	array->plt0_offset = buffer->n;
+	put_u8(buffer, 0xff);
+	put_u8(buffer, 0x35);
+	add_fixup(array, FIX_RIP32_GOT, buffer->n, NULL, 1);
+	put_u32(buffer, 0);
+	put_u8(buffer, 0xff);
+	put_u8(buffer, 0x25);
+	add_fixup(array, FIX_RIP32_GOT, buffer->n, NULL, 2);
+	put_u32(buffer, 0);
+	put_u8(buffer, 0x0f);
+	put_u8(buffer, 0x1f);
+	put_u8(buffer, 0x40);
+	put_u8(buffer, 0x00);
+	for(index = 0; index < array->nimports; index++) {
+		Import *import = &array->imports[index];
 		if(import->object)
 			continue;
-		import->plt_offset = b->n;
+		import->plt_offset = buffer->n;
 		import->plt_reloc_index = relocation_index++;
-		put_u8(b, 0xff);
-		put_u8(b, 0x25);
-		add_fixup(a, FIX_RIP32_GOT, b->n, NULL, import->got_index);
-		put_u32(b, 0);
-		put_u8(b, 0x68);
-		put_u32(b, import->plt_reloc_index);
-		put_u8(b, 0xe9);
-		add_fixup(a, FIX_REL32_SYMBOL, b->n, "@plt0", 0);
-		put_u32(b, 0);
+		put_u8(buffer, 0xff);
+		put_u8(buffer, 0x25);
+		add_fixup(array, FIX_RIP32_GOT, buffer->n, NULL, import->got_index);
+		put_u32(buffer, 0);
+		put_u8(buffer, 0x68);
+		put_u32(buffer, import->plt_reloc_index);
+		put_u8(buffer, 0xe9);
+		add_fixup(array, FIX_REL32_SYMBOL, buffer->n, "@plt0", 0);
+		put_u32(buffer, 0);
 	}
 }
 
-static void prune_local_imports(AsmImage *a)
+static void prune_local_imports(AsmImage *array)
 {
 	size_t read_index;
 	size_t write_index = 0;
-
-	for(read_index = 0; read_index < a->nimports; read_index++)
-	{
-		Import *import = &a->imports[read_index];
-
-		if(find_label(a, import->name))
+	for(read_index = 0; read_index < array->nimports; read_index++) {
+		Import *import = &array->imports[read_index];
+		if(find_label(array, import->name))
 			continue;
 		if(write_index != read_index)
-			a->imports[write_index] = *import;
+			array->imports[write_index] = *import;
 		write_index++;
 	}
-	a->nimports = write_index;
+	array->nimports = write_index;
 }
 
 static uint32_t sysv_hash(const unsigned char *name)
 {
 	uint32_t hash = 0;
-
-	while(*name)
-	{
+	while(*name) {
 		uint32_t high;
-
 		hash = (hash << 4) + *name++;
 		high = hash & 0xf0000000;
 		if(high)
@@ -4348,9 +3943,9 @@ static uint32_t sysv_hash(const unsigned char *name)
 	return hash;
 }
 
-static uint64_t symbol_address(AsmImage *a, ALabel *label, uint64_t text_va, uint64_t rodata_va, uint64_t bss_va)
+static uint64_t symbol_address(AsmImage *array_1, ALabel *label, uint64_t text_va, uint64_t rodata_va, uint64_t bss_va)
 {
-	(void)a;
+	(void)array_1;
 	if(label->section == ASEC_TEXT)
 		return text_va + label->offset;
 	if(label->section == ASEC_RODATA)
@@ -4358,45 +3953,37 @@ static uint64_t symbol_address(AsmImage *a, ALabel *label, uint64_t text_va, uin
 	return bss_va + label->offset;
 }
 
-static Import *require_import(AsmImage *a, const char *name, bool object)
+static Import *require_import(AsmImage *array, const char *name, bool object)
 {
-	Import *import = add_import(a, name, object);
-
+	Import *import = add_import(array, name, object);
 	if(object)
 		import->object = true;
 	return import;
 }
 
-static void patch_code(AsmImage *a, uint64_t text_va, uint64_t rodata_va, uint64_t bss_va, uint64_t got_va)
+static void patch_code(AsmImage *array, uint64_t text_va, uint64_t rodata_va, uint64_t bss_va, uint64_t got_va)
 {
-	size_t i;
-
-	for(i = 0; i < a->nfixups; i++)
-	{
-		Fixup *fix = &a->fixups[i];
+	size_t index;
+	for(index = 0; index < array->nfixups; index++) {
+		Fixup *fix = &array->fixups[index];
 		uint64_t place = text_va + fix->offset;
 		uint64_t target = 0;
 		int64_t relative;
-
-		if(fix->kind == FIX_RIP32_GOT)
-		{
+		if(fix->kind == FIX_RIP32_GOT) {
 			target = got_va + (uint64_t)fix->aux * 8;
 		} else if(fix->name && !strcmp(fix->name, "@plt0"))
 		{
-			target = text_va + a->plt0_offset;
+			target = text_va + array->plt0_offset;
 		} else {
-			ALabel *label = fix->name ? find_label(a, fix->name) : NULL;
-
+			ALabel *label = fix->name ? find_label(array, fix->name) : NULL;
 			if(label)
-				target = symbol_address(a, label, text_va, rodata_va, bss_va);
-			else
-			{
+				target = symbol_address(array, label, text_va, rodata_va, bss_va);
+			else {
 				Import *import;
-
 				if(fix->kind == FIX_RIP32_OBJECT)
-					import = require_import(a, fix->name, true);
+					import = require_import(array, fix->name, true);
 				else
-					import = require_import(a, fix->name, false);
+					import = require_import(array, fix->name, false);
 				if(fix->kind == FIX_RIP32_OBJECT)
 					target = got_va + (uint64_t)import->got_index * 8;
 				else
@@ -4406,7 +3993,7 @@ static void patch_code(AsmImage *a, uint64_t text_va, uint64_t rodata_va, uint64
 		relative = (int64_t)target - (int64_t)(place + 4);
 		if(relative < INT32_MIN || relative > INT32_MAX)
 			fatal("internal: relative relocation overflow");
-		patch_u32(&a->text, fix->offset, (uint32_t)(int32_t)relative);
+		patch_u32(&array->text, fix->offset, (uint32_t)(int32_t)relative);
 	}
 }
 
@@ -4415,7 +4002,7 @@ static void copy_into(uint8_t *file, uint64_t offset, const void *data, size_t s
 	memcpy(file + offset, data, size);
 }
 
-static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11, char **libraries, size_t library_count)
+static void write_independent_elf(const char *path, AsmImage *array, bool needs_x11, char **libraries, size_t library_count)
 {
 	const uint64_t base = 0x400000;
 	const char interpreter[] = "/lib64/ld-linux-x86-64.so.2";
@@ -4444,30 +4031,26 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 	uint8_t *file;
 	Elf64_Ehdr *ehdr;
 	Elf64_Phdr *phdr;
-	size_t i;
+	size_t index_1;
 	uint32_t next_got = 3;
 	uint32_t next_symbol = 1;
 	uint32_t next_function_relocation = 0;
 	uint32_t next_object_relocation = 0;
-
-	prune_local_imports(a);
+	prune_local_imports(array);
 	put_u8(&dynstr, 0);
 	needed_offsets = xcalloc(needed_count, sizeof(*needed_offsets));
 	needed_offsets[0] = dynstr.n;
 	bputs(&dynstr, "libc.so.6");
 	put_u8(&dynstr, 0);
-	if(needs_x11)
-	{
+	if(needs_x11) {
 		needed_offsets[1] = dynstr.n;
 		bputs(&dynstr, "libX11.so.6");
 		put_u8(&dynstr, 0);
 	}
-	for(i = 0; i < library_count; i++)
-	{
+	for(index_1 = 0; index_1 < library_count; index_1++) {
 		char library_name[256];
-		uint32_t index = 1 + (needs_x11 ? 1 : 0) + (uint32_t)i;
-		const char *argument = libraries[i];
-
+		uint32_t index = 1 + (needs_x11 ? 1 : 0) + (uint32_t)index_1;
+		const char *argument = libraries[index_1];
 		if(!strncmp(argument, "-l", 2))
 			argument += 2;
 		if(strstr(argument, ".so"))
@@ -4478,10 +4061,8 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 		bputs(&dynstr, library_name);
 		put_u8(&dynstr, 0);
 	}
-	for(i = 0; i < a->nimports; i++)
-	{
-		Import *import = &a->imports[i];
-
+	for(index_1 = 0; index_1 < array->nimports; index_1++) {
+		Import *import = &array->imports[index_1];
 		import->symbol_index = next_symbol++;
 		import->got_index = next_got++;
 		import->string_offset = dynstr.n;
@@ -4492,15 +4073,12 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 		else
 			function_count++;
 	}
-	append_plt(a);
-
-	symbol_count = (uint32_t)a->nimports + 1;
+	append_plt(array);
+	symbol_count = (uint32_t)array->nimports + 1;
 	dynsym = xcalloc(symbol_count, sizeof(*dynsym));
-	for(i = 0; i < a->nimports; i++)
-	{
-		Import *import = &a->imports[i];
+	for(index_1 = 0; index_1 < array->nimports; index_1++) {
+		Import *import = &array->imports[index_1];
 		Elf64_Sym *symbol = &dynsym[import->symbol_index];
-
 		symbol->st_name = import->string_offset;
 		symbol->st_info = ELF64_ST_INFO(STB_GLOBAL,
 						import->object ? STT_OBJECT : STT_FUNC);
@@ -4513,32 +4091,27 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 	hash[1] = symbol_count;
 	buckets = hash + 2;
 	chains = buckets + bucket_count;
-	for(i = 1; i < symbol_count; i++)
-	{
-		uint32_t bucket = sysv_hash((unsigned char *)a->imports[i - 1].name) % bucket_count;
-
+	for(index_1 = 1; index_1 < symbol_count; index_1++) {
+		uint32_t bucket = sysv_hash((unsigned char *)array->imports[index_1 - 1].name) % bucket_count;
 		if(!buckets[bucket])
-			buckets[bucket] = (uint32_t)i;
-		else
-		{
+			buckets[bucket] = (uint32_t)index_1;
+		else {
 			uint32_t link = buckets[bucket];
-
 			while(chains[link])
 				link = chains[link];
-			chains[link] = (uint32_t)i;
+			chains[link] = (uint32_t)index_1;
 		}
 	}
 	rela_dyn = xcalloc(object_count ? object_count : 1, sizeof(*rela_dyn));
 	rela_plt = xcalloc(function_count ? function_count : 1, sizeof(*rela_plt));
-	got = xcalloc(3 + a->nimports, sizeof(*got));
-
+	got = xcalloc(3 + array->nimports, sizeof(*got));
 	cursor = ualign(sizeof(Elf64_Ehdr) + phnum * sizeof(Elf64_Phdr), 16);
 	interp_off = cursor;
 	cursor += sizeof(interpreter);
 	text_off = ualign(cursor, 16);
-	cursor = text_off + a->text.n;
+	cursor = text_off + array->text.n;
 	rodata_off = ualign(cursor, 16);
-	cursor = rodata_off + a->rodata.n;
+	cursor = rodata_off + array->rodata.n;
 	dynstr_off = ualign(cursor, 8);
 	cursor = dynstr_off + dynstr.n;
 	dynsym_off = ualign(cursor, 8);
@@ -4550,35 +4123,29 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 	rela_plt_off = ualign(cursor, 8);
 	cursor = rela_plt_off + function_count * sizeof(Elf64_Rela);
 	got_off = ualign(cursor, 8);
-	cursor = got_off + (3 + a->nimports) * sizeof(uint64_t);
+	cursor = got_off + (3 + array->nimports) * sizeof(uint64_t);
 	dynamic_count = needed_count + 12 + 1;
 	dynamic_off = ualign(cursor, 8);
 	cursor = dynamic_off + dynamic_count * sizeof(Elf64_Dyn);
 	file_size = ualign(cursor, 16);
 	bss_off = file_size;
-	memory_size = bss_off + a->bss_size;
-
+	memory_size = bss_off + array->bss_size;
 	text_va = base + text_off;
 	rodata_va = base + rodata_off;
 	bss_va = base + bss_off;
 	got_va = base + got_off;
 	dynamic_va = base + dynamic_off;
 	got[0] = dynamic_va;
-	for(i = 0; i < a->nimports; i++)
-	{
-		Import *import = &a->imports[i];
-
-		if(import->object)
-		{
+	for(index_1 = 0; index_1 < array->nimports; index_1++) {
+		Import *import = &array->imports[index_1];
+		if(import->object) {
 			Elf64_Rela *relocation = &rela_dyn[next_object_relocation++];
-
 			relocation->r_offset = got_va + (uint64_t)import->got_index * 8;
 			relocation->r_info = ELF64_R_INFO(import->symbol_index,
 							  R_X86_64_GLOB_DAT);
 			relocation->r_addend = 0;
 		} else {
 			Elf64_Rela *relocation = &rela_plt[next_function_relocation++];
-
 			relocation->r_offset = got_va + (uint64_t)import->got_index * 8;
 			relocation->r_info = ELF64_R_INFO(import->symbol_index,
 							  R_X86_64_JUMP_SLOT);
@@ -4586,44 +4153,40 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 			got[import->got_index] = text_va + import->plt_offset + 6;
 		}
 	}
-	patch_code(a, text_va, rodata_va, bss_va, got_va);
-
+	patch_code(array, text_va, rodata_va, bss_va, got_va);
 	dynamic = xcalloc(dynamic_count, sizeof(*dynamic));
 	{
-		uint32_t d = 0;
-
-		for(i = 0; i < needed_count; i++)
-		{
-			dynamic[d].d_tag = DT_NEEDED;
-			dynamic[d++].d_un.d_val = needed_offsets[i];
+		uint32_t value = 0;
+		for(index_1 = 0; index_1 < needed_count; index_1++) {
+			dynamic[value].d_tag = DT_NEEDED;
+			dynamic[value++].d_un.d_val = needed_offsets[index_1];
 		}
-		dynamic[d].d_tag = DT_HASH;
-		dynamic[d++].d_un.d_ptr = base + hash_off;
-		dynamic[d].d_tag = DT_STRTAB;
-		dynamic[d++].d_un.d_ptr = base + dynstr_off;
-		dynamic[d].d_tag = DT_SYMTAB;
-		dynamic[d++].d_un.d_ptr = base + dynsym_off;
-		dynamic[d].d_tag = DT_STRSZ;
-		dynamic[d++].d_un.d_val = dynstr.n;
-		dynamic[d].d_tag = DT_SYMENT;
-		dynamic[d++].d_un.d_val = sizeof(Elf64_Sym);
-		dynamic[d].d_tag = DT_PLTGOT;
-		dynamic[d++].d_un.d_ptr = got_va;
-		dynamic[d].d_tag = DT_PLTRELSZ;
-		dynamic[d++].d_un.d_val = function_count * sizeof(Elf64_Rela);
-		dynamic[d].d_tag = DT_PLTREL;
-		dynamic[d++].d_un.d_val = DT_RELA;
-		dynamic[d].d_tag = DT_JMPREL;
-		dynamic[d++].d_un.d_ptr = base + rela_plt_off;
-		dynamic[d].d_tag = DT_RELA;
-		dynamic[d++].d_un.d_ptr = base + rela_dyn_off;
-		dynamic[d].d_tag = DT_RELASZ;
-		dynamic[d++].d_un.d_val = object_count * sizeof(Elf64_Rela);
-		dynamic[d].d_tag = DT_RELAENT;
-		dynamic[d++].d_un.d_val = sizeof(Elf64_Rela);
-		dynamic[d].d_tag = DT_NULL;
+		dynamic[value].d_tag = DT_HASH;
+		dynamic[value++].d_un.d_ptr = base + hash_off;
+		dynamic[value].d_tag = DT_STRTAB;
+		dynamic[value++].d_un.d_ptr = base + dynstr_off;
+		dynamic[value].d_tag = DT_SYMTAB;
+		dynamic[value++].d_un.d_ptr = base + dynsym_off;
+		dynamic[value].d_tag = DT_STRSZ;
+		dynamic[value++].d_un.d_val = dynstr.n;
+		dynamic[value].d_tag = DT_SYMENT;
+		dynamic[value++].d_un.d_val = sizeof(Elf64_Sym);
+		dynamic[value].d_tag = DT_PLTGOT;
+		dynamic[value++].d_un.d_ptr = got_va;
+		dynamic[value].d_tag = DT_PLTRELSZ;
+		dynamic[value++].d_un.d_val = function_count * sizeof(Elf64_Rela);
+		dynamic[value].d_tag = DT_PLTREL;
+		dynamic[value++].d_un.d_val = DT_RELA;
+		dynamic[value].d_tag = DT_JMPREL;
+		dynamic[value++].d_un.d_ptr = base + rela_plt_off;
+		dynamic[value].d_tag = DT_RELA;
+		dynamic[value++].d_un.d_ptr = base + rela_dyn_off;
+		dynamic[value].d_tag = DT_RELASZ;
+		dynamic[value++].d_un.d_val = object_count * sizeof(Elf64_Rela);
+		dynamic[value].d_tag = DT_RELAENT;
+		dynamic[value++].d_un.d_val = sizeof(Elf64_Rela);
+		dynamic[value].d_tag = DT_NULL;
 	}
-
 	file = xcalloc(file_size, 1);
 	ehdr = (Elf64_Ehdr *)file;
 	memcpy(ehdr->e_ident, ELFMAG, SELFMAG);
@@ -4675,24 +4238,21 @@ static void write_independent_elf(const char *path, AsmImage *a, bool needs_x11,
 	phdr[4].p_type = PT_GNU_STACK;
 	phdr[4].p_flags = PF_R | PF_W;
 	phdr[4].p_align = 16;
-
 	copy_into(file, interp_off, interpreter, sizeof(interpreter));
-	copy_into(file, text_off, a->text.s, a->text.n);
-	copy_into(file, rodata_off, a->rodata.s, a->rodata.n);
+	copy_into(file, text_off, array->text.s, array->text.n);
+	copy_into(file, rodata_off, array->rodata.s, array->rodata.n);
 	copy_into(file, dynstr_off, dynstr.s, dynstr.n);
 	copy_into(file, dynsym_off, dynsym, symbol_count * sizeof(Elf64_Sym));
 	copy_into(file, hash_off, hash, (2 + bucket_count + symbol_count) * sizeof(uint32_t));
 	copy_into(file, rela_dyn_off, rela_dyn, object_count * sizeof(Elf64_Rela));
 	copy_into(file, rela_plt_off, rela_plt, function_count * sizeof(Elf64_Rela));
-	copy_into(file, got_off, got, (3 + a->nimports) * sizeof(uint64_t));
+	copy_into(file, got_off, got, (3 + array->nimports) * sizeof(uint64_t));
 	copy_into(file, dynamic_off, dynamic, dynamic_count * sizeof(Elf64_Dyn));
 	write_file(path, (char *)file, file_size);
 	if(chmod(path, 0755))
 		fatal("cannot make %s executable: %s", path, strerror(errno));
 }
-
 //i386 backend
-
 typedef struct
 {
 	char *name;
@@ -4705,7 +4265,6 @@ typedef struct
 	uint32_t size;
 	uint32_t index;
 } I386ObjSymbol;
-
 typedef struct
 {
 	uint32_t offset;
@@ -4714,33 +4273,28 @@ typedef struct
 	uint16_t section_symbol;
 	uint16_t target_section;
 } I386Relocation;
-
 typedef struct
 {
 	char *name;
 	uint32_t offset;
 	bool defined;
 } I386Label;
-
 typedef struct
 {
 	char *name;
 	uint32_t offset;
 } I386JumpFixup;
-
 typedef struct
 {
 	char *name;
 	CType *type;
 	long offset;
 } I386Local;
-
 typedef struct
 {
 	char *value;
 	uint32_t offset;
 } I386String;
-
 typedef struct
 {
 	Program *program;
@@ -4777,7 +4331,6 @@ typedef struct
 	size_t ncontinue_labels;
 	size_t capcontinue_labels;
 } I386Gen;
-
 enum
 {
 	I386_SEC_NULL,
@@ -4792,13 +4345,11 @@ enum
 	I386_SEC_SHSTRTAB,
 	I386_SEC_COUNT
 };
-
 static long i386_type_align(CType *type);
 
 static long i386_type_size(CType *type)
 {
-	switch(type->kind)
-	{
+	switch(type->kind) {
 	case TY_VOID:
 		return 0;
 	case TY_CHAR:
@@ -4819,14 +4370,11 @@ static long i386_type_size(CType *type)
 	{
 		long offset = 0;
 		long maximum = 1;
-		size_t i;
-
-		for(i = 0; i < type->nmembers; i++)
-		{
-			long alignment = type->packed ? 1 : i386_type_align(type->members[i].type);
-
+		size_t index;
+		for(index = 0; index < type->nmembers; index++) {
+			long alignment = type->packed ? 1 : i386_type_align(type->members[index].type);
 			offset = align_up(offset, alignment);
-			offset += i386_type_size(type->members[i].type);
+			offset += i386_type_size(type->members[index].type);
 			if(alignment > maximum)
 				maximum = alignment;
 		}
@@ -4848,21 +4396,15 @@ static long i386_type_size(CType *type)
 static long i386_type_align(CType *type)
 {
 	long size;
-
 	if(type->kind == TY_ARRAY)
 		return i386_type_align(type->base);
-	if(type->kind == TY_STRUCT)
-	{
+	if(type->kind == TY_STRUCT) {
 		long maximum = 1;
-
 		if(type->packed)
 			return 1;
-		size_t i;
-
-		for(i = 0; i < type->nmembers; i++)
-		{
-			long alignment = i386_type_align(type->members[i].type);
-
+		size_t index;
+		for(index = 0; index < type->nmembers; index++) {
+			long alignment = i386_type_align(type->members[index].type);
 			if(alignment > maximum)
 				maximum = alignment;
 		}
@@ -4906,11 +4448,10 @@ static uint32_t i386_align32(uint32_t value, uint32_t alignment)
 static I386ObjSymbol *i386_find_object_symbol(I386Gen *gen,
 					      const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < gen->nsymbols; i++)
-		if(!strcmp(gen->symbols[i].name, name))
-			return &gen->symbols[i];
+	size_t index;
+	for(index = 0; index < gen->nsymbols; index++)
+		if(!strcmp(gen->symbols[index].name, name))
+			return &gen->symbols[index];
 	return NULL;
 }
 
@@ -4920,9 +4461,7 @@ static I386ObjSymbol *i386_add_object_symbol(I386Gen *gen,
 					     bool function)
 {
 	I386ObjSymbol *symbol = i386_find_object_symbol(gen, name);
-
-	if(symbol)
-	{
+	if(symbol) {
 		if(function != symbol->function)
 			fatal("symbol %s declared as both object and function", name);
 		return symbol;
@@ -4939,7 +4478,6 @@ static I386ObjSymbol *i386_add_object_symbol(I386Gen *gen,
 static void i386_add_relocation(I386Gen *gen, uint16_t target_section, uint32_t offset, uint32_t type, const char *symbol, uint16_t section_symbol)
 {
 	I386Relocation *relocation;
-
 	ARR_GROW(gen->relocations, gen->nrelocations, gen->caprelocations, I386Relocation);
 	relocation = &gen->relocations[gen->nrelocations++];
 	relocation->offset = offset;
@@ -4951,20 +4489,17 @@ static void i386_add_relocation(I386Gen *gen, uint16_t target_section, uint32_t 
 
 static I386Label *i386_find_label(I386Gen *gen, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < gen->nlabels; i++)
-		if(!strcmp(gen->labels[i].name, name))
-			return &gen->labels[i];
+	size_t index;
+	for(index = 0; index < gen->nlabels; index++)
+		if(!strcmp(gen->labels[index].name, name))
+			return &gen->labels[index];
 	return NULL;
 }
 
 static void i386_define_label(I386Gen *gen, const char *name)
 {
 	I386Label *label = i386_find_label(gen, name);
-
-	if(!label)
-	{
+	if(!label) {
 		ARR_GROW(gen->labels, gen->nlabels, gen->caplabels, I386Label);
 		label = &gen->labels[gen->nlabels++];
 		memset(label, 0, sizeof(*label));
@@ -4979,7 +4514,6 @@ static void i386_define_label(I386Gen *gen, const char *name)
 static char *i386_new_label(I386Gen *gen, const char *prefix)
 {
 	char buffer[128];
-
 	snprintf(buffer, sizeof(buffer), "%s%ld", prefix, ++gen->label_number);
 	return xstrdup(buffer);
 }
@@ -4987,7 +4521,6 @@ static char *i386_new_label(I386Gen *gen, const char *prefix)
 static void i386_add_jump_fixup(I386Gen *gen, const char *name, uint32_t offset)
 {
 	I386JumpFixup *fixup;
-
 	ARR_GROW(gen->jump_fixups, gen->njump_fixups, gen->capjump_fixups, I386JumpFixup);
 	fixup = &gen->jump_fixups[gen->njump_fixups++];
 	fixup->name = xstrdup(name);
@@ -4997,9 +4530,7 @@ static void i386_add_jump_fixup(I386Gen *gen, const char *name, uint32_t offset)
 static void i386_emit_jump(I386Gen *gen, uint8_t condition, const char *label)
 {
 	uint32_t offset;
-
-	if(condition == 0xff)
-	{
+	if(condition == 0xff) {
 		i386_put8(&gen->text, 0xe9);
 	} else {
 		i386_put8(&gen->text, 0x0f);
@@ -5012,14 +4543,11 @@ static void i386_emit_jump(I386Gen *gen, uint8_t condition, const char *label)
 
 static void i386_patch_jumps(I386Gen *gen)
 {
-	size_t i;
-
-	for(i = 0; i < gen->njump_fixups; i++)
-	{
-		I386JumpFixup *fixup = &gen->jump_fixups[i];
+	size_t index;
+	for(index = 0; index < gen->njump_fixups; index++) {
+		I386JumpFixup *fixup = &gen->jump_fixups[index];
 		I386Label *label = i386_find_label(gen, fixup->name);
 		int64_t displacement;
-
 		if(!label || !label->defined)
 			fatal("internal: undefined i386 label %s", fixup->name);
 		displacement = (int64_t)label->offset -
@@ -5030,23 +4558,19 @@ static void i386_patch_jumps(I386Gen *gen)
 
 static I386Local *i386_find_local(I386Gen *gen, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < gen->nlocals; i++)
-		if(!strcmp(gen->locals[i].name, name))
-			return &gen->locals[i];
+	size_t index;
+	for(index = 0; index < gen->nlocals; index++)
+		if(!strcmp(gen->locals[index].name, name))
+			return &gen->locals[index];
 	return NULL;
 }
 
 static Decl *i386_find_function(Program *program, const char *name)
 {
-	size_t i;
+	size_t index;
 	Decl *prototype = NULL;
-
-	for(i = 0; i < program->n; i++)
-	{
-		Decl *declaration = program->a[i];
-
+	for(index = 0; index < program->n; index++) {
+		Decl *declaration = program->a[index];
 		if(strcmp(declaration->name, name))
 			continue;
 		if(!(declaration->body || declaration->prototype))
@@ -5060,13 +4584,10 @@ static Decl *i386_find_function(Program *program, const char *name)
 
 static Decl *i386_find_global(Program *program, const char *name)
 {
-	size_t i;
+	size_t index;
 	Decl *external = NULL;
-
-	for(i = 0; i < program->n; i++)
-	{
-		Decl *declaration = program->a[i];
-
+	for(index = 0; index < program->n; index++) {
+		Decl *declaration = program->a[index];
 		if(strcmp(declaration->name, name))
 			continue;
 		if(declaration->body || declaration->prototype)
@@ -5083,22 +4604,18 @@ static StructMember *i386_find_struct_member(CType *type,
 					     long *member_offset)
 {
 	long offset = 0;
-	size_t i;
-
+	size_t index;
 	if(!type || type->kind != TY_STRUCT)
 		return NULL;
-	for(i = 0; i < type->nmembers; i++)
-	{
-		long alignment = type->packed ? 1 : i386_type_align(type->members[i].type);
-
+	for(index = 0; index < type->nmembers; index++) {
+		long alignment = type->packed ? 1 : i386_type_align(type->members[index].type);
 		offset = align_up(offset, alignment);
-		if(!strcmp(type->members[i].name, name))
-		{
+		if(!strcmp(type->members[index].name, name)) {
 			if(member_offset)
 				*member_offset = offset;
-			return &type->members[i];
+			return &type->members[index];
 		}
-		offset += i386_type_size(type->members[i].type);
+		offset += i386_type_size(type->members[index].type);
 	}
 	return NULL;
 }
@@ -5108,11 +4625,9 @@ static CType *i386_expr_type(I386Gen *gen, Expr *expression)
 	CType *type;
 	Decl *declaration;
 	I386Local *local;
-
 	if(expression->type)
 		return expression->type;
-	switch(expression->kind)
-	{
+	switch(expression->kind) {
 	case EX_ID:
 		local = i386_find_local(gen, expression->str);
 		if(local)
@@ -5131,8 +4646,7 @@ static CType *i386_expr_type(I386Gen *gen, Expr *expression)
 	case EX_UNARY:
 		if(!strcmp(expression->op, "&"))
 			return ptr_to(i386_expr_type(gen, expression->left));
-		if(!strcmp(expression->op, "*"))
-		{
+		if(!strcmp(expression->op, "*")) {
 			type = i386_expr_type(gen, expression->left);
 			return type->base ? type->base : &T_U32;
 		}
@@ -5144,7 +4658,6 @@ static CType *i386_expr_type(I386Gen *gen, Expr *expression)
 	case EX_PTRMEMBER:
 	{
 		StructMember *member;
-
 		type = i386_expr_type(gen, expression->left);
 		if(expression->kind == EX_PTRMEMBER)
 			type = type && type->kind == TY_PTR ? type->base : NULL;
@@ -5167,8 +4680,7 @@ static CType *i386_expr_type(I386Gen *gen, Expr *expression)
 			return &T_INT;
 		return i386_expr_type(gen, expression->left);
 	case EX_CALL:
-		if(expression->left->kind == EX_ID)
-		{
+		if(expression->left->kind == EX_ID) {
 			declaration = i386_find_function(gen->program,
 							 expression->left->str);
 			if(declaration)
@@ -5183,12 +4695,11 @@ static CType *i386_expr_type(I386Gen *gen, Expr *expression)
 
 static uint32_t i386_intern_string(I386Gen *gen, const char *value)
 {
-	size_t i;
+	size_t index;
 	uint32_t offset;
-
-	for(i = 0; i < gen->nstrings; i++)
-		if(!strcmp(gen->strings[i].value, value))
-			return gen->strings[i].offset;
+	for(index = 0; index < gen->nstrings; index++)
+		if(!strcmp(gen->strings[index].value, value))
+			return gen->strings[index].offset;
 	offset = (uint32_t)gen->rodata.n;
 	bputn(&gen->rodata, value, strlen(value) + 1);
 	ARR_GROW(gen->strings, gen->nstrings, gen->capstrings, I386String);
@@ -5207,7 +4718,6 @@ static void i386_emit_mov_eax_imm(I386Gen *gen, uint32_t value)
 static void i386_emit_mov_eax_symbol(I386Gen *gen, const char *name)
 {
 	uint32_t offset;
-
 	i386_put8(&gen->text, 0xb8);
 	offset = (uint32_t)gen->text.n;
 	i386_put32(&gen->text, 0);
@@ -5217,7 +4727,6 @@ static void i386_emit_mov_eax_symbol(I386Gen *gen, const char *name)
 static void i386_emit_mov_eax_rodata(I386Gen *gen, uint32_t addend)
 {
 	uint32_t offset;
-
 	i386_put8(&gen->text, 0xb8);
 	offset = (uint32_t)gen->text.n;
 	i386_put32(&gen->text, addend);
@@ -5234,15 +4743,13 @@ static void i386_emit_lea_ebp(I386Gen *gen, long displacement)
 static void i386_emit_load_ebp(I386Gen *gen, CType *type, long displacement)
 {
 	long size = i386_type_size(type);
-
 	if(type->kind == TY_ARRAY || type->kind == TY_STRUCT ||
 	   type->kind == TY_XEVENT || type->kind == TY_VALIST)
 	{
 		i386_emit_lea_ebp(gen, displacement);
 		return;
 	}
-	if(size == 1)
-	{
+	if(size == 1) {
 		i386_put8(&gen->text, 0x0f);
 		i386_put8(&gen->text, 0xb6);
 		i386_put8(&gen->text, 0x85);
@@ -5272,12 +4779,10 @@ static void i386_emit_load_ebp(I386Gen *gen, CType *type, long displacement)
 static void i386_emit_load_ecx_address(I386Gen *gen, CType *type)
 {
 	long size = i386_type_size(type);
-
 	if(type->kind == TY_ARRAY || type->kind == TY_STRUCT ||
 	   type->kind == TY_XEVENT || type->kind == TY_VALIST)
 		return;
-	if(size == 1)
-	{
+	if(size == 1) {
 		i386_put8(&gen->text, 0x0f);
 		i386_put8(&gen->text, 0xb6);
 		i386_put8(&gen->text, 0x01);
@@ -5296,15 +4801,13 @@ static void i386_emit_load_symbol(I386Gen *gen, const char *name, CType *type)
 {
 	long size = i386_type_size(type);
 	uint32_t offset;
-
 	if(type->kind == TY_ARRAY || type->kind == TY_STRUCT ||
 	   type->kind == TY_XEVENT || type->kind == TY_VALIST)
 	{
 		i386_emit_mov_eax_symbol(gen, name);
 		return;
 	}
-	if(size == 1)
-	{
+	if(size == 1) {
 		i386_put8(&gen->text, 0x0f);
 		i386_put8(&gen->text, 0xb6);
 		i386_put8(&gen->text, 0x05);
@@ -5340,9 +4843,7 @@ static void i386_emit_load_symbol(I386Gen *gen, const char *name, CType *type)
 static void i386_emit_store_ecx(I386Gen *gen, CType *type)
 {
 	long size = i386_type_size(type);
-
-	if(size == 1)
-	{
+	if(size == 1) {
 		i386_put8(&gen->text, 0x88);
 		i386_put8(&gen->text, 0x01);
 	} else if(size == 2)
@@ -5362,7 +4863,6 @@ static void i386_emit_store_ecx(I386Gen *gen, CType *type)
 		i386_put8(&gen->text, 0x01);
 	}
 }
-
 static void i386_gen_expression(I386Gen *gen, Expr *expression);
 
 static void i386_emit_load_vla_pointer(I386Gen *gen, I386Local *local)
@@ -5376,15 +4876,12 @@ static void i386_emit_vla_bound(I386Gen *gen, const char *name)
 {
 	I386Local *local = i386_find_local(gen, name);
 	Decl *global;
-
-	if(local)
-	{
+	if(local) {
 		i386_emit_load_ebp(gen, local->type, local->offset);
 		return;
 	}
 	global = i386_find_global(gen->program, name);
-	if(global)
-	{
+	if(global) {
 		i386_emit_load_symbol(gen, global->name, global->type);
 		return;
 	}
@@ -5398,12 +4895,9 @@ static CType *i386_gen_address(I386Gen *gen, Expr *expression)
 	Decl *global;
 	CType *type;
 	long size;
-
-	if(expression->kind == EX_ID)
-	{
+	if(expression->kind == EX_ID) {
 		local = i386_find_local(gen, expression->str);
-		if(local)
-		{
+		if(local) {
 			if(is_vla(local->type))
 				i386_emit_load_vla_pointer(gen, local);
 			else
@@ -5411,14 +4905,12 @@ static CType *i386_gen_address(I386Gen *gen, Expr *expression)
 			return local->type;
 		}
 		global = i386_find_global(gen->program, expression->str);
-		if(global)
-		{
+		if(global) {
 			i386_emit_mov_eax_symbol(gen, global->name);
 			return global->type;
 		}
 		global = i386_find_function(gen->program, expression->str);
-		if(global)
-		{
+		if(global) {
 			i386_emit_mov_eax_symbol(gen, global->name);
 			return global->type;
 		}
@@ -5431,16 +4923,14 @@ static CType *i386_gen_address(I386Gen *gen, Expr *expression)
 		type = i386_expr_type(gen, expression->left);
 		return type->base ? type->base : &T_U32;
 	}
-	if(expression->kind == EX_INDEX)
-	{
+	if(expression->kind == EX_INDEX) {
 		i386_gen_expression(gen, expression->left);
 		i386_put8(&gen->text, 0x50);
 		i386_gen_expression(gen, expression->right);
 		type = i386_expr_type(gen, expression->left);
 		type = type->base ? type->base : &T_U32;
 		size = i386_type_size(type);
-		if(size != 1)
-		{
+		if(size != 1) {
 			i386_put8(&gen->text, 0x69);
 			i386_put8(&gen->text, 0xc0);
 			i386_put32(&gen->text, (uint32_t)size);
@@ -5456,9 +4946,7 @@ static CType *i386_gen_address(I386Gen *gen, Expr *expression)
 		StructMember *member;
 		CType *owner;
 		long member_offset;
-
-		if(expression->kind == EX_MEMBER)
-		{
+		if(expression->kind == EX_MEMBER) {
 			i386_gen_address(gen, expression->left);
 			owner = i386_expr_type(gen, expression->left);
 		} else {
@@ -5469,8 +4957,7 @@ static CType *i386_gen_address(I386Gen *gen, Expr *expression)
 		member = i386_find_struct_member(owner, expression->str, &member_offset);
 		if(!member)
 			fatal("unknown struct member %s", expression->str);
-		if(member_offset)
-		{
+		if(member_offset) {
 			i386_put8(&gen->text, 0x05);
 			i386_put32(&gen->text, (uint32_t)member_offset);
 		}
@@ -5518,8 +5005,7 @@ static void i386_emit_division(I386Gen *gen, bool is_unsigned)
 	i386_put8(&gen->text, 0xc8);
 	i386_put8(&gen->text, 0x89);
 	i386_put8(&gen->text, 0xd1);
-	if(is_unsigned)
-	{
+	if(is_unsigned) {
 		i386_put8(&gen->text, 0x31);
 		i386_put8(&gen->text, 0xd2);
 		i386_put8(&gen->text, 0xf7);
@@ -5534,7 +5020,6 @@ static void i386_emit_division(I386Gen *gen, bool is_unsigned)
 static bool i386_expression_is_u64(I386Gen *gen, Expr *expression)
 {
 	CType *type = i386_expr_type(gen, expression);
-
 	return type && type->kind == TY_U64;
 }
 
@@ -5549,7 +5034,6 @@ static void i386_emit_mul64_imm(I386Gen *gen,
 {
 	uint32_t low = (uint32_t)multiplier;
 	uint32_t high = (uint32_t)(multiplier >> 32);
-
 	//Preserve the original halves and form the low 64 bits of the product.
 	i386_put8(&gen->text, 0x50);
 	i386_put8(&gen->text, 0x52);
@@ -5600,10 +5084,8 @@ static void i386_emit_shift64_imm(I386Gen *gen, bool left, unsigned int count)
 	count &= 63;
 	if(!count)
 		return;
-	if(left)
-	{
-		if(count < 32)
-		{
+	if(left) {
+		if(count < 32) {
 			i386_put8(&gen->text, 0x0f);
 			i386_put8(&gen->text, 0xa4);
 			i386_put8(&gen->text, 0xc2);
@@ -5627,8 +5109,7 @@ static void i386_emit_shift64_imm(I386Gen *gen, bool left, unsigned int count)
 			i386_put8(&gen->text, 0xc0);
 		}
 	} else {
-		if(count < 32)
-		{
+		if(count < 32) {
 			i386_put8(&gen->text, 0x0f);
 			i386_put8(&gen->text, 0xac);
 			i386_put8(&gen->text, 0xd0);
@@ -5656,9 +5137,7 @@ static void i386_gen_binary64(I386Gen *gen, Expr *expression)
 {
 	const char *operator= expression->op;
 	CType *type;
-
-	if(!strcmp(operator, "="))
-	{
+	if(!strcmp(operator, "=")) {
 		type = i386_gen_address(gen, expression->left);
 		i386_put8(&gen->text, 0x50);
 		i386_gen_expression(gen, expression->right);
@@ -5680,8 +5159,7 @@ static void i386_gen_binary64(I386Gen *gen, Expr *expression)
 		i386_put8(&gen->text, 0x8b);
 		i386_put8(&gen->text, 0x51);
 		i386_put8(&gen->text, 0x04);
-		if(!strcmp(operator, "*="))
-		{
+		if(!strcmp(operator, "*=")) {
 			if(expression->right->kind != EX_NUM)
 				fatal("64-bit compound multiplication requires a constant");
 			i386_emit_mul64_imm(gen, expression->right->num);
@@ -5698,8 +5176,7 @@ static void i386_gen_binary64(I386Gen *gen, Expr *expression)
 			i386_put8(&gen->text, 0xc1);
 			i386_put8(&gen->text, 0x58);
 			i386_put8(&gen->text, 0x5a);
-			if(!strcmp(operator, "^="))
-			{
+			if(!strcmp(operator, "^=")) {
 				i386_put8(&gen->text, 0x31);
 				i386_put8(&gen->text, 0xc8);
 				i386_put8(&gen->text, 0x31);
@@ -5722,8 +5199,7 @@ static void i386_gen_binary64(I386Gen *gen, Expr *expression)
 		i386_emit_store_ecx(gen, type);
 		return;
 	}
-	if(!strcmp(operator, "<<") || !strcmp(operator, ">>"))
-	{
+	if(!strcmp(operator, "<<") || !strcmp(operator, ">>")) {
 		if(expression->right->kind != EX_NUM)
 			fatal("64-bit shifts require a constant count");
 		i386_gen_expression(gen, expression->left);
@@ -5732,8 +5208,7 @@ static void i386_gen_binary64(I386Gen *gen, Expr *expression)
 		i386_emit_shift64_imm(gen, !strcmp(operator, "<<"), (unsigned int)expression->right->num);
 		return;
 	}
-	if(!strcmp(operator, "*") && expression->right->kind == EX_NUM)
-	{
+	if(!strcmp(operator, "*") && expression->right->kind == EX_NUM) {
 		i386_gen_expression(gen, expression->left);
 		if(!i386_expression_is_u64(gen, expression->left))
 			i386_emit_zero_edx(gen);
@@ -5759,8 +5234,7 @@ static void i386_gen_binary64(I386Gen *gen, Expr *expression)
 		i386_put8(&gen->text, 0xc1);
 		i386_put8(&gen->text, 0x58);
 		i386_put8(&gen->text, 0x5a);
-		if(!strcmp(operator, "|"))
-		{
+		if(!strcmp(operator, "|")) {
 			i386_put8(&gen->text, 0x09);
 			i386_put8(&gen->text, 0xc8);
 			i386_put8(&gen->text, 0x09);
@@ -5799,7 +5273,6 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 {
 	const char *operator= expression->op;
 	CType *type;
-
 	if(i386_expression_is_u64(gen, expression->left) &&
 	   strcmp(operator, "==") && strcmp(operator, "!=") &&
 	   strcmp(operator, "<") && strcmp(operator, "<=") &&
@@ -5808,16 +5281,12 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 		i386_gen_binary64(gen, expression);
 		return;
 	}
-
-	if(!strcmp(operator, "="))
-	{
+	if(!strcmp(operator, "=")) {
 		type = i386_gen_address(gen, expression->left);
 		i386_put8(&gen->text, 0x50);
 		i386_gen_expression(gen, expression->right);
-		if(type->kind == TY_STRUCT)
-		{
+		if(type->kind == TY_STRUCT) {
 			long size = i386_type_size(type);
-
 			i386_put8(&gen->text, 0x5a);
 			i386_put8(&gen->text, 0x52);
 			i386_put8(&gen->text, 0x56);
@@ -5853,8 +5322,7 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 		i386_put8(&gen->text, 0x50);
 		i386_gen_expression(gen, expression->right);
 		i386_put8(&gen->text, 0x59);
-		if(!strcmp(operator, "+="))
-		{
+		if(!strcmp(operator, "+=")) {
 			i386_put8(&gen->text, 0x01);
 			i386_put8(&gen->text, 0xc8);
 		} else if(!strcmp(operator, "-="))
@@ -5885,8 +5353,7 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 					   i386_type_is_unsigned(type) ||
 						   i386_expression_is_unsigned(gen,
 									       expression->right));
-			if(!strcmp(operator, "%="))
-			{
+			if(!strcmp(operator, "%=")) {
 				i386_put8(&gen->text, 0x89);
 				i386_put8(&gen->text, 0xd0);
 			}
@@ -5895,11 +5362,9 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 		i386_emit_store_ecx(gen, type);
 		return;
 	}
-	if(!strcmp(operator, "&&") || !strcmp(operator, "||"))
-	{
+	if(!strcmp(operator, "&&") || !strcmp(operator, "||")) {
 		char *short_label = i386_new_label(gen, ".Llogic");
 		char *done_label = i386_new_label(gen, ".Llogic_done");
-
 		i386_gen_expression(gen, expression->left);
 		i386_put8(&gen->text, 0x85);
 		i386_put8(&gen->text, 0xc0);
@@ -5918,8 +5383,7 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 	i386_put8(&gen->text, 0x50);
 	i386_gen_expression(gen, expression->right);
 	i386_put8(&gen->text, 0x59);
-	if(!strcmp(operator, "+"))
-	{
+	if(!strcmp(operator, "+")) {
 		i386_put8(&gen->text, 0x01);
 		i386_put8(&gen->text, 0xc8);
 	} else if(!strcmp(operator, "-"))
@@ -5938,8 +5402,7 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 		i386_emit_division(gen,
 				   i386_expression_is_unsigned(gen, expression->left) ||
 					   i386_expression_is_unsigned(gen, expression->right));
-		if(!strcmp(operator, "%"))
-		{
+		if(!strcmp(operator, "%")) {
 			i386_put8(&gen->text, 0x89);
 			i386_put8(&gen->text, 0xd0);
 		}
@@ -5974,7 +5437,6 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 		  !strcmp(operator, ">") || !strcmp(operator, ">="))
 	{
 		uint8_t condition;
-
 		i386_put8(&gen->text, 0x39);
 		i386_put8(&gen->text, 0xc1);
 		if(!strcmp(operator, "=="))
@@ -5998,26 +5460,23 @@ static void i386_gen_binary(I386Gen *gen, Expr *expression)
 
 static void i386_gen_call(I386Gen *gen, Expr *expression)
 {
-	size_t i;
+	size_t index;
 	const char *name;
 	uint32_t offset;
-
 	if(expression->left->kind != EX_ID)
 		fatal("only direct calls are supported by i386 backend");
 	name = expression->left->str;
 	if(!strcmp(name, "va_start") || !strcmp(name, "va_end"))
 		fatal("variadic builtins are not supported by i386 backend yet");
-	for(i = expression->nargs; i > 0; i--)
-	{
-		i386_gen_expression(gen, expression->args[i - 1]);
+	for(index = expression->nargs; index > 0; index--) {
+		i386_gen_expression(gen, expression->args[index - 1]);
 		i386_put8(&gen->text, 0x50);
 	}
 	i386_put8(&gen->text, 0xe8);
 	offset = (uint32_t)gen->text.n;
 	i386_put32(&gen->text, 0xfffffffcU);
 	i386_add_relocation(gen, I386_SEC_TEXT, offset, R_386_PC32, name, 0);
-	if(expression->nargs)
-	{
+	if(expression->nargs) {
 		i386_put8(&gen->text, 0x81);
 		i386_put8(&gen->text, 0xc4);
 		i386_put32(&gen->text,
@@ -6033,14 +5492,11 @@ static void i386_gen_incdec(I386Gen *gen, Expr *expression)
 		       !strcmp(expression->op, "post--");
 	bool decrement = !strcmp(expression->op, "--") ||
 			 !strcmp(expression->op, "post--");
-
-	if(type->kind == TY_PTR && type->base)
-	{
+	if(type->kind == TY_PTR && type->base) {
 		step = i386_type_size(type->base);
 		if(step <= 0)
 			step = 1;
 	}
-
 	i386_put8(&gen->text, 0x50);
 	i386_put8(&gen->text, 0x89);
 	i386_put8(&gen->text, 0xc1);
@@ -6049,8 +5505,7 @@ static void i386_gen_incdec(I386Gen *gen, Expr *expression)
 		i386_put8(&gen->text, 0x50);
 	i386_put8(&gen->text, decrement ? 0x2d : 0x05);
 	i386_put32(&gen->text, (uint32_t)step);
-	if(postfix)
-	{
+	if(postfix) {
 		i386_put8(&gen->text, 0x5a);
 		i386_put8(&gen->text, 0x59);
 		i386_emit_store_ecx(gen, type);
@@ -6068,13 +5523,10 @@ static void i386_gen_expression(I386Gen *gen, Expr *expression)
 	Decl *declaration;
 	CType *type;
 	uint32_t string_offset;
-
-	switch(expression->kind)
-	{
+	switch(expression->kind) {
 	case EX_NUM:
 		i386_emit_mov_eax_imm(gen, (uint32_t)expression->num);
-		if(i386_expression_is_u64(gen, expression))
-		{
+		if(i386_expression_is_u64(gen, expression)) {
 			i386_put8(&gen->text, 0xba);
 			i386_put32(&gen->text, (uint32_t)(expression->num >> 32));
 		}
@@ -6084,14 +5536,12 @@ static void i386_gen_expression(I386Gen *gen, Expr *expression)
 		i386_emit_mov_eax_rodata(gen, string_offset);
 		return;
 	case EX_ID:
-		if(!strcmp(expression->str, "NULL"))
-		{
+		if(!strcmp(expression->str, "NULL")) {
 			i386_emit_mov_eax_imm(gen, 0);
 			return;
 		}
 		local = i386_find_local(gen, expression->str);
-		if(local)
-		{
+		if(local) {
 			if(is_vla(local->type))
 				i386_emit_load_vla_pointer(gen, local);
 			else
@@ -6099,14 +5549,12 @@ static void i386_gen_expression(I386Gen *gen, Expr *expression)
 			return;
 		}
 		declaration = i386_find_global(gen->program, expression->str);
-		if(declaration)
-		{
+		if(declaration) {
 			i386_emit_load_symbol(gen, declaration->name, declaration->type);
 			return;
 		}
 		declaration = i386_find_function(gen->program, expression->str);
-		if(declaration)
-		{
+		if(declaration) {
 			i386_emit_mov_eax_symbol(gen, declaration->name);
 			return;
 		}
@@ -6126,10 +5574,8 @@ static void i386_gen_expression(I386Gen *gen, Expr *expression)
 		} else if(!strcmp(expression->op, "cast"))
 		{
 			bool source_wide = i386_expression_is_u64(gen, expression->left);
-
 			i386_gen_expression(gen, expression->left);
-			if(i386_type_size(expression->type) == 1)
-			{
+			if(i386_type_size(expression->type) == 1) {
 				i386_put8(&gen->text, 0x25);
 				i386_put32(&gen->text, 0xff);
 			} else if(i386_type_size(expression->type) == 2)
@@ -6152,8 +5598,7 @@ static void i386_gen_expression(I386Gen *gen, Expr *expression)
 			i386_emit_load_ecx_address(gen, type);
 		} else {
 			i386_gen_expression(gen, expression->left);
-			if(!strcmp(expression->op, "!"))
-			{
+			if(!strcmp(expression->op, "!")) {
 				i386_put8(&gen->text, 0x85);
 				i386_put8(&gen->text, 0xc0);
 				i386_emit_setcc(gen, 0x94);
@@ -6191,15 +5636,13 @@ static void i386_gen_expression(I386Gen *gen, Expr *expression)
 
 static long i386_collect_locals(I386Gen *gen, Stmt *statement, long used)
 {
-	size_t i;
+	size_t index;
 	Decl *declaration;
 	long size;
 	long alignment;
-
 	if(!statement)
 		return used;
-	if(statement->kind == ST_DECL)
-	{
+	if(statement->kind == ST_DECL) {
 		declaration = statement->decl;
 		if(i386_find_local(gen, declaration->name))
 			fatal("duplicate local %s", declaration->name);
@@ -6216,9 +5659,9 @@ static long i386_collect_locals(I386Gen *gen, Stmt *statement, long used)
 		gen->nlocals++;
 	} else if(statement->kind == ST_BLOCK)
 	{
-		for(i = 0; i < statement->nchildren; i++)
+		for(index = 0; index < statement->nchildren; index++)
 			used = i386_collect_locals(gen,
-						   statement->children[i],
+						   statement->children[index],
 						   used);
 	} else if(statement->kind == ST_IF)
 	{
@@ -6240,31 +5683,26 @@ static long i386_collect_locals(I386Gen *gen, Stmt *statement, long used)
 
 static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 {
-	size_t i;
+	size_t index;
 	I386Local *local;
 	char *else_label;
 	char *done_label;
 	char *loop_label;
 	char *condition_label;
 	char *next_label;
-
 	if(!statement)
 		return;
-	switch(statement->kind)
-	{
+	switch(statement->kind) {
 	case ST_BLOCK:
-		for(i = 0; i < statement->nchildren; i++)
-			i386_gen_statement(gen, statement->children[i]);
+		for(index = 0; index < statement->nchildren; index++)
+			i386_gen_statement(gen, statement->children[index]);
 		return;
 	case ST_DECL:
 		local = i386_find_local(gen, statement->decl->name);
-		if(is_vla(local->type))
-		{
+		if(is_vla(local->type)) {
 			long element_size = i386_type_size(local->type->base);
-
 			i386_emit_vla_bound(gen, local->type->name);
-			if(element_size != 1)
-			{
+			if(element_size != 1) {
 				i386_put8(&gen->text, 0x69);
 				i386_put8(&gen->text, 0xc0);
 				i386_put32(&gen->text, (uint32_t)element_size);
@@ -6284,8 +5722,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 			i386_put32(&gen->text,
 				   (uint32_t)(int32_t)local->offset);
 		}
-		if(statement->decl->init)
-		{
+		if(statement->decl->init) {
 			if(is_vla(local->type))
 				fatal("variable-length array %s cannot have an initializer",
 				      statement->decl->name);
@@ -6350,8 +5787,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 		ARR_GROW(gen->continue_labels, gen->ncontinue_labels, gen->capcontinue_labels, char *);
 		gen->continue_labels[gen->ncontinue_labels++] = next_label;
 		i386_define_label(gen, condition_label);
-		if(statement->cond)
-		{
+		if(statement->cond) {
 			i386_gen_expression(gen, statement->cond);
 			i386_put8(&gen->text, 0x85);
 			i386_put8(&gen->text, 0xc0);
@@ -6370,17 +5806,13 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 	{
 		Stmt *body = statement->body;
 		char *default_label;
-		size_t j;
+		size_t inner_index;
 		done_label = i386_new_label(gen, ".Lswitchend");
 		default_label = done_label;
-		if(body && body->kind == ST_BLOCK)
-		{
-			for(j = 0; j < body->nchildren; j++)
-			{
-				Stmt *child = body->children[j];
-
-				if(child->kind == ST_CASE)
-				{
+		if(body && body->kind == ST_BLOCK) {
+			for(inner_index = 0; inner_index < body->nchildren; inner_index++) {
+				Stmt *child = body->children[inner_index];
+				if(child->kind == ST_CASE) {
 					long value;
 					if(!eval_const_expr(child->expr, &value))
 						fatal("case value is not an integer constant");
@@ -6397,14 +5829,10 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 			fatal("switch body must be a block");
 		}
 		i386_gen_expression(gen, statement->cond);
-		for(j = 0; j < body->nchildren; j++)
-		{
-			Stmt *child = body->children[j];
-
-			if(child->kind == ST_CASE)
-			{
+		for(inner_index = 0; inner_index < body->nchildren; inner_index++) {
+			Stmt *child = body->children[inner_index];
+			if(child->kind == ST_CASE) {
 				long value;
-
 				eval_const_expr(child->expr, &value);
 				i386_put8(&gen->text, 0x3d);
 				i386_put32(&gen->text, (uint32_t)value);
@@ -6441,10 +5869,8 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 		return;
 	case ST_ASM:
 	{
-		if(!strcmp(statement->asm_text, "rdtsc"))
-		{
+		if(!strcmp(statement->asm_text, "rdtsc")) {
 			size_t output_index;
-
 			i386_put8(&gen->text, 0x0f);
 			i386_put8(&gen->text, 0x31);
 			for(output_index = 0; output_index < statement->nasm_outputs;
@@ -6454,9 +5880,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 					statement->asm_constraints[output_index];
 				Expr *output = statement->asm_outputs[output_index];
 				CType *output_type;
-
-				if(!strcmp(constraint, "=a"))
-				{
+				if(!strcmp(constraint, "=a")) {
 					//Preserve EDX:EAX while calculating the lvalue.
 					i386_put8(&gen->text, 0x52);
 					i386_put8(&gen->text, 0x50);
@@ -6486,12 +5910,9 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 		}
 		char *copy = xstrdup(statement->asm_text);
 		char *cursor = copy;
-
-		while(cursor && *cursor)
-		{
+		while(cursor && *cursor) {
 			char *next = strchr(cursor, ';');
 			char *end;
-
 			if(next)
 				*next++ = 0;
 			while(isspace((unsigned char)*cursor))
@@ -6499,8 +5920,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 			end = cursor + strlen(cursor);
 			while(end > cursor && isspace((unsigned char)end[-1]))
 				*--end = 0;
-			if(!*cursor)
-			{
+			if(!*cursor) {
 				cursor = next;
 				continue;
 			}
@@ -6518,8 +5938,7 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 				i386_put8(&gen->text, 0xfd);
 			else if(!strcmp(cursor, "int3"))
 				i386_put8(&gen->text, 0xcc);
-			else if(!strcmp(cursor, "pause"))
-			{
+			else if(!strcmp(cursor, "pause")) {
 				i386_put8(&gen->text, 0xf3);
 				i386_put8(&gen->text, 0x90);
 			} else if(!strcmp(cursor, "ud2"))
@@ -6528,7 +5947,6 @@ static void i386_gen_statement(I386Gen *gen, Stmt *statement)
 				i386_put8(&gen->text, 0x0b);
 			} else {
 				char *bad = xstrdup(cursor);
-
 				free(copy);
 				fatal("unsupported inline asm instruction: %s", bad);
 			}
@@ -6544,17 +5962,15 @@ static void i386_gen_function(I386Gen *gen, Decl *declaration)
 {
 	I386ObjSymbol *symbol;
 	long used = 0;
-	size_t i;
+	size_t index;
 	uint32_t start;
-
 	gen->current = declaration;
 	gen->nlocals = 0;
-	for(i = 0; i < declaration->nparams; i++)
-	{
+	for(index = 0; index < declaration->nparams; index++) {
 		ARR_GROW(gen->locals, gen->nlocals, gen->caplocals, I386Local);
-		gen->locals[gen->nlocals].name = declaration->params[i].name;
-		gen->locals[gen->nlocals].type = declaration->params[i].type;
-		gen->locals[gen->nlocals].offset = 8 + (long)i * 4;
+		gen->locals[gen->nlocals].name = declaration->params[index].name;
+		gen->locals[gen->nlocals].type = declaration->params[index].type;
+		gen->locals[gen->nlocals].offset = 8 + (long)index * 4;
 		gen->nlocals++;
 	}
 	used = i386_collect_locals(gen, declaration->body, used);
@@ -6569,8 +5985,7 @@ static void i386_gen_function(I386Gen *gen, Decl *declaration)
 	i386_put8(&gen->text, 0x55);
 	i386_put8(&gen->text, 0x89);
 	i386_put8(&gen->text, 0xe5);
-	if(gen->frame_size)
-	{
+	if(gen->frame_size) {
 		i386_put8(&gen->text, 0x81);
 		i386_put8(&gen->text, 0xec);
 		i386_put32(&gen->text, (uint32_t)gen->frame_size);
@@ -6583,7 +5998,6 @@ static void i386_gen_function(I386Gen *gen, Decl *declaration)
 	i386_put8(&gen->text, 0xc3);
 	symbol->size = (uint32_t)gen->text.n - start;
 }
-
 static uint32_t i386_intern_string(I386Gen *gen, const char *value);
 
 static void i386_put_zeros(Buf *buffer, size_t count)
@@ -6596,16 +6010,12 @@ static void i386_write_global_initializer(I386Gen *gen, CType *type, Expr *initi
 {
 	size_t start = gen->data.n;
 	long size = i386_type_size(type);
-
-	if(type->kind == TY_ARRAY)
-	{
-		size_t i;
-
+	if(type->kind == TY_ARRAY) {
+		size_t index_1;
 		if(initializer->kind == EX_STR &&
 		   (type->base->kind == TY_CHAR || type->base->kind == TY_U8))
 		{
 			size_t bytes = strlen(initializer->str) + 1;
-
 			if(bytes > (size_t)type->count)
 				fatal("initializer string is too long for %s", name);
 			bputn(&gen->data, initializer->str, bytes);
@@ -6616,46 +6026,39 @@ static void i386_write_global_initializer(I386Gen *gen, CType *type, Expr *initi
 			fatal("array initializer for %s must use braces", name);
 		if(initializer->nargs > (size_t)type->count)
 			fatal("too many initializers for %s", name);
-		for(i = 0; i < initializer->nargs; i++)
-			i386_write_global_initializer(gen, type->base, initializer->args[i], name);
+		for(index_1 = 0; index_1 < initializer->nargs; index_1++)
+			i386_write_global_initializer(gen, type->base, initializer->args[index_1], name);
 		i386_put_zeros(&gen->data,
 			       (size_t)size - (gen->data.n - start));
 		return;
 	}
-	if(type->kind == TY_STRUCT)
-	{
-		size_t i;
-
+	if(type->kind == TY_STRUCT) {
+		size_t index_1;
 		if(initializer->kind != EX_INITLIST)
 			fatal("struct initializer for %s must use braces", name);
 		if(initializer->nargs > type->nmembers)
 			fatal("too many initializers for %s", name);
-		for(i = 0; i < initializer->nargs; i++)
-		{
+		for(index_1 = 0; index_1 < initializer->nargs; index_1++) {
 			long member_offset = 0;
-
-			if(!i386_find_struct_member(type, type->members[i].name, &member_offset))
+			if(!i386_find_struct_member(type, type->members[index_1].name, &member_offset))
 				fatal("internal: bad member offset in %s", name);
 			if(gen->data.n < start + (size_t)member_offset)
 				i386_put_zeros(&gen->data,
 					       start + (size_t)member_offset - gen->data.n);
-			i386_write_global_initializer(gen, type->members[i].type, initializer->args[i], name);
+			i386_write_global_initializer(gen, type->members[index_1].type, initializer->args[index_1], name);
 		}
 		if(gen->data.n < start + (size_t)size)
 			i386_put_zeros(&gen->data, start + (size_t)size - gen->data.n);
 		return;
 	}
-	if(initializer->kind == EX_INITLIST)
-	{
+	if(initializer->kind == EX_INITLIST) {
 		if(initializer->nargs != 1)
 			fatal("scalar initializer for %s has %zu elements", name, initializer->nargs);
 		initializer = initializer->args[0];
 	}
-	if(initializer->kind == EX_STR && type->kind == TY_PTR)
-	{
+	if(initializer->kind == EX_STR && type->kind == TY_PTR) {
 		uint32_t string_offset = i386_intern_string(gen, initializer->str);
 		uint32_t relocation_offset = (uint32_t)gen->data.n;
-
 		i386_put32(&gen->data, string_offset);
 		i386_add_relocation(gen, I386_SEC_DATA, relocation_offset, R_386_32, NULL, I386_SEC_RODATA);
 		return;
@@ -6663,7 +6066,6 @@ static void i386_write_global_initializer(I386Gen *gen, CType *type, Expr *initi
 	{
 		long constant_value;
 		uint64_t value;
-
 		if(!eval_const_expr(initializer, &constant_value))
 			fatal("unsupported i386 global initializer for %s", name);
 		value = (uint64_t)(unsigned long)constant_value;
@@ -6682,15 +6084,11 @@ static void i386_write_global_initializer(I386Gen *gen, CType *type, Expr *initi
 
 static void i386_prepare_symbols_and_globals(I386Gen *gen)
 {
-	size_t i;
-
-	for(i = 0; i < gen->program->n; i++)
-	{
-		Decl *declaration = gen->program->a[i];
+	size_t index;
+	for(index = 0; index < gen->program->n; index++) {
+		Decl *declaration = gen->program->a[index];
 		I386ObjSymbol *symbol;
-
-		if(declaration->body || declaration->prototype)
-		{
+		if(declaration->body || declaration->prototype) {
 			symbol = i386_add_object_symbol(gen, declaration->name, declaration->type, true);
 			if(declaration->is_static)
 				symbol->local = true;
@@ -6706,10 +6104,8 @@ static void i386_prepare_symbols_and_globals(I386Gen *gen)
 			symbol->local = true;
 		if(declaration->is_extern)
 			continue;
-		if(declaration->init)
-		{
+		if(declaration->init) {
 			long size = i386_type_size(declaration->type);
-
 			while(gen->data.n % (size_t)i386_type_align(
 						    declaration->type))
 				i386_put8(&gen->data, 0);
@@ -6721,7 +6117,6 @@ static void i386_prepare_symbols_and_globals(I386Gen *gen)
 		} else {
 			long alignment = i386_type_align(declaration->type);
 			long size = i386_type_size(declaration->type);
-
 			gen->bss_size = i386_align32(gen->bss_size,
 						     (uint32_t)alignment);
 			symbol->defined = true;
@@ -6736,18 +6131,16 @@ static void i386_prepare_symbols_and_globals(I386Gen *gen)
 static uint32_t i386_string_offset(Buf *strings, const char *string)
 {
 	uint32_t offset = (uint32_t)strings->n;
-
 	bputn(strings, string, strlen(string) + 1);
 	return offset;
 }
 
 static uint32_t i386_symbol_index(I386Gen *gen, const char *name)
 {
-	size_t i;
-
-	for(i = 0; i < gen->nsymbols; i++)
-		if(!strcmp(gen->symbols[i].name, name))
-			return gen->symbols[i].index;
+	size_t index_1;
+	for(index_1 = 0; index_1 < gen->nsymbols; index_1++)
+		if(!strcmp(gen->symbols[index_1].name, name))
+			return gen->symbols[index_1].index;
 	fatal("internal: relocation references unknown symbol %s", name);
 	return 0;
 }
@@ -6779,12 +6172,12 @@ static void write_i386_relocatable(const char *path, Program *program)
 	uint32_t text_relocation_count = 0;
 	uint32_t data_relocation_count = 0;
 	uint8_t *file;
-	size_t i;
+	size_t index_1;
 	gen.program = program;
 	i386_prepare_symbols_and_globals(&gen);
-	for(i = 0; i < program->n; i++)
-		if(program->a[i]->body)
-			i386_gen_function(&gen, program->a[i]);
+	for(index_1 = 0; index_1 < program->n; index_1++)
+		if(program->a[index_1]->body)
+			i386_gen_function(&gen, program->a[index_1]);
 	i386_patch_jumps(&gen);
 	put_u8(&strtab, 0);
 	put_u8(&shstrtab, 0);
@@ -6807,8 +6200,8 @@ static void write_i386_relocatable(const char *path, Program *program)
 							    ".strtab");
 	section_names[I386_SEC_SHSTRTAB] = i386_string_offset(&shstrtab,
 							      ".shstrtab");
-	for(i = 0; i < gen.nsymbols; i++)
-		if(gen.symbols[i].local)
+	for(index_1 = 0; index_1 < gen.nsymbols; index_1++)
+		if(gen.symbols[index_1].local)
 			local_symbol_count++;
 	first_global = 5 + local_symbol_count;
 	symbol_count = 5 + (uint32_t)gen.nsymbols;
@@ -6824,12 +6217,9 @@ static void write_i386_relocatable(const char *path, Program *program)
 	{
 		uint32_t local_index = 5;
 		uint32_t global_index = first_global;
-
-		for(i = 0; i < gen.nsymbols; i++)
-		{
-			I386ObjSymbol *object = &gen.symbols[i];
+		for(index_1 = 0; index_1 < gen.nsymbols; index_1++) {
+			I386ObjSymbol *object = &gen.symbols[index_1];
 			Elf32_Sym *symbol;
-
 			object->index = object->local ? local_index++ : global_index++;
 			symbol = &symtab[object->index];
 			symbol->st_name = i386_string_offset(&strtab, object->name);
@@ -6842,11 +6232,10 @@ static void write_i386_relocatable(const char *path, Program *program)
 			symbol->st_shndx = object->defined ? object->section : SHN_UNDEF;
 		}
 	}
-	for(i = 0; i < gen.nrelocations; i++)
-	{
-		if(gen.relocations[i].target_section == I386_SEC_TEXT)
+	for(index_1 = 0; index_1 < gen.nrelocations; index_1++) {
+		if(gen.relocations[index_1].target_section == I386_SEC_TEXT)
 			text_relocation_count++;
-		else if(gen.relocations[i].target_section == I386_SEC_DATA)
+		else if(gen.relocations[index_1].target_section == I386_SEC_DATA)
 			data_relocation_count++;
 		else
 			fatal("internal: unsupported i386 relocation target section");
@@ -6855,16 +6244,12 @@ static void write_i386_relocatable(const char *path, Program *program)
 	data_relocations = xcalloc(data_relocation_count ? data_relocation_count : 1, sizeof(*data_relocations));
 	text_relocation_count = 0;
 	data_relocation_count = 0;
-	for(i = 0; i < gen.nrelocations; i++)
-	{
-		I386Relocation *source = &gen.relocations[i];
+	for(index_1 = 0; index_1 < gen.nrelocations; index_1++) {
+		I386Relocation *source = &gen.relocations[index_1];
 		Elf32_Rel *destination;
 		uint32_t symbol_index;
-
-		if(source->section_symbol)
-		{
-			switch(source->section_symbol)
-			{
+		if(source->section_symbol) {
+			switch(source->section_symbol) {
 			case I386_SEC_TEXT:
 				symbol_index = 1;
 				break;
@@ -6891,11 +6276,9 @@ static void write_i386_relocatable(const char *path, Program *program)
 		destination->r_info = ELF32_R_INFO(symbol_index,
 						   source->type);
 	}
-	
 	/*
 		PREPARE YOUR EYES FOR THIS GIGANTIC CHUNK!
 	*/
-	
 	cursor = sizeof(Elf32_Ehdr);
 	text_offset = i386_align32(cursor, 16);
 	cursor = text_offset + (uint32_t)gen.text.n;
@@ -7032,67 +6415,63 @@ int main(int argc, char **argv)
 	Program prog = {0};
 	char **src = NULL;
 	char **libs = NULL;
-	size_t nsrc = 0, csrc = 0, nlibs = 0, clibs = 0, i;
+	size_t nsrc = 0, csrc = 0, nlibs = 0, clibs = 0, index;
 	char *out = xstrdup("a.out");
 	bool assembly_only = false;
 	bool compile_only = false;
 	bool target_i386 = false;
 	bool freestanding = false;
 	bool needs_x11 = false;
-	for(i = 1; i < (size_t)argc; i++)
-	{
-		if(!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h"))
-		{
+	for(index = 1; index < (size_t)argc; index++) {
+		if(!strcmp(argv[index], "--help") || !strcmp(argv[index], "-h")) {
 			usage();
 			return 0;
 		}
-		if(!strcmp(argv[i], "--version"))
-		{
+		if(!strcmp(argv[index], "--version")) {
 			puts(VERSION);
 			return 0;
 		}
-		if(!strcmp(argv[i], "-o"))
-		{
-			if(++i >= (size_t)argc)
+		if(!strcmp(argv[index], "-o")) {
+			if(++index >= (size_t)argc)
 				fatal("-o needs a file");
-			out = argv[i];
-		} else if(!strcmp(argv[i], "-S"))
+			out = argv[index];
+		} else if(!strcmp(argv[index], "-S"))
 		{
 			assembly_only = true;
-		} else if(!strcmp(argv[i], "-c"))
+		} else if(!strcmp(argv[index], "-c"))
 		{
 			compile_only = true;
-		} else if(!strcmp(argv[i], "-m32"))
+		} else if(!strcmp(argv[index], "-m32"))
 		{
 			target_i386 = true;
-		} else if(!strcmp(argv[i], "-ffreestanding"))
+		} else if(!strcmp(argv[index], "-ffreestanding"))
 		{
 			freestanding = true;
-		} else if(!strcmp(argv[i], "-fno-builtin") ||
-			  !strcmp(argv[i], "-fno-stack-protector") ||
-			  !strcmp(argv[i], "-fno-pie") ||
-			  !strcmp(argv[i], "-fno-pic") ||
-			  !strcmp(argv[i], "-nostdlib") ||
-			  !strcmp(argv[i], "-nostdinc") ||
-			  !strcmp(argv[i], "-Wall") ||
-			  !strcmp(argv[i], "-Wextra") ||
-			  !strcmp(argv[i], "-Wpedantic") ||
-			  !strncmp(argv[i], "-O", 2) ||
-			  !strncmp(argv[i], "-std=", 5) ||
-			  !strncmp(argv[i], "-I", 2) ||
-			  !strncmp(argv[i], "-D", 2))
+		} else if(!strcmp(argv[index], "-fno-builtin") ||
+			  !strcmp(argv[index], "-fno-stack-protector") ||
+			  !strcmp(argv[index], "-fno-pie") ||
+			  !strcmp(argv[index], "-fno-pic") ||
+			  !strcmp(argv[index], "-nostdlib") ||
+			  !strcmp(argv[index], "-nostdinc") ||
+			  !strcmp(argv[index], "-Wall") ||
+			  !strcmp(argv[index], "-Wextra") ||
+			  !strcmp(argv[index], "-Wpedantic") ||
+			  !strncmp(argv[index], "-O", 2) ||
+			  !strncmp(argv[index], "-std=", 5) ||
+			  !strncmp(argv[index], "-I", 2) ||
+			  !strncmp(argv[index], "-D", 2))
 		{
 			//Accepted compatibility flags; AneoC is always freestanding in -m32 -c mode.
-		} else if(!strncmp(argv[i], "-l", 2))
+		} else if(!strncmp(argv[index], "-l", 2))
 		{
 			ARR_GROW(libs, nlibs, clibs, char *);
-			libs[nlibs++] = argv[i];
-		} else if(argv[i][0] == '-')
+			libs[nlibs++] = argv[index];
+		} else if(argv[index][0] == '-')
 		{
-			fatal("unsupported option %s", argv[i]);
+			fatal("unsupported option %s", argv[index]);
 		} else {
 			ARR_GROW(src, nsrc, csrc, char *);
-			src[nsrc++] = argv[i];
+			src[nsrc++] = argv[index];
 		}
 	}
 	if(!nsrc)
@@ -7105,12 +6484,10 @@ int main(int argc, char **argv)
 	}
 	if(compile_only)
 		target_i386 = true;
-	for(i = 0; i < nsrc; i++)
-	{
-		char *raw = read_file(src[i]);
+	for(index = 0; index < nsrc; index++) {
+		char *raw = read_file(src[index]);
 		char *text = preprocess_source(raw);
-		Tokens tokens = lex_source(text, src[i]);
-
+		Tokens tokens = lex_source(text, src[index]);
 		if(strstr(raw, "X11/Xlib.h") ||
 		   strstr(raw, "XOpenDisplay") ||
 		   strstr(raw, "XCreateSimpleWindow") ||
@@ -7119,8 +6496,7 @@ int main(int argc, char **argv)
 		parse_program(&tokens, &prog);
 	}
 	(void)freestanding;
-	if(compile_only)
-	{
+	if(compile_only) {
 		if(assembly_only)
 			fatal("-S and -c cannot be combined yet");
 		write_i386_relocatable(out, &prog);
@@ -7130,15 +6506,12 @@ int main(int argc, char **argv)
 		fatal("-m32 currently requires -c");
 	{
 		char *assembly = generate(&prog);
-
-		if(assembly_only)
-		{
+		if(assembly_only) {
 			write_file(out, assembly, strlen(assembly));
 			return 0;
 		}
 		{
 			AsmImage image;
-
 			internal_assemble(assembly, &image);
 			write_independent_elf(out, &image, needs_x11, libs, nlibs);
 		}

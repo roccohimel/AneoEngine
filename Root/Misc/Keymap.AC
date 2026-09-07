@@ -9,7 +9,6 @@ static const char keymap[128] =
         'b', 'n', 'm', ',', '.', '/', 0, '*',
         0, ' ', 0
 };
-
 static const char shiftmap[128] =
 {//allowed chars when shift is pressed
         0, 27, '!', '@', '#', '$', '%', '^',
