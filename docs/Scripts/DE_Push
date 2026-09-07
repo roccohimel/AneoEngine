@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Daily Entry Push"
+cd ~/AneoEngine
+git add docs/AboutRH/DailyEntry.html
+git commit -m 'DE Push'
+git push

@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "QEMU New"
+qemu-img create -f raw HDD.img 2G
+sleep 1

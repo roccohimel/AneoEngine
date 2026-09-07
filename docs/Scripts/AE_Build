@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "AE build and run"
+cd ~/AneoEngine
+./build.sh -RC1

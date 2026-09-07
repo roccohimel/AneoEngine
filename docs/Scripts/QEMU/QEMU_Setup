@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "QEMU Setup"
+echo -n "Input AneoEngine ISO file path: "
+touch F.ISO
+rm *.ISO
+read ISO_PATH
+cp $ISO_PATH .
+qemu-system-x86_64 -cdrom *.ISO -hda HDD.img -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0

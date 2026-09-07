@@ -1,0 +1,3 @@
+#!/bin/bash
+EDIT_CMD="gedit"
+$EDIT_CMD ~/AneoEngine/docs/AboutRH/DailyEntry.html

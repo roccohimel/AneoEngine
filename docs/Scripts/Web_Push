@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Website Push"
+cd ~/AneoEngine
+git add docs
+git commit -m 'Web Push'
+git push

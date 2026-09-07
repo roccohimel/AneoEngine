@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "QEMU Running"
+touch F.ISO
+rm *.ISO
+qemu-system-x86_64 -hda HDD.img -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0

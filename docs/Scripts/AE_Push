@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "AE Push"
+cd ~/AneoEngine
+git add .
+read -p "Commit desc: " desc
+git commit -m "$desc"
+git push
+
