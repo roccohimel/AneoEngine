@@ -1,3 +1,8 @@
+[09/07/26 21:15]
+- Added a 5 decimal calculator operations.
+  (Source code in Cmds/Calculator.AC)
+  * I will soon add hexadecimal operations as well
+
 [08/30/26 17:37]
 - Converted AnchorSand into AneoC source and removed the AnchorSand C source.
 

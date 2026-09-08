@@ -6,7 +6,12 @@ TD U S u16;
 TD U INT u32;
 TD ULL u64;
 //import all AneoEngine funtions
-extern U calc(U equation);
+extern VD calc_help(VD);
+extern U calc_add(U adden_1, U adden_2);
+extern U calc_subtract(U minuend, U subtrahend);
+extern U calc_multiply(U factor_1, U factor_2);
+extern U calc_divide(U dividend, U divisor);
+extern U calc_modulo(U dividend, U divisor);
 extern VD convert(CC *strhex);
 extern VD entropy(VD);
 extern VD pit_init_1000hz(VD);
@@ -4486,10 +4491,38 @@ VD shell_exec(C *line)
 	if(strcmp(line, "fault;") == 0) {
 		triple_fault();
 	}
-	else if(starts(line, "calc(") && ends(line, ");")) {
+	else if(strcmp(line, "calc;") == 0)
+		calc_help();
+	else if(starts(line, "calc_add(") && ends(line, ");")) {
 		rmsemia(line);
-		calc(atoi(line + 5));
-	}	
+		as_two_args(line + 9, arg1, arg2);
+		calc_add(atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc_subtract(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 14, arg1, arg2);
+		calc_subtract(atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc_multiply(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 14, arg1, arg2);
+		calc_multiply(atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc_divide(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 12, arg1, arg2);
+		calc_divide(atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc_modulo(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 12, arg1, arg2);
+		calc_modulo(atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
 	else if(strcmp(line, "index;") == 0)
 		run_script("/Everist/Index/Main.AC");
 	else if(strcmp(line, "cls;") == 0)
