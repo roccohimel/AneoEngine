@@ -137,6 +137,8 @@ build()
 	$AC Cmds/Entropy.AC -o Entropy.o
 	echo "AC Cmds/Convert.AC"
 	$AC Cmds/Convert.AC -o Convert.o
+	echo "AC Cmds/Calculator.AC"
+	$AC Cmds/Calculator.AC -o Calculator.o
 	echo "LD *.o -> Kernel.ELF"
 	#link main *.o
 	ld -m elf_i386 -Ttext 0x10000 --section-start=.bss=0x100000 -e _start \
@@ -158,6 +160,7 @@ build()
 		Tune.o \
 		Entropy.o \
 		Convert.o \
+		Calculator.o \
 		-o Kernel.ELF
 	#BSS cals
 	BSS_END_HEX=$(nm -n Kernel.ELF | awk '$3 == "_end" { print $1; exit }')

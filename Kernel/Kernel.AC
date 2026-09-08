@@ -6,6 +6,7 @@ TD U S u16;
 TD U INT u32;
 TD ULL u64;
 //import all AneoEngine funtions
+extern U calc(U equation);
 extern VD convert(CC *strhex);
 extern VD entropy(VD);
 extern VD pit_init_1000hz(VD);
@@ -4485,6 +4486,10 @@ VD shell_exec(C *line)
 	if(strcmp(line, "fault;") == 0) {
 		triple_fault();
 	}
+	else if(starts(line, "calc(") && ends(line, ");")) {
+		rmsemia(line);
+		calc(atoi(line + 5));
+	}	
 	else if(strcmp(line, "index;") == 0)
 		run_script("/Everist/Index/Main.AC");
 	else if(strcmp(line, "cls;") == 0)

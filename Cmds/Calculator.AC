@@ -1,0 +1,45 @@
+/*
+AneoEngine Calculator tool
+AneoC source file
+*/
+
+#include <stdint.h>
+//TDs
+TD U C U8;
+TD U S U16;
+TD U INT U32;
+//regular kernel externs
+extern VD print(CC *string);
+extern VD printint(U INT count);
+extern VD putc(C character);
+
+VD calc_help(VD)
+{//index for calc
+	print("AneoEngine simple calculator\n");
+	print("Calculator commands:\n");
+	print("        Add two decimal values                 - calc_add(X Y);\n");
+	print("        Subtract second value from first value - calc_subtract(X Y);\n");
+	print("        Multiply two values                    - calc_multiply(X Y);\n");
+	print("        Divide first value by second value     - calc_divide(X Y);\n");
+}
+
+
+U calc_add(U adden_1, U adden_2)
+{//add
+	U sum = adden_1 + adden_2;
+	printint(sum);
+}
+
+U calc_subtract(U minuend, U subtrahend)
+{//subtract
+	U difference = minuend - subtrahend;
+	printint(difference);
+}
+
+U calc_multiply(U factor_1, U factor_2)
+{//subtract
+	U product = factor_1 * factor_2;
+	printint(product);
+}
+
+U calc_divide(
