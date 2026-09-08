@@ -33,3 +33,10 @@ support FAT12 or FAT32, but is 100% open-source.
 All the source code, including the compiler, can be found at the
 AneoEngine official website, and the repository.
 https://roccohimel.github.io/AneoEngine/
+
+Required build dependencies:
+- AneoC Compiler (included in source)
+- gcc
+- nasm
+- genisoimage
+- qemu-system-x86 (optional)
