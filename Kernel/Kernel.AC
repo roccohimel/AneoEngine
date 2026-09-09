@@ -4523,31 +4523,31 @@ VD shell_exec(C *line)
 	else if(starts(line, "calc.addx(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 10, arg1, arg2);
-		calc_hexadecimal(1, atoi(arg1), atoi(arg2));
+		calc_hexadecimal(1, atox(arg1), atox(arg2));
 		putc('\n');
 	}
 	else if(starts(line, "calc.subtractx(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 15, arg1, arg2);
-		calc_hexadecimal(2, atoi(arg1), atoi(arg2));
+		calc_hexadecimal(2, atox(arg1), atox(arg2));
 		putc('\n');
 	}
 	else if(starts(line, "calc.multiplyx(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 15, arg1, arg2);
-		calc_hexadecimal(3, atoi(arg1), atoi(arg2));
+		calc_hexadecimal(3, atox(arg1), atox(arg2));
 		putc('\n');
 	}
 	else if(starts(line, "calc.dividex(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 12, arg1, arg2);
-		calc_hexadecimal(4, atoi(arg1), atoi(arg2));
+		calc_hexadecimal(4, atox(arg1), atox(arg2));
 		putc('\n');
 	}
 	else if(starts(line, "calc.modulox(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 13, arg1, arg2);
-		calc_hexadecimal(5, atoi(arg1), atoi(arg2));
+		calc_hexadecimal(5, atox(arg1), atox(arg2));
 		putc('\n');
 	}
 	else if(strcmp(line, "index;") == 0)

@@ -14,18 +14,22 @@ TD U INT U32;
 extern VD print(CC *string);
 extern VD printint(U INT count);
 extern VD putc(C character);
-extern INT strcmp(CC *array, CC *boundary);
 extern VD printx(U32 x_value);
 
 VD calc_help(VD)
 {
 	print("AneoEngine simple calculator\n");
 	print("Calculator commands:\n");
-	print("- Add two decimal values                         - calc.add(X Y);\n");
-	print("- Subtract second decimal value from first value - calc.subtract(X Y);\n");
-	print("- Multiply two decimal values                    - calc.multiply(X Y);\n");
-	print("- Divide first decimal value by second value     - calc.divide(X Y);\n");
-	print("- Modulo first decimal value by second value     - calc.modulo(X Y);\n");
+	print("- Add two decimal values                             - calc.add(X Y);\n");
+	print("- Add two hexadecimal values                         - calc.addx(X Y);\n");	
+	print("- Subtract second decimal value from first value     - calc.subtract(X Y);\n");
+	print("- Subtract second hexadecimal value from first value - calc.subtractx(X Y);\n");	
+	print("- Multiply two decimal values                        - calc.multiply(X Y);\n");
+	print("- Multiply two hexadecimal values                    - calc.multiplyx(X Y);\n");	
+	print("- Divide first decimal value by second value         - calc.divide(X Y);\n");
+	print("- Divide first hexadecimal value by second value     - calc.dividex(X Y);\n");	
+	print("- Modulo first decimal value by second value         - calc.modulo(X Y);\n");
+	print("- Modulo first hexadecimal value by second value     - calc.modulox(X Y);\n");
 }
 
 U calc_decimal(INT operation, U factor_1, U factor_2)
