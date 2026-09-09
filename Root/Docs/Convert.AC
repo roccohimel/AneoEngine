@@ -1,0 +1,7 @@
+AneoEngine Hexadecimal -> Decimal and Binary Converter
+
+Example:
+
+/Home> convert(ABCDEF);
+Decimal: 11259375
+Binary:101010111100110111101111

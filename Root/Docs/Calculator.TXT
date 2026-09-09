@@ -1,0 +1,19 @@
+AneoEngine Calculator
+
+Five operation calculator:
+- Addition       (calc.add)
+- Subtraction    (calc.subtract)
+- Multiplication (calc.multiply)
+- Division       (calc.divide)
+- Reduction      (calc.modulo)
+
+The calculator defaults to decimal calculation. If you want
+hexadecimal calculation, simply add an "x" to these
+operation commands.
+
+Examples:
+
+/Home> calc.add(56 34);        //add decimals
+90
+/Home> calc.subtractx(E6 A7);  //subtract hexadecimals
+0000003F

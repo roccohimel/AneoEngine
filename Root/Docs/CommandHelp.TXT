@@ -1,0 +1,24 @@
+help;                         Open/activate the one help window
+cls;                          Clear the active window
+reboot;                       Triple-fault reboot
+fault;                        Trigger test fault
+addr;                         List memory addresses
+memstat;                      Show memory used by window tasks
+ls;                           List current directory
+ls("/Directory");             List a directory
+cd("/Directory");             Change directory
+mkdir("/Directory/Name");     Create a directory
+touch("/Directory/File");     Create a file
+cat("/Directory/File");       Print a file
+edit("/Directory/File");      Edit a file in the active window
+run("/Directory/File");       Run a script in the active window
+tune("T120 C4q D4q");         Play notes without blocking the window
+beep(440);                    Start tone with PC speaker / HDA beep fallback
+nosound;                      Stop tone
+sleep(1000);                  Non-blocking sleep for window scripts
+rm("/Path");                  Remove a file or directory
+cp("/Src /Dst");              Copy a file
+mv("/Src /Dst");              Move/rename a file
+save;                         Save AnchorSand to disk
+load;                         Load AnchorSand from disk
+cpdrive;                      Copy the whole current disk to another drive
