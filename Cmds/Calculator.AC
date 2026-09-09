@@ -1,6 +1,8 @@
 /*
 AneoEngine Calculator tool
 AneoC source file
+
+Hexadecimal is my girlfriend.
 */
 
 #include <stdint.h>
@@ -12,51 +14,44 @@ TD U INT U32;
 extern VD print(CC *string);
 extern VD printint(U INT count);
 extern VD putc(C character);
+extern INT strcmp(CC *array, CC *boundary);
+extern VD printx(U32 x_value);
 
 VD calc_help(VD)
-{//index for calc
+{
 	print("AneoEngine simple calculator\n");
 	print("Calculator commands:\n");
-	print("- Add two decimal values                         - calc_add(X Y);\n");
-	print("- Subtract second decimal value from first value - calc_subtract(X Y);\n");
-	print("- Multiply two decimal values                    - calc_multiply(X Y);\n");
-	print("- Divide first decimal value by second value     - calc_divide(X Y);\n");
-	print("- Modulo first decimal value by second value     - calc_modulo(X Y);\n");
-	
+	print("- Add two decimal values                         - calc.add(X Y);\n");
+	print("- Subtract second decimal value from first value - calc.subtract(X Y);\n");
+	print("- Multiply two decimal values                    - calc.multiply(X Y);\n");
+	print("- Divide first decimal value by second value     - calc.divide(X Y);\n");
+	print("- Modulo first decimal value by second value     - calc.modulo(X Y);\n");
 }
 
-
-U calc_add(U adden_1, U adden_2)
-{//add decimals
-	U sum = adden_1 + adden_2;
-	printint(sum);
-	return 0;
+U calc_decimal(INT operation, U factor_1, U factor_2)
+{//decimal calc
+	if(operation == 1)                      //add
+		printint(factor_1 + factor_2);	
+	else if(operation == 2)
+		printint(factor_1 - factor_2);	//subtract	
+	else if(operation == 3)		
+		printint(factor_1 * factor_2);	//multiply
+	else if(operation == 4)
+		printint(factor_1 / factor_2);	//divide
+	else if(operation == 5)
+		printint(factor_1 % factor_2);  //modulo
 }
 
-U calc_subtract(U minuend, U subtrahend)
-{//subtract decimals
-	U difference = minuend - subtrahend;
-	printint(difference);
-	return 0;
-}
-
-U calc_multiply(U factor_1, U factor_2)
-{//subtract decimals
-	U product = factor_1 * factor_2;
-	printint(product);
-	return 0;
-}
-
-U calc_divide(U dividend, U divisor)
-{//divide decimals
-	U quotient = dividend / divisor;
-	printint(quotient);
-	return 0;
-}
-
-U calc_modulo(U dividend, U divisor)
-{//divide decimals
-	U remainder = dividend % divisor;
-	printint(remainder);
-	return 0;
+U calc_hexadecimal(INT operation, U32 factor_1, U32 factor_2)
+{//hexadecimal
+	if(operation == 1)                      //add
+		printx(factor_1 + factor_2);	
+	else if(operation == 2)
+		printx(factor_1 - factor_2);	//subtract	
+	else if(operation == 3)		
+		printx(factor_1 * factor_2);	//multiply
+	else if(operation == 4)
+		printx(factor_1 / factor_2);	//divide
+	else if(operation == 5)
+		printx(factor_1 % factor_2);    //modulo
 }

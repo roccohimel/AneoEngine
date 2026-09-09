@@ -6,12 +6,9 @@ TD U S u16;
 TD U INT u32;
 TD ULL u64;
 //import all AneoEngine funtions
+extern U calc_hexadecimal(INT operation, u32 factor_1, u32 factor_2);
 extern VD calc_help(VD);
-extern U calc_add(U adden_1, U adden_2);
-extern U calc_subtract(U minuend, U subtrahend);
-extern U calc_multiply(U factor_1, U factor_2);
-extern U calc_divide(U dividend, U divisor);
-extern U calc_modulo(U dividend, U divisor);
+extern U calc_decimal(CC *operation, U factor_1, U factor_2);
 extern VD convert(CC *strhex);
 extern VD entropy(VD);
 extern VD pit_init_1000hz(VD);
@@ -4493,34 +4490,64 @@ VD shell_exec(C *line)
 	}
 	else if(strcmp(line, "calc;") == 0)
 		calc_help();
-	else if(starts(line, "calc_add(") && ends(line, ");")) {
+	else if(starts(line, "calc.add(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 9, arg1, arg2);
-		calc_add(atoi(arg1), atoi(arg2));
+		calc_decimal(1, atoi(arg1), atoi(arg2));
 		putc('\n');
 	}
-	else if(starts(line, "calc_subtract(") && ends(line, ");")) {
+	else if(starts(line, "calc.subtract(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 14, arg1, arg2);
-		calc_subtract(atoi(arg1), atoi(arg2));
+		calc_decimal(2, atoi(arg1), atoi(arg2));
 		putc('\n');
 	}
-	else if(starts(line, "calc_multiply(") && ends(line, ");")) {
+	else if(starts(line, "calc.multiply(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 14, arg1, arg2);
-		calc_multiply(atoi(arg1), atoi(arg2));
+		calc_decimal(3, atoi(arg1), atoi(arg2));
 		putc('\n');
 	}
-	else if(starts(line, "calc_divide(") && ends(line, ");")) {
+	else if(starts(line, "calc.divide(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 12, arg1, arg2);
-		calc_divide(atoi(arg1), atoi(arg2));
+		calc_decimal(4, atoi(arg1), atoi(arg2));
 		putc('\n');
 	}
-	else if(starts(line, "calc_modulo(") && ends(line, ");")) {
+	else if(starts(line, "calc.modulo(") && ends(line, ");")) {
 		rmsemia(line);
 		as_two_args(line + 12, arg1, arg2);
-		calc_modulo(atoi(arg1), atoi(arg2));
+		calc_decimal(5, atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc.addx(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 10, arg1, arg2);
+		calc_hexadecimal(1, atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc.subtractx(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 15, arg1, arg2);
+		calc_hexadecimal(2, atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc.multiplyx(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 15, arg1, arg2);
+		calc_hexadecimal(3, atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc.dividex(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 12, arg1, arg2);
+		calc_hexadecimal(4, atoi(arg1), atoi(arg2));
+		putc('\n');
+	}
+	else if(starts(line, "calc.modulox(") && ends(line, ");")) {
+		rmsemia(line);
+		as_two_args(line + 13, arg1, arg2);
+		calc_hexadecimal(5, atoi(arg1), atoi(arg2));
 		putc('\n');
 	}
 	else if(strcmp(line, "index;") == 0)
